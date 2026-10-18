@@ -1,0 +1,47 @@
+{
+  "pathways": {
+    "1": "State-capitalist / state-permeated",
+    "2": "FDI-led / dependent",
+    "3": "Developmental state / economic statecraft",
+    "4": "Subsidy-led geoeconomic",
+    "5": "Firm-led reshoring",
+    "6": "Informal naissance"
+  },
+  "roles": {
+    "Q1": "Determinant: why reindustrialization varies (a cause of the variation)",
+    "Q2": "Effect: what a variant does (an outcome of the variation)",
+    "TYPOLOGY": "Defines or classifies a variant, without a cause or effect",
+    "OTHER": "Relevant context that fits none of the above"
+  },
+  "evidence": ["theory", "case-study", "cross-country-quantitative", "firm-level-quantitative", "historical", "review-of-literature", "author-assertion"],
+  "direction": ["+", "-", "mixed", "none"],
+  "direction_rule": "Direction is the sign of change in the NAMED outcome quantity, never good or bad. '+' = the quantity named in 'outcome' rises. '-' = it falls. 'mixed' = it rises in one place or time and falls in another. 'none' = no change, or the authors did not assess it. Example: SOE losses grow -> outcome 'fiscal and financial burden', direction '+'. Privatization cuts the state deficit -> same outcome, direction '-'.",
+  "expected_rule": "expected = true when the quote is a forecast, an expectation, a hypothetical ('may', 'likely', 'if... then'), a stated limit of the study, or a view the authors report without testing. Such a claim keeps its role (Q2 if it names an outcome) and gets expected = true. expected = false for measured or observed findings.",
+  "pathway_rule": "Tag pathway from what THIS quote says about a mechanism or case, not from the topic of the whole paper. Use [] when the quote names no variant. A book or paper about one pathway does not make every claim carry that pathway.",
+  "q1_factors": [
+    "state capacity and existing coordination institutions",
+    "private investment failure (market gap)",
+    "executive consolidation of power / regime type",
+    "business-labor coalitions and political settlement",
+    "position in world economy (FDI, commodity dependence, core-periphery)",
+    "fiscal capacity and income level",
+    "external policy space (trade rules, great-power pressure)",
+    "firm cost and supply-chain risk",
+    "local developmental agency and cooperation (local government, firms, universities)",
+    "physical and human-capital infrastructure (transport, skills, universities)",
+    "governance of the state's own firms (selection of managers, transparency, political appointment)",
+    "depth of local capital markets and finance"
+  ],
+  "q2_outcomes": [
+    "manufacturing employment",
+    "manufacturing output / value-added share",
+    "productivity and technological upgrading",
+    "job quality, wages and inequality",
+    "fiscal and financial burden",
+    "resilience and security of supply",
+    "political outcomes (state power, rent-seeking, conflict)",
+    "regional / spatial unevenness",
+    "housing and living costs",
+    "firm performance and investment"
+  ]
+}
