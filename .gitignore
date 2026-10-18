@@ -1,5 +1,6 @@
 build/
-release/
+release/*
+!release/ClaimViewer-Setup-*.exe
 reader/pdf/*.pdf
 *.pyc
 # optional claims pipeline (verify.py, build.py): your research data and PDFs stay out of git

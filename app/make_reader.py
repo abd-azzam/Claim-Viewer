@@ -1,17 +1,17 @@
 """Write reader/index.html: template.html with an empty library and the starter vocab.
 
 reader/ is the ready-to-copy empty viewer (and what the Windows installer ships).
-Re-run after editing template.html or vocab.starter.json:  python make_reader.py
+Re-run after editing template.html or vocab.starter.json:  python app/make_reader.py
 An existing reader/sources.js is never overwritten.
 """
 import json
 from pathlib import Path
 
-HERE = Path(__file__).resolve().parent
+HERE = Path(__file__).resolve().parent.parent  # project folder; this script lives in app/
 OUT = HERE / "reader"
-SOURCES_JS = """// List your PDFs here. id = the file name in the pdf folder, without ".pdf". title is optional.
-window.SOURCES = [
-  // { id: "smith-2020", title: "Smith 2020" },
+SOURCES_JS = """// One line per reading. id = file name in the pdf folder without .pdf. Add a line, drop the PDF in pdf/, reload.
+window.SOURCES=[
+  {id:"example-paper", title:"Example paper"}
 ];
 """
 

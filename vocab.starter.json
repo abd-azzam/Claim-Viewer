@@ -1,13 +1,43 @@
 {
-  "pathways": {},
-  "roles": {
-    "Q1": "Determinant: a cause of the variation you study",
-    "Q2": "Effect: an outcome of the variation you study",
-    "TYPOLOGY": "Defines or classifies a variant, without a cause or effect",
-    "OTHER": "Relevant context that fits none of the above"
+  "pathways": {
+    "1": "Pathway 1",
+    "2": "Pathway 2",
+    "3": "Pathway 3",
+    "4": "Pathway 4",
+    "5": "Pathway 5",
+    "6": "Pathway 6"
   },
-  "evidence": ["theory", "case-study", "cross-country-quantitative", "firm-level-quantitative", "historical", "review-of-literature", "author-assertion"],
-  "direction": ["+", "-", "mixed", "none"],
-  "q1_factors": [],
-  "q2_outcomes": []
+  "roles": {
+    "Q1": "Determinant: a cause of the variation",
+    "Q2": "Effect: an outcome of the variation",
+    "TYPOLOGY": "Defines or classifies, no cause or effect",
+    "OTHER": "Other relevant context"
+  },
+  "evidence": [
+    "theory",
+    "case-study",
+    "cross-country-quantitative",
+    "firm-level-quantitative",
+    "historical",
+    "review-of-literature",
+    "author-assertion"
+  ],
+  "direction": [
+    "+",
+    "-",
+    "mixed",
+    "none"
+  ],
+  "direction_rule": "Direction is the sign of change in the NAMED outcome quantity, never good or bad. '+' = the quantity named in 'outcome' rises. '-' = it falls. 'mixed' = it rises in one place or time and falls in another. 'none' = no change, or the authors did not assess it. Example: SOE losses grow -> outcome 'fiscal and financial burden', direction '+'. Privatization cuts the state deficit -> same outcome, direction '-'.",
+  "expected_rule": "expected = true when the quote is a forecast, an expectation, a hypothetical ('may', 'likely', 'if... then'), a stated limit of the study, or a view the authors report without testing. Such a claim keeps its role (Q2 if it names an outcome) and gets expected = true. expected = false for measured or observed findings.",
+  "q1_factors": [
+    "Factor 1",
+    "Factor 2",
+    "Factor 3"
+  ],
+  "q2_outcomes": [
+    "Outcome 1",
+    "Outcome 2",
+    "Outcome 3"
+  ]
 }

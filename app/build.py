@@ -1,13 +1,13 @@
-"""Build index.html from sources.json, vocab.json and claims/<id>.verified.json (all next to this script).
+"""Build index.html from sources.json, vocab.json and claims/<id>.verified.json (all in the project folder, the parent of app/).
 
-Needs: pip install -r requirements.txt
-Serve this folder (PDFs cannot load from file://):
+Run from the project folder:  python app/build.py        Needs: pip install -r requirements.txt
+Serve the project folder (PDFs cannot load from file://):
     python -m http.server 8000      then open http://localhost:8000
 """
 import json
 from pathlib import Path
 
-HERE = Path(__file__).resolve().parent
+HERE = Path(__file__).resolve().parent.parent  # project folder; this script lives in app/
 sources = json.loads((HERE / "sources.json").read_text(encoding="utf-8"))
 vocab = json.loads((HERE / "vocab.json").read_text(encoding="utf-8"))
 vocab.pop("TODO(human)", None)
