@@ -1,0 +1,4 @@
+build/
+release/
+reader/pdf/*.pdf
+*.pyc
