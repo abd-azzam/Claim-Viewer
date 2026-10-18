@@ -39,10 +39,10 @@ You define the pathway, factor and outcome lists yourself. The Q1 and Q2 labels 
 
 1. Copy the [`reader/`](reader) folder anywhere.
 2. Put your PDFs in `reader/pdf/`.
-3. List each PDF in `reader/sources.js` (`id` = the file name without `.pdf`):
+3. List each PDF in `reader/sources.js` (`id` = the file name without `.pdf`). Replace the placeholder `example-paper` line:
    ```js
-   window.SOURCES = [
-     { id: "smith-2020", title: "Smith 2020" },
+   window.SOURCES=[
+     {id:"smith-2020", title:"Smith 2020"},
    ];
    ```
 4. Double-click `reader/index.html`.
@@ -51,7 +51,7 @@ When you open it by double-click, the browser cannot read the `pdf` folder by it
 
 ## Use it as a Windows app
 
-1. Download [`ClaimViewer-Setup-1.0.0.exe`](ClaimViewer-Setup-1.0.0.exe) and run it.
+1. Download [`ClaimViewer-Setup-1.0.0.exe`](release/ClaimViewer-Setup-1.0.0.exe) and run it.
 2. Pick the folder (default: `Documents\Claim Viewer`) and, if you want, a Desktop shortcut. It always adds a Start menu shortcut.
 3. Put your PDFs in the `pdf` folder inside it and list them in `sources.js`.
 4. Open **Claim Viewer** from the Start menu. It opens its own window (no browser) and stops when you close it.
@@ -66,7 +66,7 @@ Needs the Microsoft WebView2 runtime (already on Windows 11 and current Windows 
 build_exe.bat
 ```
 
-Needs Python 3 and [Inno Setup 6](https://jrsoftware.org/isinfo.php) (`winget install JRSoftware.InnoSetup`). The script refreshes `reader/index.html` from `template.html`, then builds `release/ClaimViewer.exe` (PyInstaller) and `release/ClaimViewer-Setup-<version>.exe`. Change the version in `ClaimViewer.iss`.
+Needs Python 3 and [Inno Setup 6](https://jrsoftware.org/isinfo.php) (`winget install JRSoftware.InnoSetup`). The script refreshes `reader/index.html` from `template.html`, then builds `release/ClaimViewer.exe` (PyInstaller) and `release/ClaimViewer-Setup-<version>.exe`. Change the version in `ClaimViewer.iss`. Git tracks only the `ClaimViewer-Setup-*.exe` file in `release/`.
 
 ## Optional: fill the viewer with claims you prepared
 
@@ -74,12 +74,12 @@ If you already have claims as quotes in JSON (written by hand, or extracted by a
 
 ```
 pip install -r requirements.txt
-python verify.py          # checks every quote against the PDF text
-python build.py           # writes index.html
+python app/verify.py      # checks every quote against the PDF text
+python app/build.py       # writes index.html
 python -m http.server 8000
 ```
 
-Then open <http://localhost:8000> (PDFs cannot load from `file://`). Everything lives next to the scripts:
+Run these from the project folder (the one that holds `template.html`) and then open <http://localhost:8000> (PDFs cannot load from `file://`). The inputs live in that folder, not in `app/`:
 
 | Input | What it is |
 |---|---|
@@ -95,13 +95,15 @@ Then open <http://localhost:8000> (PDFs cannot load from `file://`). Everything 
 | Path | Purpose |
 |---|---|
 | `template.html` | The whole viewer. A built `index.html` is this file with its data filled in. |
-| `reader/` | A ready, empty copy to start from (made by `make_reader.py`). |
-| `make_reader.py`, `vocab.starter.json` | Rebuild `reader/index.html` from the template with an empty library. |
+| `reader/` | A ready, empty viewer to start from: `index.html`, `sources.js` and an empty `pdf/` folder. |
+| `vocab.starter.json` | The placeholder lists inside `reader/index.html`. |
 | `app/launch.py` | The Windows app: a native window (WebView2) around a small local server. |
-| `app/setup_shortcuts.py` | Small shortcut-only setup helper (the installer below covers this). |
+| `app/make_reader.py` | Rebuilds `reader/index.html` from `template.html` and `vocab.starter.json`. |
+| `app/verify.py`, `app/build.py` | The optional claims pipeline (see above). |
+| `app/setup_shortcuts.py` | Small shortcut-only setup helper (the installer covers this). |
+| `release/` | The prebuilt, unsigned Windows installer, `ClaimViewer-Setup-1.0.0.exe`. A build also writes `ClaimViewer.exe` here. |
 | `ClaimViewer.iss`, `build_exe.bat` | Inno Setup script and build script for the Windows installer. |
-| `ClaimViewer-Setup-1.0.0.exe` | The prebuilt, unsigned Windows installer. |
-| `verify.py`, `build.py`, `requirements.txt`, `vocab.thesis.json` | The optional claims pipeline and an example vocabulary. |
+| `requirements.txt`, `vocab.thesis.json` | Pipeline dependencies, and an example vocabulary. |
 | `docs/` | Screenshots used in this README. |
 
 ## Known limits

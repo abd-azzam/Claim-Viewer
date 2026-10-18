@@ -1,7 +1,7 @@
 """Verify extracted quotes against the source PDF, then write a highlighted copy.
 
-Usage: python verify.py [source-id ...]   (default: all in sources.json)
-Paths are relative to this script's folder.
+Usage: python app/verify.py [source-id ...]   (default: all in sources.json)
+Paths are relative to the project folder (the parent of app/).
 In : sources.json                   [{"id","kind","pdf": "papers/x.pdf", ...}]  pdf = the ORIGINAL file
      claims/<id>.json               {"claims": [{"id","quote",...}]}
 Out: claims/<id>.verified.json      (adds status/pdf_page/cite_page)
@@ -12,7 +12,7 @@ import json, re, sys, unicodedata
 from pathlib import Path
 import pymupdf
 
-HERE = Path(__file__).resolve().parent
+HERE = Path(__file__).resolve().parent.parent  # project folder; this script lives in app/
 ANCHOR = 8  # words used at each end of a quote when the full quote does not match
 
 
