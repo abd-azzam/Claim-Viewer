@@ -1,0 +1,5 @@
+# Only for the optional claims pipeline (verify.py, build.py).
+# The viewer and the Windows app need none of these; build_exe.bat installs pywebview and pyinstaller itself.
+pymupdf
+numpy
+scipy

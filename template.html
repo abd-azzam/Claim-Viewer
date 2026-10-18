@@ -509,7 +509,7 @@ lpn.onclick=()=>lpn.className&&$("lpf").click();
 $("lp").onclick=()=>$("lpf").click();
 $("lpf").onchange=async e=>{const d=await db;for(const x of e.target.files){if(!/\.pdf$/i.test(x.name))continue;files[key(x.name)]=x;if(d)d.transaction("p","readwrite").objectStore("p").put(x,key(x.name))}cur="";showPdf(s.value)};
 s.onchange=()=>showPdf(s.value);
-(async()=>{const d=await db;if(d)await new Promise(r=>{const q=d.transaction("p").objectStore("p").openCursor();q.onsuccess=()=>{const c=q.result;if(c){files[c.key]=c.value;c.continue()}else r()};q.onerror=()=>r()});showPdf(s.value)})()})();
+(async()=>{const d=await db;if(d)await new Promise(r=>{const q=d.transaction("p").objectStore("p").openCursor();q.onsuccess=()=>{const c=q.result;if(c){files[c.key]=c.value;c.continue()}else r()};q.onerror=()=>r()});s.value&&showPdf(s.value)})()})();
 </script>
 
 </body>

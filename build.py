@@ -1,7 +1,8 @@
-"""Build ClaimViewer/index.html from sources.json + claims/*.verified.json.
+"""Build index.html from sources.json, vocab.json and claims/<id>.verified.json (all next to this script).
 
-Serve it (PDFs cannot load from file://):
-    python -m http.server 8000 --directory ClaimViewer      then open http://localhost:8000
+Needs: pip install -r requirements.txt
+Serve this folder (PDFs cannot load from file://):
+    python -m http.server 8000      then open http://localhost:8000
 """
 import json
 from pathlib import Path
@@ -10,7 +11,7 @@ HERE = Path(__file__).resolve().parent
 sources = json.loads((HERE / "sources.json").read_text(encoding="utf-8"))
 vocab = json.loads((HERE / "vocab.json").read_text(encoding="utf-8"))
 vocab.pop("TODO(human)", None)
-over = json.loads((HERE / "overrides.json").read_text(encoding="utf-8"))
+over = json.loads((HERE / "overrides.json").read_text(encoding="utf-8")) if (HERE / "overrides.json").exists() else {}  # optional: {claim id: fields to change}
 
 data = {"vocab": vocab, "sources": []}
 for s in sources:

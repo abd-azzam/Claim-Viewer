@@ -1,0 +1,516 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Claim Viewer</title>
+<style>
+:root{--ctl:#767f8c;--bg:#fff;--panel:#f6f7f9;--ink:#15181d;--mute:#5d6672;--line:#d9dee5;--acc:#1f5fbf;--ok:#17713f;--warn:#9a5b00;--bad:#b3261e;--hl:#fff1a8;--dp:#0e7c86;--dn:#c2410c;--dm:#7c3aed}
+@media (prefers-color-scheme:dark){:root{--ctl:#6b7684;--bg:#14171c;--panel:#1c2027;--ink:#e8ebef;--mute:#9aa4b0;--line:#2d333c;--acc:#7aa7ff;--ok:#5fd08e;--warn:#e0a548;--bad:#ff8a80;--hl:#4a4310;--dp:#4fd1c5;--dn:#fb923c;--dm:#b794f4}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 -apple-system,"Segoe UI",Roboto,sans-serif;height:100vh;display:grid;grid-template-columns:330px minmax(340px,1fr) minmax(360px,1.1fr)}
+aside,main,section{overflow:auto;height:100vh}
+aside{background:var(--panel);border-right:1px solid var(--line);padding:12px;overflow:hidden;display:flex;flex-direction:column}
+#flt{display:grid;grid-template-columns:1fr 1fr;gap:0 8px}#flt{gap:0 8px}#flt label.f{margin:9px 0 3px;font-size:10px;line-height:1.2;color:var(--mute);text-transform:none;letter-spacing:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}body.graph #fs{display:none}#flt .w{grid-column:1/-1}
+#flt select,#flt input{padding:4px 6px}
+#reads{flex:1;min-height:0;overflow:auto;margin-top:4px;display:grid;grid-template-columns:1fr 1fr;column-gap:8px;align-content:start}#reads .f{grid-column:1/-1}#reads .read{margin-top:2px;font-size:12.5px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+main{padding:14px;border-right:1px solid var(--line)}
+h1{font-size:16px;margin:0 0 10px}
+label.f{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--mute);margin:12px 0 3px}
+select,input[type=search]{width:100%;padding:6px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);font:inherit}
+.count{color:var(--mute);margin:0 0 10px}
+.card{border:1px solid var(--line);border-radius:8px;padding:16px 18px;margin:0 0 16px;line-height:1.55;cursor:pointer;background:var(--bg)}
+.card:hover,.card:focus-visible{border-color:var(--acc);outline:none}
+.card.sel{border-color:var(--acc);background:var(--panel)}
+.quote{background:var(--hl);padding:1px 3px;border-radius:3px}.quote[contenteditable=plaintext-only]{outline:2px solid #5b9dff;background:transparent;cursor:text}
+.gist{color:var(--mute);margin:6px 0 4px;font-size:13px}
+.meta{display:flex;flex-wrap:wrap;gap:5px;align-items:center;font-size:11.5px;margin-top:6px}
+.tag{border:1px solid var(--line);border-radius:3px;padding:1px 6px;white-space:nowrap}
+.tag.q{border-color:var(--acc);color:var(--acc)}
+.tag.ok{color:var(--ok)}.tag.warn{color:var(--warn)}.tag.bad{color:var(--bad)}
+.pg{font-variant-numeric:tabular-nums;font-weight:600}
+.grp{font-size:13px;font-weight:700;margin:18px 0 8px;padding-bottom:4px;border-bottom:2px solid var(--ink)}
+section{display:flex;flex-direction:column}
+section header{padding:10px 14px;border-bottom:1px solid var(--line);font-size:13px}
+iframe{flex:1;border:0;width:100%}
+#rd{flex:1;overflow:auto;background:#888}#rd .pg{position:relative;margin:6px auto;background:#fff}#rd canvas{display:block}.textLayer{position:absolute;inset:0;overflow:hidden;line-height:1;z-index:2}
+#rd .pg{isolation:isolate}.hl{position:absolute;z-index:1;mix-blend-mode:multiply;pointer-events:none}.hl.on{outline:2px solid var(--acc);outline-offset:-2px}
+#rt{display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:0 6px 6px}#rt[hidden]{display:none}
+#rt button{padding:4px 10px;border:1px solid var(--ctl);border-radius:4px;background:var(--bg);color:var(--ink);font:inherit;cursor:pointer}
+#rt.nat>:not(#nv){display:none}
+.sw{display:inline-flex;gap:6px;align-items:center}.sw button{width:22px;height:22px;padding:0;border:2px solid var(--ctl);border-radius:50%;cursor:pointer}
+#cm .sw{display:flex;padding:6px 12px}#cm .sw button{display:inline-block;padding:0}
+#cm button:disabled{color:var(--ctl);cursor:not-allowed}.textLayer span{position:absolute;white-space:pre;color:transparent;transform-origin:0 0}.textLayer ::selection{background:transparent}.bsel{position:absolute;z-index:2;background:rgba(0,90,255,.35);pointer-events:none}.rtop{padding:8px 10px 4px}.rsel{display:flex;gap:8px;align-items:center}.rsel select{flex:1;min-width:0}#lpn{margin-top:6px;font-size:.8rem;opacity:.65}#lpn:empty{display:none}#lpn.warn{display:block;cursor:pointer;background:#fde68a;color:#3b2f00;padding:6px 8px;font-weight:600}#toast.top{top:14px;transform:translateX(-50%)}#toast{pointer-events:none;position:fixed;left:50%;top:45%;transform:translate(-50%,-50%);z-index:9;background:#1f2937;color:#fff;padding:10px 16px;border-radius:8px;max-width:min(60vw,420px);max-height:40vh;overflow:hidden;overflow-wrap:anywhere;text-align:center}#ask{border:1px solid var(--ctl);border-radius:10px;padding:18px 20px;max-width:min(360px,90vw);overflow-wrap:anywhere;font:inherit}#ask p{margin:0 0 12px}#ask label{display:block;margin:0 0 12px;font-size:.9em}#ask div{display:flex;gap:8px;justify-content:flex-end}
+
+.empty{padding:30px;color:var(--mute)}
+.rl{margin:6px 0 0;padding-left:16px;max-height:34vh;overflow:auto}.rl button{all:unset;cursor:pointer;color:var(--acc);font-weight:600}.rl small{color:var(--mute)}
+.read{display:flex;gap:6px;align-items:center;margin-top:8px;font-size:13px}
+#gv{display:none;grid-column:2/4;overflow:auto;height:100vh;padding:14px}
+body.graph main,body.graph section{display:none}body.graph #gv{display:block}
+.tabs{display:flex;gap:6px;margin:0 0 8px}.tabs button{flex:1;padding:6px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);font:inherit;cursor:pointer}.tabs button.on{border-color:var(--acc);color:var(--acc);font-weight:700}
+#gv svg{width:100%;height:auto;min-width:760px}#gv text{fill:var(--ink);font-size:12px}#gv .cnt{fill:var(--mute)}#gv .hd{font-weight:700;fill:var(--mute);font-size:11px;text-transform:uppercase}
+#gv .e{fill:none;opacity:.45;cursor:pointer}#gv .e:hover{opacity:.95}#gv .n{cursor:pointer}#gv .n rect{fill:var(--panel);stroke:var(--line)}#gv .n:hover rect{stroke:var(--acc)}
+#gv .e.dim{opacity:.08}#gv .e.hit{opacity:1}#gv .n.dim{opacity:.35}#gv .n.hit rect{fill:var(--hl);stroke:var(--acc);stroke-width:2.5}
+#ed,#vl{position:fixed;left:12px;top:12px;margin:0;max-height:92vh;overflow:auto;z-index:9;background:var(--panel);color:var(--ink);border:2px solid var(--acc);border-radius:8px;padding:14px}#ed label,#vl label{display:grid;gap:3px;font-size:12px;font-weight:700;color:var(--mute)}#ed input,#ed textarea,#ed select,#vl textarea{font:inherit;font-weight:400;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:6px}
+#ed button,#vl button{padding:6px 16px;border:1px solid var(--acc);border-radius:6px;background:var(--bg);color:var(--acc);font:inherit;cursor:pointer}#ed button[value=ok],#vl button[value=ok]{background:var(--acc);color:var(--bg);font-weight:700}
+#vl{left:50%;top:50%;transform:translate(-50%,-50%)}#vl form{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;width:min(1000px,92vw)}#vl form>b,#vl form>small,#vl form>div:last-child{grid-column:1/-1}#vl form>b{font-size:16px}
+#vl .col{display:flex;flex-direction:column;gap:8px;min-width:0}#vl h4{margin:0}#vl .items{display:grid;gap:6px;max-height:55vh;overflow:auto;padding-right:2px}
+#vl .it{display:flex;gap:4px}#vl .it input{flex:1;min-width:0;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:6px}#vl .it .k{flex:0 0 40px;text-align:center;font-weight:700}#vl .x{padding:2px 9px;color:var(--dn);border-color:var(--line)}#vl .add{border-style:dashed}
+.bar{position:sticky;top:0;z-index:5;background:var(--bg);padding:6px 0;margin:0;display:flex;gap:6px;align-items:center;flex-wrap:wrap}.bar button,.bar .gbtn{margin:0;padding:4px 10px;border:1px solid var(--line);border-radius:4px;background:var(--bg);color:var(--ink);font:inherit;cursor:pointer}.bar button:hover,.bar .gbtn:hover{border-color:var(--acc)}#count button{margin-left:8px;padding:1px 8px;border:1px solid var(--line);border-radius:4px;background:var(--bg);color:var(--acc);font:inherit;cursor:pointer}button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible,.card:focus-visible,.gbtn:focus-within{outline:2px solid var(--acc);outline-offset:2px}
+.selbar{border:1px solid var(--acc);border-radius:6px;padding:8px 10px;margin:8px 0;font-size:13px;background:var(--panel)}.selbar button,.gbtn{margin-left:8px;padding:3px 8px;border:1px solid var(--acc);border-radius:5px;background:var(--bg);color:var(--acc);font:inherit;cursor:pointer}
+.lg{display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:var(--mute);margin:6px 0}.lg i{display:inline-block;width:18px;height:4px;vertical-align:middle;margin-right:4px}
+@media (max-width:1000px){body{grid-template-columns:1fr;height:auto}aside,main,section{height:auto;max-height:none}iframe{min-height:70vh}}
+select,input,textarea,.bar button,#count button,.tabs button,#ed button,#vl button,#vl .it input{border-color:var(--ctl)}
+#cm{position:fixed;z-index:20;background:var(--bg);border:1px solid var(--ctl);border-radius:4px;padding:4px}
+#cm button{display:block;padding:6px 12px;border:0;background:none;color:var(--ink);font:inherit;cursor:pointer;text-align:left}
+#cm [hidden]{display:none}
+#cm button:hover{background:var(--panel)}
+.i{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vertical-align:middle}.bar button,.bar .gbtn,#rt button,#lp{display:inline-flex;align-items:center;justify-content:center;min-width:32px}
+.gc{margin:0 0 8px}.gc .gh{display:block;font-size:10px;color:var(--mute);margin:0 0 2px}.gc .tabs{margin:0 0 4px}
+.gc .ck{display:flex;flex-wrap:wrap;gap:2px 12px;font-size:12px;align-items:center}.gc .ck b{font-size:10px;font-weight:400;color:var(--mute)}.gc .ck label{display:flex;gap:4px;align-items:center;cursor:pointer}
+.gc .lk,body.gnet .gc .ly{display:none}body.gnet .gc .lk{display:flex}
+#gv .nn{cursor:pointer}#gv .nn circle{stroke:var(--bg);stroke-width:1.5}#gv .nn:hover circle,#gv .nn.hit circle{stroke:var(--acc);stroke-width:3}#gv .nn.dim{opacity:.25}
+#gv .ce{fill:none;stroke:var(--mute);stroke-width:1;opacity:.35}#gv .ce.tag{stroke:var(--acc);opacity:.55}#gv .ce.opp{stroke:var(--dn);stroke-dasharray:4 3;opacity:.75}#gv .ce.dim{opacity:.04}#gv .ce.hit{opacity:1;stroke-width:2}
+</style>
+</head>
+<body>
+<aside>
+  <h1>Claim Viewer</h1>
+  <div class="tabs"><button id="tl" class="on">List</button><button id="tg">Graph</button></div>
+  <div class="gc" id="gc1"></div>
+  <div id="flt"><label class="f w" for="q">Find words in quotes</label><input class="w" id="q" type="search" placeholder="Quote or gist" style="grid-column:1/-1">
+  <label class="f w" for="src">Reading</label><select id="src" style="grid-column:1/-1"></select>
+  <label class="f" for="role">Type of claim</label><select id="role"></select>
+  <label class="f" for="pw">Pathway (variant)</label><select id="pw"></select>
+  <label class="f w" for="fa">Q1: what makes variants differ</label><select id="fa" style="grid-column:1/-1"></select>
+  <label class="f w" for="oc">Q2: what a variant does</label><select id="oc" style="grid-column:1/-1"></select>
+  <label class="f" for="dir" title="Sign of change in the outcome, not good or bad">Up or down (Q2)</label><select id="dir" title="Sign of change in the outcome, not good or bad"></select>
+  <label class="f" for="ev">Kind of evidence</label><select id="ev"></select>
+  <label class="f" for="own">Own or cited claim</label><select id="own"><option value="">Any author</option><option value="1">Own</option><option value="0">Cited</option></select>
+  <label class="f" for="grp">Group the list by</label><select id="grp"><option value="source">Group: source</option><option value="pathway">Group: pathway</option><option value="factor">Group: Q1 factor</option><option value="outcome">Group: Q2 outcome</option><option value="section">Group: section</option></select>
+  <label class="f" for="rl">Links to other readings</label><select id="rl"><option value="">Any links</option><option value="rel">Related</option><option value="opp">Opposite sign</option></select></div>
+  <div id="reads"></div>
+</aside>
+<dialog id="vl"><form method="dialog">
+  <b>Lists</b>
+  <small>Type to rename. ✕ removes.</small>
+  <div class="col" data-c="p"><h4>Pathways</h4><div class="items"></div><button type="button" class="add">+ Add</button></div>
+  <div class="col" data-c="f"><h4>Q1 factors</h4><div class="items"></div><button type="button" class="add">+ Add</button></div>
+  <div class="col" data-c="o"><h4>Q2 outcomes</h4><div class="items"></div><button type="button" class="add">+ Add</button></div>
+  <div><button value="ok">Save</button> <button value="x" formnovalidate>Cancel</button></div>
+</form></dialog>
+<dialog id="ed"><form method="dialog" style="display:grid;gap:6px;width:min(420px,40vw)">
+  <b id="edt"></b>
+  <label>Source <select name="src"></select></label>
+  <label>Quote <textarea name="quote" rows="5" required></textarea></label>
+  <label>Gist <textarea name="gist" rows="2"></textarea></label>
+  <label>Role <select name="role"></select></label>
+  <label>Pathways (e.g. 1,3) <input name="pathway"></label>
+  <label>Q1 factor <input name="factor" list="dlf"></label>
+  <label>Q2 outcome <input name="outcome" list="dlo"></label>
+  <label>Direction <select name="direction"><option value=""></option><option>+</option><option>-</option><option>mixed</option><option>none</option></select></label>
+  <label>PDF page <input name="pdf_page" type="number" min="1"></label>
+  <label>Section <input name="section"></label>
+  <datalist id="dlf"></datalist><datalist id="dlo"></datalist>
+  <div><button value="ok">Save</button> <button value="x" formnovalidate>Cancel</button></div>
+</form></dialog>
+<main aria-live="polite"><div class="bar"><button id="vb" title="Edit lists" aria-label="Edit lists"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg></button><button id="ex" title="Export edits" aria-label="Export edits"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m-4-4 4 4 4-4M5 20h14"/></svg></button><label class="gbtn" title="Import edits" aria-label="Import edits" style="margin:0"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4m-4 4 4-4 4 4M5 20h14"/></svg><input id="im" type="file" accept=".json" hidden></label><button id="rs" title="Reset edits" aria-label="Reset edits"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 3-6.2M4 4v4h4"/></svg></button></div><p class="count" id="count" aria-live="polite"></p><div id="list"></div></main>
+<div id="gv"><h1 id="gt"></h1><div class="gc" id="gc2"></div><div id="gout"></div></div>
+<section><div class="empty" id="ph">Pick a reading.</div><div class="rtop"><div class="rsel"><select id="pdfsel" aria-label="Reading"></select><button id="lp" type="button" title="Choose PDF folder" aria-label="Choose PDF folder"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h6l2 2h10v10H3z"/></svg></button><input id="lpf" type="file" webkitdirectory multiple hidden></div><div id="lpn"></div></div><div id="rt" hidden><button id="zo" type="button" aria-label="Zoom out">−</button><span id="zv">100%</span><button id="zi" type="button" aria-label="Zoom in">+</button><button id="zf" type="button" title="Fit width" aria-label="Fit width"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button><button id="sv" type="button" title="Save PDF" aria-label="Save PDF"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m-4-4 4 4 4-4M5 20h14"/></svg></button><span class="sw" id="hs" role="group" aria-label="Highlight colour"></span><button id="hc" type="button" title="Clear all highlights in this PDF (right-click one highlight to remove only it)" aria-label="Clear all highlights"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13"/></svg></button><button id="nv" type="button" title="Open in Chrome viewer" aria-label="Switch viewer"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 9h18"/></svg></button><button id="fs" type="button" title="Full screen PDF" aria-label="Full screen PDF" onclick="var f=document.getElementById('rd').hidden?document.getElementById('pdf'):document.getElementById('rd');document.fullscreenElement?document.exitFullscreen():f.requestFullscreen()"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6M20 4l-7 7M10 20H4v-6M4 20l7-7"/></svg></button></div><iframe id="pdf" allowfullscreen title="Source PDF" hidden></iframe><div id="rd" hidden></div></section>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script><script src="sources.js"></script>
+<script>
+const DATA={"vocab": {"pathways": {}, "roles": {"Q1": "Determinant: a cause of the variation you study", "Q2": "Effect: an outcome of the variation you study", "TYPOLOGY": "Defines or classifies a variant, without a cause or effect", "OTHER": "Relevant context that fits none of the above"}, "evidence": ["theory", "case-study", "cross-country-quantitative", "firm-level-quantitative", "historical", "review-of-literature", "author-assertion"], "direction": ["+", "-", "mixed", "none"], "q1_factors": [], "q2_outcomes": []}, "sources": []};
+if(window.SOURCES)DATA.sources=SOURCES.map(s=>DATA.sources.find(x=>x.id===s.id)||{id:s.id,kind:"paper",title:s.title||s.id,claims:[]});
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const all=[];DATA.sources.forEach(s=>s.claims.forEach(c=>all.push({...c,src:s.id,srcTitle:s.title})));
+// user edits live in this browser (localStorage); Delete only hides, so related-claim indices stay valid
+let ED={m:{},a:[],d:[]};try{ED=JSON.parse(localStorage.getItem("cv:edits"))||ED}catch(e){}
+const kc=c=>c.src+"\u0001"+c.id;
+all.forEach(c=>{Object.assign(c,ED.m[kc(c)]||{});c.del=ED.d.includes(kc(c))});
+ED.a.forEach(c=>all.push(c));
+// user-edited lists (ED.v) replace the built-in vocab; ED.r maps a renamed label to its new name so tagged claims follow
+if(ED.v){DATA.vocab.pathways=ED.v.p;DATA.vocab.q1_factors=ED.v.f;DATA.vocab.q2_outcomes=ED.v.o;}
+all.forEach(c=>{const r=ED.r||{};if(c.factor&&r[c.factor])c.factor=r[c.factor];if(c.outcome&&r[c.outcome])c.outcome=r[c.outcome];});
+const PW=DATA.vocab.pathways;
+const opts=(el,label,vals)=>{el.innerHTML=`<option value="">${label}</option>`+vals.map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join("")};
+opts($("src"),"All sources",DATA.sources.map(s=>s.id));
+opts($("role"),"All roles",Object.keys(DATA.vocab.roles));
+opts($("pw"),"All pathways",Object.keys(PW).map(k=>k+" "+PW[k]).concat(["none"]));
+const extra=k=>[...new Set(all.map(c=>c[k]).filter(v=>v&&v.startsWith("other:")))].sort();
+opts($("fa"),"All factors",DATA.vocab.q1_factors.concat(["(other)"],extra("factor")));
+opts($("oc"),"All outcomes",DATA.vocab.q2_outcomes.concat(["(other)"],extra("outcome")));
+const isOther=(v,list)=>!!v&&!list.includes(v);
+opts($("dir"),"Any sign",DATA.vocab.direction);
+opts($("ev"),"All evidence",DATA.vocab.evidence);
+let sel=null;
+const FL=["q","src","role","pw","fa","oc","dir","ev","own","rl"];
+function clearFilters(){FL.forEach(i=>$(i).value="");refresh()}
+function pass(c){
+  if(c.del)return false;
+  const q=$("q").value.toLowerCase();
+  if(q&&!(c.quote+" "+c.gist).toLowerCase().includes(q))return false;
+  if($("src").value&&c.src!==$("src").value)return false;
+  if($("role").value&&c.role!==$("role").value)return false;
+  const pw=$("pw").value;
+  if(pw){const n=pw==="none"?[]:[pw.split(" ")[0]];
+    if(pw==="none"?(c.pathway||[]).length:!(c.pathway||[]).map(String).includes(n[0]))return false;}
+  const fa=$("fa").value,oc=$("oc").value;
+  const fm=c.factor===fa||(fa==="(other)"&&isOther(c.factor,DATA.vocab.q1_factors)),om=c.outcome===oc||(oc==="(other)"&&isOther(c.outcome,DATA.vocab.q2_outcomes));
+  if(fa&&oc?!(fm||om):(fa&&!fm)||(oc&&!om))return false;
+  if($("rl").value==="opp"&&!(c.opp&&c.opp.length))return false;
+  if($("rl").value==="rel"&&!(c.rel&&c.rel.length))return false;
+  if($("dir").value&&c.direction!==$("dir").value)return false;
+  if($("ev").value&&c.evidence!==$("ev").value)return false;
+  if($("own").value&&String(+!!c.own_claim)!==$("own").value)return false;
+  return true;
+}
+function keys(c){
+  const g=$("grp").value;
+  if(g==="source")return[c.srcTitle];
+  if(g==="pathway")return(c.pathway||[]).length?c.pathway.map(p=>p+" "+(PW[p]||"")):["(no pathway)"];
+  if(g==="factor")return[c.factor||"(not a Q1 claim)"];
+  if(g==="outcome")return[c.outcome||"(not a Q2 claim)"];
+  return[c.srcTitle.slice(0,24)+" | "+(c.section||"(no section)")];
+}
+const stCls={exact:"ok",anchored:"warn",ambiguous:"warn",failed:"bad"};
+function card(c){
+  const pg=c.pdf_page?`<span class="pg">PDF p.${c.pdf_page}</span> · <span class="pg">cite p.${esc(c.cite_page||"?")}</span>`:`<span class="pg">no page</span>`;
+  const tags=[`<span class="tag q">${esc(c.role)}</span>`];
+  (c.pathway||[]).forEach(p=>tags.push(`<span class="tag">P${p}</span>`));
+  if(c.factor)tags.push(`<span class="tag">${esc(c.factor)}</span>`);
+  if(c.outcome)tags.push(`<span class="tag">${esc(c.outcome)} · change ${esc(c.direction||"")}</span>`);
+  if(c.dir_flag)tags.push(`<span class="tag warn" title="Workers coded the sign of this outcome inconsistently. Read the quote.">direction unverified</span>`);
+  if(c.expected)tags.push(c.own_claim?`<span class="tag warn" title="Forecast, expectation or limit, not a measured effect.">expectation, not a finding</span>`:`<span class="tag warn" title="A view the author reports from others. Not tested here.">reported view, untested</span>`);
+  if(c.evidence)tags.push(`<span class="tag">${esc(c.evidence)}</span>`);
+  if(c.scope)tags.push(`<span class="tag">${esc(c.scope)}</span>`);
+  if(!c.own_claim)tags.push(`<span class="tag warn">reported</span>`);
+  if(c.in_abstract)tags.push(`<span class="tag warn">abstract</span>`);
+  return `<article class="card${sel===c.src+c.id?" sel":""}" tabindex="0" data-k="${esc(c.src+"\u0001"+c.id)}">
+   <div><span class="quote" title="Double-click to edit">${esc(c.quote)}</span></div>${c.gist?`<div class="gist">${esc(c.gist)} <em>(paraphrase)</em></div>`:""}
+   <div class="meta">${pg}<span class="tag ${stCls[c.status]||""}">${esc(c.status)}</span>${tags.join("")}${c.section?`<span class="tag">${esc(c.section)}</span>`:""}</div>${sel===c.src+c.id?`<button class="gbtn" data-g="1">Show in graph</button><button class="gbtn" data-ed="1">Edit</button><button class="gbtn" data-del="1">Delete</button>`+related(c):""}</article>`;
+}
+function render(){
+  const rows=all.filter(pass);
+  const live=all.filter(c=>!c.del).length,fl=FL.some(i=>$(i).value);$("count").innerHTML=(fl?rows.length+" / "+live+" claims":live+(live===1?" claim":" claims"))+(fl?'<button id="cf">Clear</button>':"");
+  const groups=new Map();
+  rows.forEach(c=>keys(c).forEach(k=>{if(!groups.has(k))groups.set(k,[]);groups.get(k).push(c)}));
+  $("list").innerHTML=[...groups].sort((a,b)=>a[0].localeCompare(b[0])).map(([k,v])=>`<div class="grp">${esc(k)} (${v.length})</div>`+v.map(card).join("")).join("")||`<div class="empty">${fl?"No matches.":"No claims yet. Select text in the PDF, then right-click."}</div>`;
+}
+// related[j] = index into `all` (same order as build.py); sim = TF-IDF cosine, word overlap only, not meaning
+function related(c){
+  const one=(j,tag)=>{const r=all[j[0]];return `<li><button data-k="${esc(r.src+"\u0001"+r.id)}">${tag} ${esc(r.srcTitle.slice(0,40))} · ${r.pdf_page?"p."+esc(r.cite_page||"?"):"no page"} · sim ${j[1]}</button><br><small>${esc(r.quote.slice(0,160))}…</small></li>`};
+  const live=j=>!all[j[0]].del;
+  const o=(c.opp||[]).filter(live).map(j=>one(j,"⚠ opposite sign:")),r=(c.rel||[]).filter(live).map(j=>one(j,"≈"));
+  return o.length+r.length?`<details open><summary>Other papers: ${o.length} opposite-sign, ${r.length} similar</summary><ul class="rl">${o.join("")}${r.join("")}</ul></details>`:"";
+}
+function open_(src,id){
+  const c=all.find(x=>x.src===src&&x.id===id);if(!c)return;
+  sel=src+id;
+  showPdf(src,c.pdf_page);
+  if(c.hg){let t=0;const iv=setInterval(()=>{const f=window.flashHL&&window.flashHL(c.hg);if(f){clearInterval(iv);setTimeout(async()=>{const g=window.flashHL(c.hg);g&&g.scrollIntoView({block:"center"});g&&window.healClaim&&window.healClaim(c,g._m.n)},400)}else if(++t>15)clearInterval(iv)},200)}
+  render();
+}
+// centered dialog instead of the browser's confirm()/alert(); "don't ask again" is remembered per key
+const ask=(msg,key,info)=>new Promise(res=>{if(key&&store.get("cv:skip:"+key)==="1")return res(true);
+  const d=document.createElement("dialog");d.id="ask";d.innerHTML='<p></p>'+(info?'':'<label><input type="checkbox"> Do not ask me again</label>')+'<div>'+(info?'':'<button value="0">Cancel</button>')+'<button value="1" autofocus>OK</button></div>';
+  d.firstChild.textContent=msg;let ok=0;d.querySelectorAll("button").forEach(b=>b.onclick=()=>{ok=+b.value;d.close()});
+  d.onclose=()=>{const c=d.querySelector("input");if(ok&&c&&c.checked&&key)store.set("cv:skip:"+key,"1");d.remove();res(!!ok)};
+  document.body.append(d);d.showModal()});
+
+$("list").addEventListener("click",async e=>{if(e.target.closest("[contenteditable]"))return;if(e.detail>1&&e.target.closest(".quote"))return editQ(e.target.closest(".quote"));if(e.target.closest("[data-g]"))return show(true);
+  if(e.target.closest("[data-ed]"))return editor(all.find(x=>x.src+x.id===sel));
+  if(e.target.closest("[data-del]")){const c=all.find(x=>x.src+x.id===sel);
+    if(c&&await ask("Delete this claim from your view? Export edits to keep this.","delclaim"))del_(c);return;}
+const a=e.target.closest("button[data-k]")||e.target.closest(".card");if(a){const[s,i]=a.dataset.k.split("\u0001");open_(s,i)}});
+// inline quote edit: double-click the quote, type, Enter or click away saves, Esc cancels
+const editQ=q=>{if(!q||q.isContentEditable)return;
+  const [s_,i_]=q.closest(".card").dataset.k.split(""),c=all.find(x=>x.src===s_&&x.id===i_);if(!c)return;
+  const old=c.quote;q.contentEditable="plaintext-only";q.focus();getSelection().selectAllChildren(q);getSelection().collapseToEnd();
+  const end=ok=>{q.removeEventListener("blur",onb);q.contentEditable="false";const v=q.textContent.replace(/\s+/g," ").trim();
+    if(ok&&v&&v!==old){c.quote=v;c.rq=2;c.rs=1;const k=kc(c);if(!ED.a.includes(c))ED.m[k]={...ED.m[k],quote:v};saveED()}render()};
+  const onb=()=>end(true);q.addEventListener("blur",onb);
+  q.addEventListener("keydown",ev=>{ev.stopPropagation();if(ev.key==="Enter"){ev.preventDefault();q.removeEventListener("blur",onb);end(true)}else if(ev.key==="Escape"){q.removeEventListener("blur",onb);end(false)}})};
+$("list").addEventListener("dblclick",e=>editQ(e.target.closest(".quote")));
+$("list").addEventListener("keydown",e=>{if(e.key==="Enter"){const a=e.target.closest(".card");if(a){const[s,i]=a.dataset.k.split("\u0001");open_(s,i)}}});
+document.querySelectorAll("aside select,aside input").forEach(el=>el.addEventListener("input",render));
+[$("ed"),$("vl")].forEach(d=>d.addEventListener("keydown",e=>{if(e.key==="Escape"&&!e.target.list&&e.target.tagName!=="SELECT")d.close()}));
+$("count").addEventListener("click",e=>{if(e.target.id==="cf")clearFilters()});
+// per-source "read in full" checkbox; localStorage is a convenience only
+const store={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+$("reads").innerHTML='<label class="f" style="position:static;width:auto;height:auto;clip:auto">Read in full</label>'+DATA.sources.map(s=>`<label class="read"><input type="checkbox" data-s="${esc(s.id)}" ${store.get("read:"+s.id)==="1"?"checked":""}> <span title="${esc(s.title)}">${esc(s.title)}</span></label>`).join("");
+$("reads").addEventListener("change",e=>store.set("read:"+e.target.dataset.s,e.target.checked?"1":"0"));
+// graph view. Layers: any mix of Q1 factors, pathways, Q2 outcomes as columns; neighbours are joined by claims that carry both tags. Claim network: claims are the nodes. Counts only, no model.
+const DCOL={"+":"var(--dp)","-":"var(--dn)",mixed:"var(--dm)",none:"var(--mute)"};
+let G={m:"L",l:{f:1,p:1,o:1},k:{w:1,p:0,f:0,o:0}};
+try{const g=JSON.parse(store.get("cv:graph"));if(g&&g.l&&g.k)G=g}catch(e){}
+const ckb=(grp,list)=>list.map(([k,t])=>`<label><input type="checkbox" data-gc="${grp}${k}"> ${t}</label>`).join("");
+const GCTL=`<b class="gh">Graph to draw</b><div class="tabs"><button data-gc="mL">Layers</button><button data-gc="mC">Claim network</button></div><div class="ck ly" role="group" aria-label="Layers to show"><b>Show</b>${ckb("l",[["f","Q1 factors"],["p","Pathways"],["o","Q2 outcomes"]])}</div><div class="ck lk" role="group" aria-label="Link claims that share"><b>Link by</b>${ckb("k",[["w","wording"],["p","pathway"],["f","Q1"],["o","Q2"]])}</div>`;
+function gsync(){
+  document.body.classList.toggle("gnet",G.m==="C");
+  document.querySelectorAll("[data-gc]").forEach(el=>{const k=el.dataset.gc;
+    if(k[0]==="m"){const on=G.m===k[1];el.classList.toggle("on",on);el.setAttribute("aria-pressed",on)}
+    else el.checked=!!G[k[0]][k[1]]});
+}
+function gset(){store.set("cv:graph",JSON.stringify(G));gsync();show(true);}
+document.addEventListener("click",e=>{const b=e.target.closest("button[data-gc]");if(!b)return;G.m=b.dataset.gc[1];gset();});
+document.addEventListener("change",e=>{const i=e.target.closest("input[data-gc]");if(!i)return;const[g,k]=i.dataset.gc;G[g][k]=+i.checked;
+  if(!Object.values(G[g]).some(Boolean))G[g][k]=1;  // keep at least one layer / one link basis
+  gset();});
+function graph(){
+  const rows=all.filter(pass),sc=sel&&all.find(x=>x.src+x.id===sel);
+  $("gt").textContent=G.m==="C"?"Claim network":"Pathways, factors, outcomes";
+  $("gout").innerHTML=G.m==="C"?netGraph(rows,sc):layerGraph(rows,sc);
+}
+function layerGraph(rows,sc){
+  const V=DATA.vocab,on=["f","p","o"].filter(k=>G.l[k]),bw=170,H=34,top=40,W=1100,step=275;
+  const pwName=k=>k==="none"?"(no pathway)":k+" "+PW[k];
+  const bucket=(v,list)=>list.includes(v)?v:"(other)";
+  const items={f:V.q1_factors.concat(["(other)"]),p:Object.keys(PW).concat(["none"]),o:V.q2_outcomes.concat(["(other)"])};
+  const lab={f:k=>k,p:pwName,o:k=>k},HD={f:"Q1: why it varies (factor)",p:"Pathway",o:"Q2: effect (outcome)"};
+  const pOf=c=>(c.pathway||[]).length?c.pathway.map(String):["none"];
+  const tag={f:c=>c.factor?[bucket(c.factor,V.q1_factors)]:[],p:pOf,o:c=>c.outcome?[bucket(c.outcome,V.q2_outcomes)]:[]};
+  // box number = distinct claims (what the click lists); edge number = distinct claims carrying both tags
+  const N={f:{},p:{},o:{}},E=new Map();
+  rows.forEach(c=>on.forEach(k=>tag[k](c).forEach(x=>N[k][x]=(N[k][x]||0)+1)));
+  const add=(a,x,b,y,dir)=>{const k=a+"|"+x+"|"+b+"|"+y,e=E.get(k)||{a,x,b,y,n:0,d:{}};e.n++;if(dir)e.d[dir]=(e.d[dir]||0)+1;E.set(k,e);};
+  on.slice(1).forEach((b,i)=>{const a=on[i];
+    if(a==="f"&&b==="o"){
+      // no pathway column: no claim carries a factor and an outcome, so join them where claims of each sit on the same pathway (derived)
+      const PF={},PO={},put=(M,p,x,c)=>{M[p]=M[p]||{};(M[p][x]=M[p][x]||new Set()).add(c)};
+      rows.forEach(c=>pOf(c).forEach(p=>{if(p==="none")return;tag.f(c).forEach(x=>put(PF,p,x,c));tag.o(c).forEach(y=>put(PO,p,y,c))}));
+      Object.keys(PF).forEach(p=>Object.keys(PF[p]).forEach(x=>Object.keys(PO[p]||{}).forEach(y=>{
+        const k="f|"+x+"|o|"+y,e=E.get(k)||{a:"f",x,b:"o",y,n:0,d:{},ps:[],fc:new Set(),oc:new Set(),der:1};
+        e.n++;e.ps.push(p);PF[p][x].forEach(c=>e.fc.add(c));PO[p][y].forEach(c=>e.oc.add(c));E.set(k,e);})));
+      E.forEach(e=>e.oc.forEach(c=>{if(c.direction)e.d[c.direction]=(e.d[c.direction]||0)+1}));
+    }else rows.forEach(c=>tag[a](c).forEach(x=>tag[b](c).forEach(y=>add(a,x,b,y,b==="o"?c.direction:null))));
+  });
+  // selected claim: highlight its boxes and lines among the shown layers; dim the rest
+  const sp=sc?pOf(sc):[],sf=sc&&sc.factor?bucket(sc.factor,V.q1_factors):null,so=sc&&sc.outcome?bucket(sc.outcome,V.q2_outcomes):null;
+  const cls=t=>sc?(t?" hit":" dim"):"";
+  const hitE=e=>e.a==="f"&&e.b==="p"?sf===e.x&&sp.includes(e.y):e.a==="p"?sp.includes(e.x)&&so===e.y:(sf!=null&&sf===e.x)||(so!=null&&so===e.y);
+  const left=on.map((_,i)=>550-((on.length-1)*step+bw)/2+i*step),col={};on.forEach((k,i)=>col[k]=left[i]);
+  const rowsN=Math.max(...on.map(k=>items[k].length)),h=top+rowsN*H+10;
+  const pos={};on.forEach(k=>{pos[k]={};items[k].forEach((x,i)=>pos[k][x]=top+i*(rowsN*H/items[k].length)+H/2)});
+  const dom=d=>Object.entries(d).sort((a,b)=>b[1]-a[1])[0]?.[0]||"none";
+  let s=`<svg viewBox="0 0 ${W} ${h}" role="img" aria-label="Graph of ${esc(on.map(k=>HD[k]).join(", "))}">`+on.map(k=>`<text class="hd" x="${col[k]}" y="22">${HD[k]}</text>`).join("");
+  const mx=Math.max(1,...[...E.values()].map(e=>e.n));
+  E.forEach(e=>{
+    const x1=col[e.a]+bw,x2=col[e.b],y1=pos[e.a][e.x],y2=pos[e.b][e.y],m=(x1+x2)/2,c=e.b==="o"?DCOL[dom(e.d)]:"var(--acc)";
+    const sg=Object.entries(e.d).map(([k,v])=>k+" "+v).join(", ");
+    const nAll=e.der?rows.filter(c=>tag.f(c).includes(e.x)||tag.o(c).includes(e.y)).length:0;
+    const tip=e.der?`${e.x} -> ${e.y}: derived, no claim states this link. Joined through pathway ${e.ps.join(", ")}, where ${e.fc.size} factor claims and ${e.oc.size} outcome claims sit. Sign of those outcome claims: ${sg||"none"}. ${e.ps.length===1?"Click to list those claims.":"Click to list all "+nAll+" claims with this factor or this outcome (more than the claims joined here, because the list filter takes one pathway at most)."}`:`${lab[e.a](e.x)} -> ${lab[e.b](e.y)}: ${e.n} claims${e.b==="o"?" · sign: "+sg:""}. Click to list them.`;
+    s+=`<path class="e${cls(hitE(e))}" data-a="${e.a}" data-av="${esc(e.x)}" data-b="${e.b}" data-bv="${esc(e.y)}"${e.der&&e.ps.length===1?` data-p="${esc(e.ps[0])}"`:""} d="M${x1},${y1} C${m},${y1} ${m},${y2} ${x2},${y2}" stroke="${c}" stroke-width="${(1+14*Math.sqrt(e.n/mx)).toFixed(1)}"${e.der?` stroke-dasharray="10 6"`:""}><title>${esc(tip)}</title></path>`;});
+  const node=(k,x,y,label,n,kind)=>`<g class="n${cls(kind==="f"?k===sf:kind==="p"?sp.includes(k):k===so)}" data-k="${kind}" data-v="${esc(k)}"><rect x="${x}" y="${y-13}" width="${bw}" height="26" rx="5"/><text x="${x+6}" y="${y+4}">${esc(label.length>24?label.slice(0,23)+"…":label)}</text><text class="cnt" x="${x+bw-6}" y="${y+4}" text-anchor="end">${n||0}</text><title>${esc(label)}: ${n||0} claim tags</title></g>`;
+  on.forEach(k=>items[k].forEach(x=>s+=node(x,col[k],pos[k][x],lab[k](x),N[k][x],k)));
+  const bar=sc?`<div class="selbar"><b>Selected claim:</b> ${esc(sc.srcTitle.slice(0,40))} · ${esc(sc.quote.slice(0,220))}…<br>Stands at: pathway ${sp.map(pwName).map(esc).join(" + ")}${sf?" → factor "+esc(sf):""}${so?" → outcome "+esc(so)+" (change "+esc(sc.direction||"?")+")":""}${sf||so?"":". It has no factor or outcome tag (role "+esc(sc.role)+"), so it has no line. It counts only in the pathway box."}<button id="gb">Back to list</button></div>`:"";
+  return `${bar}
+  <p class="count">${rows.length} claims. Click a box or line to list them. Number = claims.</p>
+  <div class="lg"><span><i style="background:var(--acc)"></i>Q1 factor</span><span><i style="background:var(--dp)"></i>outcome +</span><span><i style="background:var(--dn)"></i>outcome -</span><span><i style="background:var(--dm)"></i>mixed</span><span><i style="background:var(--mute)"></i>no change / not assessed</span><span>Sign = change in the outcome, not good or bad. Line color = most common sign.</span>${on.join("")==="fo"?"<span>Dashed line = derived: factor and outcome claims sit on the same pathway, but no claim states the link. Width = shared pathways.</span>":""}</div>`+s+"</svg>";
+}
+function netGraph(rows,sc){
+  const CAP=60,shown=rows.slice(0,CAP),n=shown.length;
+  if(!n)return `<p class="count">No claims match the filters.</p>`;
+  // wording similarity: TF-IDF cosine on quote + gist, terms that occur in 2 or more claims but not in most. Word overlap, not meaning.
+  const tf=shown.map(c=>{const m=new Map();((c.quote||"")+" "+(c.gist||"")).toLowerCase().match(/[a-z0-9]{3,}/g)?.forEach(t=>m.set(t,(m.get(t)||0)+1));return m});
+  const df=new Map();tf.forEach(m=>m.forEach((_,t)=>df.set(t,(df.get(t)||0)+1)));
+  const vec=tf.map(m=>{const v=new Map();let q=0;m.forEach((k,t)=>{const d=df.get(t);if(d>=2&&d<=Math.max(3,.2*n)){const w=(1+Math.log(k))*Math.log(n/d);v.set(t,w);q+=w*w}});q=Math.sqrt(q)||1;v.forEach((w,t)=>v.set(t,w/q));return v});
+  const cos=(a,b)=>{let t=0;a.forEach((w,k)=>{const u=b.get(k);if(u)t+=w*u});return t};
+  const K=G.k,sg=d=>d==="+"||d==="-",ps=c=>(c.pathway||[]).map(String),E=[];
+  for(let i=0;i<n;i++)for(let j=i+1;j<n;j++){const a=shown[i],b=shown[j];let by=null;
+    if(K.w&&cos(vec[i],vec[j])>=.15)by="w";
+    if((K.p&&ps(a).some(p=>ps(b).includes(p)))||(K.f&&a.factor&&a.factor===b.factor)||(K.o&&a.outcome&&a.outcome===b.outcome))by="t";
+    if(by)E.push([i,j,by,!!(a.outcome&&a.outcome===b.outcome&&sg(a.direction)&&sg(b.direction)&&a.direction!==b.direction)]);}
+  const R=270,cx=380,cy=300,pt=i=>{const t=2*Math.PI*i/n-Math.PI/2;return[cx+R*Math.cos(t),cy+R*Math.sin(t)]};
+  const si=shown.indexOf(sc),nb=new Set();
+  if(si>=0)E.forEach(([i,j])=>{if(i===si)nb.add(j);if(j===si)nb.add(i)});
+  const srcs=[...new Set(shown.map(c=>c.src))],colr=c=>`hsl(${srcs.indexOf(c.src)*137.5%360} 60% 48%)`;
+  let s=`<svg viewBox="0 0 760 ${cy+R+30}" style="max-width:760px;display:block;margin:0 auto" role="img" aria-label="Network of ${n} claims">`;
+  E.forEach(([i,j,by,opp])=>{const a=pt(i),b=pt(j),qx=cx+.2*((a[0]+b[0])/2-cx),qy=cy+.2*((a[1]+b[1])/2-cy);
+    s+=`<path class="ce${opp?" opp":by==="t"?" tag":""}${si>=0?(si===i||si===j?" hit":" dim"):""}" d="M${a[0].toFixed(1)},${a[1].toFixed(1)} Q${qx.toFixed(1)},${qy.toFixed(1)} ${b[0].toFixed(1)},${b[1].toFixed(1)}"/>`;});
+  shown.forEach((c,i)=>{const[x,y]=pt(i);
+    s+=`<g class="nn${si>=0?(i===si||nb.has(i)?" hit":" dim"):""}" data-s="${esc(c.src)}" data-id="${esc(c.id)}"><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="7" fill="${colr(c)}"/><title>${esc(c.srcTitle.slice(0,40)+" · "+(c.gist||c.quote||"").slice(0,140))}</title></g>`;});
+  const bar=sc?`<div class="selbar"><b>Selected claim:</b> ${esc(sc.srcTitle.slice(0,40))} · ${esc(sc.quote.slice(0,220))}…<br>${si>=0?"Linked to "+nb.size+" of "+(n-1)+" other claims drawn here. Its links and neighbours are lit.":"It is not among the claims drawn here."}<button id="gb">Back to list</button></div>`:"";
+  return `${bar}
+  <p class="count">${n} of ${rows.length} claims${rows.length>n?" (first "+CAP+" only, so narrow the list with the filters on the left)":""}. ${E.length} links. Click a dot to open that claim in the list.</p>
+  <div class="lg"><span><i style="background:var(--mute)"></i>similar wording</span><span><i style="background:var(--acc)"></i>shares a checked tag</span><span><i style="background:var(--dn)"></i>same Q2 outcome, opposite sign</span><span>Wording link = word overlap (TF-IDF cosine at least 0.15), not meaning. Opposite-sign pairs include tag errors, so read both quotes.</span></div>
+  <div class="lg">Dot color = reading: ${srcs.map(id=>{const c=shown.find(x=>x.src===id);return `<span><i style="background:${colr(c)}"></i>${esc(c.srcTitle.slice(0,30))}</span>`}).join("")}</div>`+s+"</svg>";
+}
+function toList(set){
+  ["pw","fa","oc"].forEach(i=>$(i).value="");
+  if(set.p)$("pw").value=set.p==="none"?"none":set.p+" "+PW[set.p];
+  if(set.f&&set.f!=="(other)")$("fa").value=set.f;
+  if(set.o&&set.o!=="(other)")$("oc").value=set.o;
+  show(false);
+}
+function show(g){document.body.classList.toggle("graph",g);$("tg").classList.toggle("on",g);$("tl").classList.toggle("on",!g);g?graph():render();}
+$("tl").onclick=()=>show(false);$("tg").onclick=()=>show(true);
+$("gv").addEventListener("click",e=>{
+  if(e.target.id==="gb")return show(false);const p=e.target.closest(".e"),n=e.target.closest(".n"),d=e.target.closest(".nn");
+  if(p)toList({[p.dataset.a]:p.dataset.av,[p.dataset.b]:p.dataset.bv,...(p.dataset.p?{p:p.dataset.p}:{})});
+  else if(n)toList({[n.dataset.k]:n.dataset.v});
+  else if(d){show(false);open_(d.dataset.s,d.dataset.id);}
+});
+document.querySelectorAll("aside select,aside input").forEach(el=>el.addEventListener("input",()=>document.body.classList.contains("graph")&&graph()));
+$("gc1").innerHTML=$("gc2").innerHTML=GCTL;gsync();
+// editor: non-modal so the PDF stays scrollable while you type. Copy a passage from the PDF, right-click, Add as claim.
+const D=$("ed"),F=D.querySelector("form"),saveED=()=>store.set("cv:edits",JSON.stringify(ED));
+const refresh=()=>show(document.body.classList.contains("graph"));
+opts(F.elements.src,"",DATA.sources.map(s=>s.id));F.elements.src.firstChild.remove();
+opts(F.elements.role,"",Object.keys(DATA.vocab.roles));F.elements.role.firstChild.remove();
+$("dlf").innerHTML=DATA.vocab.q1_factors.map(v=>`<option value="${esc(v)}">`).join("");
+$("dlo").innerHTML=DATA.vocab.q2_outcomes.map(v=>`<option value="${esc(v)}">`).join("");
+async function editor(c){
+  F.reset();F.dataset.k=c?kc(c):"";$("edt").textContent=c?"Edit claim":"Add claim";
+  const cur=all.find(x=>x.src+x.id===sel),v=c||{role:"OTHER",src:(cur&&cur.src)||$("src").value||DATA.sources[0].id};
+  ["src","quote","gist","role","factor","outcome","direction","pdf_page","section"].forEach(n=>F.elements[n].value=v[n]??"");
+  F.elements.pathway.value=(v.pathway||[]).join(",");F.elements.src.disabled=!!c;
+  
+  D.show();F.elements.quote.focus();
+}
+F.addEventListener("submit",e=>{
+  if(e.submitter&&e.submitter.value!=="ok")return;
+  const g=n=>F.elements[n].value.trim(),k=F.dataset.k;
+  const f={quote:g("quote"),gist:g("gist"),role:g("role"),section:g("section"),factor:g("factor")||null,outcome:g("outcome")||null,direction:g("direction")||null,
+    pdf_page:+g("pdf_page")||null,pathway:g("pathway").split(/[,\s]+/).filter(n=>n in PW).map(Number)};
+  if(k){const c=all.find(x=>kc(x)===k);if(f.quote!==c.quote)f.rs=1;Object.assign(c,f);if(!ED.a.includes(c))ED.m[k]={...ED.m[k],...f};}
+  else{const s=g("src"),c={...f,id:"u"+Date.now(),src:s,srcTitle:DATA.sources.find(x=>x.id===s).title,status:"user",own_claim:true,cite_page:f.pdf_page&&String(f.pdf_page)};
+    all.push(c);ED.a.push(c);sel=s+c.id;}
+  saveED();refresh();
+});
+function del_(c){c.del=true;if(!ED.a.includes(c))ED.d.push(kc(c));saveED();sel=null;refresh();}
+const VL=$("vl").querySelector("form");
+const row=(c,o,v)=>`<div class="it" data-o="${esc(o)}">${c==="p"?`<input class="k" value="${esc(v[0])}" aria-label="number">`:""}<input value="${esc(c==="p"?v[1]:v)}" aria-label="name"><button type="button" class="x" title="Remove">✕</button></div>`;
+const cols={p:()=>Object.entries(PW),f:()=>DATA.vocab.q1_factors,o:()=>DATA.vocab.q2_outcomes};
+$("vb").onclick=()=>{VL.querySelectorAll(".col").forEach(d=>{const c=d.dataset.c;d.querySelector(".items").innerHTML=cols[c]().map(v=>row(c,c==="p"?"":v,v)).join("")});$("vl").show();};
+VL.addEventListener("click",e=>{
+  const x=e.target.closest(".x"),a=e.target.closest(".add");
+  if(x)x.parentNode.remove();
+  if(a){const d=a.closest(".col"),c=d.dataset.c,it=d.querySelector(".items");
+    const n=Math.max(0,...[...d.querySelectorAll(".k")].map(i=>+i.value||0))+1;
+    it.insertAdjacentHTML("beforeend",row(c,"",c==="p"?[String(n),""]:""));it.lastElementChild.querySelector("input:last-of-type").focus();}
+});
+VL.addEventListener("submit",e=>{
+  if(e.submitter&&e.submitter.value!=="ok")return;
+  const R=ED.r||(ED.r={});
+  const get=c=>[...VL.querySelectorAll(`.col[data-c=${c}] .it`)].map(r=>{const i=r.querySelectorAll("input"),t=i[i.length-1].value.trim(),o=r.dataset.o;
+    if(t&&o&&o!==t){Object.keys(R).forEach(k=>{if(R[k]===o)R[k]=t});R[o]=t;}
+    return[r.querySelector(".k")?r.querySelector(".k").value.trim():"",t];}).filter(x=>x[1]);
+  const p={};get("p").forEach(([k,t])=>{if(k)p[k]=t});
+  ED.v={p,f:get("f").map(x=>x[1]),o:get("o").map(x=>x[1])};saveED();location.reload();
+});
+$("ex").onclick=()=>{const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify(ED,null,1)],{type:"application/json"}));a.download="claim-edits.json";a.click();};
+$("im").onchange=async e=>{try{ED=JSON.parse(await e.target.files[0].text());saveED();location.reload()}catch(x){ask("Not a valid edits file.",0,1)}};
+$("rs").onclick=async()=>{if(await ask("Discard all your edits in this browser?","reset")){store.set("cv:edits","");["delclaim","reset","clearhl"].forEach(k=>store.set("cv:skip:"+k,""));location.reload();}};
+render();
+
+;(()=>{const s=$("pdfsel"),f=$("pdf"),rd=$("rd"),lpn=$("lpn"),B="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/",files={};let cur="",tok=0;
+s.innerHTML=DATA.sources.map(x=>`<option value="${x.id}">${x.title}</option>`).join("");
+const db=new Promise(r=>{try{const q=indexedDB.open("cv-pdf",1);q.onupgradeneeded=()=>q.result.createObjectStore("p");q.onsuccess=()=>r(q.result);q.onerror=()=>r(null)}catch(e){r(null)}});
+const key=n=>n.replace(/\.pdf$/i,"").toLowerCase();
+const fallback=(id,pg)=>{$("rt").hidden=true;rd.hidden=true;f.hidden=false;const u=`pdf/${encodeURIComponent(id)}.pdf`;f.src=pg?`${u}?v=${Date.now()}#page=${pg}`:((f.getAttribute("src")||"").startsWith(u)?f.src:u)};
+const scroll=pg=>{const e=pg&&rd.querySelector(`.pg[data-n="${pg}"]`);if(e)rd.scrollTop=e.offsetTop-rd.offsetTop-6};
+async function bytes(id){const k=key(id);if(files[k])return files[k].arrayBuffer();try{const r=await fetch(`pdf/${encodeURIComponent(id)}.pdf`);if(r.ok)return r.arrayBuffer()}catch(e){}return null}
+async function ready(){if(!window.pdfjsLib)return false;if(!window.pdfjsWorker){pdfjsLib.GlobalWorkerOptions.workerSrc=B+"pdf.worker.min.js";await new Promise((r,j)=>{const e=document.createElement("script");e.src=B+"pdf.worker.min.js";e.onload=r;e.onerror=j;document.head.append(e)})}return true}
+let Z=1,docC=null,curBuf=null,bt=0;const rt=$("rt"),zv=$("zv"),nv=$("nv");
+const HC={y:"#ffe14d",g:"#7ee08a",b:"#6ec1ff",p:"#ffab40"},HN={y:"yellow",g:"green",b:"blue",p:"orange"};
+const swHTML=Object.keys(HC).map(k=>`<button type="button" data-c="${k}" aria-label="Highlight ${HN[k]}" title="Highlight ${HN[k]}" style="background:${HC[k]}"></button>`).join("");
+const HL=()=>{try{return JSON.parse(localStorage.getItem("cv:hl")||"{}")}catch(e){return{}}},saveHL=o=>{try{localStorage.setItem("cv:hl",JSON.stringify(o))}catch(e){}};
+const mkHL=m=>{const e=document.createElement("div");e.className="hl";e._m=m;e.style.cssText=`left:${m.x}%;top:${m.y}%;width:${m.w}%;height:${m.h}%;background:${HC[m.c]}`;return e};
+async function build(pg){const doc=docC,b=++bt,w=(rd.clientWidth-20)*Z;rd.innerHTML="";zv.textContent=Math.round(Z*100)+"%";
+ const io=new IntersectionObserver(es=>es.forEach(async en=>{if(!en.isIntersecting)return;io.unobserve(en.target);const d=en.target,p=d._p,v=d._v,c=document.createElement("canvas"),k=devicePixelRatio||1;c.width=v.width*k;c.height=v.height*k;c.style.width=v.width+"px";c.style.height=v.height+"px";d.append(c);const t=document.createElement("div");t.className="textLayer";d.append(t);p.render({canvasContext:c.getContext("2d"),viewport:v,transform:[k,0,0,k,0,0]});pdfjsLib.renderTextLayer({textContentSource:await p.getTextContent(),container:t,viewport:v})}),{root:rd,rootMargin:"600px"});
+ const hl=HL()[cur]||[];
+ for(let n=1;n<=doc.numPages;n++){const p=await doc.getPage(n);if(b!==bt)return;const v=p.getViewport({scale:w/p.getViewport({scale:1}).width}),d=document.createElement("div");d.className="pg";d.dataset.n=n;d.style.width=v.width+"px";d.style.height=v.height+"px";d._p=p;d._v=v;hl.filter(m=>m.n===n).forEach(m=>d.append(mkHL(m)));rd.append(d);io.observe(d)}
+ scroll(pg)}
+const zoom=async z=>{if(!docC)return;const f=rd.scrollTop/(rd.scrollHeight||1);Z=Math.min(3,Math.max(.5,z));await build();rd.scrollTop=f*rd.scrollHeight};
+$("zo").onclick=()=>zoom(Z-.25);$("zi").onclick=()=>zoom(Z+.25);$("zf").onclick=()=>zoom(1);
+const LIB="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js";
+const needLib=()=>window.PDFLib?Promise.resolve():new Promise((ok,no)=>{const e=document.createElement("script");e.src=LIB;e.onload=ok;e.onerror=()=>no(new Error("pdf-lib needs internet"));document.head.appendChild(e)});
+const rgb=h=>[1,3,5].map(i=>parseInt(h.slice(i,i+2),16)/255);
+const withMarks=async hl=>{await needLib();const {PDFDocument:D,PDFName:N,PDFHexString:X}=PDFLib,d=await D.load(curBuf),ctx=d.context,pgs=d.getPages(),txt={},seen={};
+ all.forEach(c=>{if(c.hg!=null&&!c.del)txt[c.hg]=c.gist||c.quote||""});
+ const G={};hl.forEach(m=>{(G[m.g+"|"+m.n]=G[m.g+"|"+m.n]||[]).push(m)});
+ for(const k in G){const rs=G[k],m=rs[0],pg=pgs[m.n-1];if(!pg)continue;
+  const vp=(await docC.getPage(m.n)).getViewport({scale:1}),col=rgb(HC[m.c]),Q=[],bx=[1e9,1e9,-1e9,-1e9];let draw="/G gs "+col.join(" ")+" rg ";
+  for(const r of rs){const a=vp.convertToPdfPoint(r.x/100*vp.width,r.y/100*vp.height),b=vp.convertToPdfPoint((r.x+r.w)/100*vp.width,(r.y+r.h)/100*vp.height),
+   L=Math.min(a[0],b[0]),R=Math.max(a[0],b[0]),B=Math.min(a[1],b[1]),T=Math.max(a[1],b[1]);
+   Q.push(L,T,R,T,L,B,R,B);draw+=`${L} ${B} ${R-L} ${T-B} re f `;bx[0]=Math.min(bx[0],L);bx[1]=Math.min(bx[1],B);bx[2]=Math.max(bx[2],R);bx[3]=Math.max(bx[3],T)}
+  const ap=ctx.register(ctx.stream(draw,{Type:"XObject",Subtype:"Form",BBox:bx,Resources:{ExtGState:{G:{BM:"Multiply"}}}})),
+   o={Type:"Annot",Subtype:"Highlight",Rect:bx,QuadPoints:Q,C:col,F:4,T:X.fromText("Claim Viewer"),AP:{N:ap}},t=!seen[m.g]&&(txt[m.g]||m.t)||"";seen[m.g]=1;
+  if(t)o.Contents=X.fromText(t);
+  let an=pg.node.Annots();if(!an){an=ctx.obj([]);pg.node.set(N.of("Annots"),an)}an.push(ctx.register(ctx.obj(o)))}
+ return d.save()};
+$("sv").onclick=async()=>{if(!curBuf)return;const hl=HL()[cur]||[],nm=cur+(hl.length?"-annotated":"")+".pdf",P=window.pywebview&&pywebview.api&&pywebview.api.save_pdf;let fh=null;
+ if(!P&&window.showSaveFilePicker){try{fh=await showSaveFilePicker({suggestedName:nm,types:[{description:"PDF",accept:{"application/pdf":[".pdf"]}}]})}catch(e){if(e.name==="AbortError")return}}
+ let out=curBuf,note="";if(hl.length){try{out=await withMarks(hl)}catch(e){note=" Highlights not added: "+e.message+"."}}
+ const blob=new Blob([out],{type:"application/pdf"});
+ try{if(P){const b64=await new Promise(r=>{const f=new FileReader;f.onload=()=>r(f.result.split(",")[1]);f.readAsDataURL(blob)}),p=await P(nm,b64);if(!p)return;toast("Saved "+p+"."+note)}
+ else if(fh){const w=await fh.createWritable();await w.write(blob);await w.close();toast("Saved."+note)}
+ else{const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=nm;a.click();toast("Saved."+note)}}
+ catch(e){toast("Save failed: "+e.message)}};
+nv.onclick=()=>{if(rt.classList.toggle("nat")){rd.hidden=true;f.hidden=false;f.src=`pdf/${encodeURIComponent(cur)}.pdf`;nv.title="Back to claim reader"}else{f.hidden=true;rd.hidden=false;nv.title="Open in Chrome viewer"}};
+$("hc").onclick=async()=>{if(!await ask("Remove all highlights in this PDF?","clearhl"))return;const o=HL();delete o[cur];saveHL(o);rd.querySelectorAll(".hl").forEach(e=>e.remove())};
+window.showPdf=async(id,pg)=>{$("ph").hidden=true;const my=++tok;let buf=null;try{if(await ready())buf=await bytes(id)}catch(e){}
+ if(my!==tok)return;if(!buf){lpn.className="warn";lpn.textContent="Click to choose the pdf folder";return fallback(id,pg)}
+ lpn.className="";lpn.textContent="Select text in the PDF, then right-click to add a claim";if(cur===id&&!rd.hidden)return scroll(pg);
+ cur=id;f.hidden=true;rd.hidden=false;rd.innerHTML="";
+ const doc=await pdfjsLib.getDocument({data:new Uint8Array(buf.slice(0))}).promise;if(my!==tok)return;
+ docC=doc;curBuf=buf;Z=1;await build(pg);rt.hidden=false;rt.classList.remove("nat");nv.title="Open in Chrome viewer"};
+const toast=(m,top)=>{let t=$("toast");if(!t){t=document.createElement("div");t.id="toast";t.setAttribute("aria-live","polite");document.body.append(t)}(document.fullscreenElement||document.body).append(t);t.textContent=m;t.classList.toggle('top',!!top);t.hidden=false;clearTimeout(t._h);t._h=setTimeout(()=>t.hidden=true,3500)};
+const capture=(q,pg,rs,hg)=>{if(rs&&rs[0]&&!rs[0].t)rs[0].t=q;q=(q||"").replace(/\s+/g," ").trim();if(q.length<20)return;const x=all.find(x=>x.src+x.id===sel),src=(!rd.hidden&&cur)||(x&&x.src)||s.value,c={id:"u"+Date.now(),src,srcTitle:DATA.sources.find(x=>x.id===src).title,quote:q,gist:"",role:"OTHER",pathway:[],direction:"",status:"user",own_claim:true};if(pg){c.pdf_page=pg;c.cite_page=String(pg)}if(hg)c.hg=hg;else if(rs&&rs.length&&cur===src)c.hg=mark("y",rs);all.push(c);ED.a.push(c);sel=src+c.id;saveED();if(!pass(c))clearFilters();else refresh();const e=[...document.querySelectorAll("#list .card")].find(z=>z.dataset.k===kc(c));if(e)e.scrollIntoView({block:"center"});toast("Claim added"+(pg?" (p."+pg+")":"")+": "+q.slice(0,60));if(hg&&pg)window.healClaim(c,pg)};
+const cm=document.createElement("div");cm.id="cm";cm.hidden=true;cm.innerHTML='<button type="button">Add as claim</button><div class="sw">'+swHTML+'</div><button type="button" class="rm">Remove highlight</button>';document.body.append(cm);
+let pend=null;const hide=()=>{cm.hidden=true;rd.querySelectorAll(".hl.on").forEach(e=>e.classList.remove("on"))};
+// text-layer spans are wider/taller than the printed glyphs, so snap each rect to the ink drawn on the page canvas
+const ink=(d,q,r)=>{try{const c=d.querySelector("canvas");if(!c)return null;const k=c.width/q.width,Y0=Math.max(q.top,r.top-r.height*.3),Y1=Math.min(q.bottom,r.bottom+r.height*.3),X0=Math.max(q.left,r.left),X1=Math.min(q.right,r.right),px=Math.floor((X0-q.left)*k),py=Math.floor((Y0-q.top)*k),pw=Math.ceil((X1-X0)*k),ph=Math.ceil((Y1-Y0)*k);if(pw<2||ph<2)return null;const D=c.getContext("2d").getImageData(px,py,pw,ph).data,row=new Array(ph).fill(0),dark=(x,y)=>{const i=(y*pw+x)*4;return D[i]+D[i+1]+D[i+2]<450&&D[i+3]>0};let al=0;for(let i=3;i<D.length;i+=4)if(D[i]){al=1;break}if(!al)return null;for(let y=0;y<ph;y++)for(let x=0;x<pw;x++)if(dark(x,y))row[y]++;const th=Math.max(1,Math.round(pw*.01));for(let y=0;y<ph;y++)row[y]=row[y]>=th?row[y]:0;const mid=Math.round(((r.top+r.bottom)/2-Y0)*k),gap=Math.max(2,Math.round(r.height*.08*k));let s=-1;for(let o=0;o<ph&&s<0;o++){if(row[mid+o]>0)s=mid+o;else if(mid-o>=0&&row[mid-o]>0)s=mid-o}if(s<0)return false;let t=s,b=s;for(let y=s,g=0;y>=0&&g<=gap;y--){if(row[y]>0){t=y;g=0}else g++}for(let y=s,g=0;y<ph&&g<=gap;y++){if(row[y]>0){b=y;g=0}else g++}let a=pw,z=-1;for(let x=0;x<pw;x++)for(let y=t;y<=b;y++)if(dark(x,y)){a=Math.min(a,x);z=Math.max(z,x);break}if(z<0)return false;if((b-t+1)/k>r.height*1.3)return null;return{l:q.left+(px+a)/k-.5,t:q.top+(py+t)/k-.5,w:(z-a+1)/k+1,h:(b-t+1)/k+1}}catch(e){return null}};
+const rectsNow=()=>{const g=getSelection();if(!g.rangeCount)return[];const pgs=[...rd.querySelectorAll(".pg")],out=[],seen=new Set();const R=g.getRangeAt(0),c=R.commonAncestorContainer,tw=c.nodeType===3?[c]:(w=>{const a=[];for(let t;t=w.nextNode();)R.intersectsNode(t)&&a.push(t);return a})(document.createTreeWalker(c,NodeFilter.SHOW_TEXT)),rs=tw.flatMap(t=>{const q=document.createRange();q.selectNodeContents(t);t===R.startContainer&&q.setStart(t,R.startOffset);t===R.endContainer&&q.setEnd(t,R.endOffset);if(t.nodeType===3){const x=q.toString(),a=x.length-x.trimStart().length,e=x.length-x.trimEnd().length;if(a+e<x.length){q.setStart(q.startContainer,q.startOffset+a);q.setEnd(q.endContainer,q.endOffset-e)}}return[...q.getClientRects()]});for(const r of rs){if(r.width<2||r.height<2)continue;const cx=r.left+r.width/2,cy=r.top+r.height/2,d=pgs.find(e=>{const q=e.getBoundingClientRect();return cx>=q.left&&cx<=q.right&&cy>=q.top&&cy<=q.bottom});if(!d)continue;const q=d.getBoundingClientRect();let f=ink(d,q,r);if(f===false)continue;f=f||{l:r.left,t:r.top+r.height*.08,w:r.width,h:r.height*.84};const X=Math.max(0,(f.l-q.left)/q.width*100),m={n:+d.dataset.n,x:+X.toFixed(3),y:+((f.t-q.top)/q.height*100).toFixed(3),w:+Math.min(100-X,f.w/q.width*100).toFixed(3),h:+(f.h/q.height*100).toFixed(3)},k=[m.n,Math.round(m.x*10),Math.round(m.y*10),Math.round(m.w*10)].join();if(seen.has(k))continue;seen.add(k);out.push(m)}out.sort((a,b)=>a.n-b.n||a.y-b.y||a.x-b.x);const mg=[];for(const m of out){const p=mg.find(u=>u.n===m.n&&Math.min(u.y+u.h,m.y+m.h)-Math.max(u.y,m.y)>Math.min(u.h,m.h)*.4&&m.x<=u.x+u.w+1.2&&m.x+m.w>=u.x-1.2);if(p){const x=Math.min(p.x,m.x),y=Math.min(p.y,m.y),r=Math.max(p.x+p.w,m.x+m.w),b=Math.max(p.y+p.h,m.y+m.h);Object.assign(p,{x:+x.toFixed(3),y:+y.toFixed(3),w:+(r-x).toFixed(3),h:+(b-y).toFixed(3)})}else mg.push(m)}return mg};
+// native selection spans the wider invisible text boxes, so hide it and draw the same ink-fitted rects instead
+let st=0;document.addEventListener("selectionchange",()=>{if(st)return;st=setTimeout(()=>{st=0;rd.querySelectorAll(".bsel").forEach(e=>e.remove());const g=getSelection();if(g.isCollapsed||!rd.contains(g.anchorNode))return;rectsNow().forEach(m=>{const d=rd.querySelector(`.pg[data-n="${m.n}"]`),e=document.createElement("div");e.className="bsel";e.style.cssText=`left:${m.x}%;top:${m.y}%;width:${m.w}%;height:${m.h}%`;d&&d.append(e)})},80)});
+const mark=(c,rs)=>{if(!rs||!rs.length||!cur){toast("Select text first");return}const g=Date.now(),o=HL(),a=o[cur]||(o[cur]=[]),t=getSelection().toString().replace(/\s+/g," ").trim();if(t&&!rs[0].t)rs[0].t=t;rs.forEach(m=>{m=Object.assign({c,g},m);a.push(m);const d=rd.querySelector(`.pg[data-n="${m.n}"]`);if(d)d.append(mkHL(m))});saveHL(o);getSelection().removeAllRanges();toast("Highlighted "+HN[c]);return g};
+const sel_=(min=20)=>{const g=getSelection();if(!g.rangeCount||!rd.contains(g.anchorNode))return null;const q=g.toString().replace(/\s+/g," ").trim();if(q.length<min)return null;const p=g.anchorNode.parentElement.closest(".pg");return{q,pg:p&&+p.dataset.n}};
+const hitHL=e=>[...rd.querySelectorAll(".hl")].find(h=>{const r=h.getBoundingClientRect();return e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom});
+const flash=g=>{rd.querySelectorAll(".hl.on").forEach(e=>e.classList.remove("on"));let f;rd.querySelectorAll(".hl").forEach(e=>{if(g&&e._m.g===g){e.classList.add("on");f=f||e}});return f};
+window.flashHL=flash;window.pageText=async(id,n)=>{if(cur!==id||!docC)return"";const tc=await(await docC.getPage(n)).getTextContent();return tc.items.map(i=>i.hasEOL&&/\w-$/.test(i.str)?i.str.slice(0,-1):i.str+(i.hasEOL?" ":"")).join("").replace(/\s+/g," ")};window.healClaim=async(c,n)=>{if(c.status!=="user"||c.rs)return;const P=await window.pageText(c.src,n);if(!P)return;c.rs=1;const q=window.restoreQ(P,c.quote);if(q&&q.length>=20&&q!==c.quote){c.quote=q;const k=kc(c);if(!ED.a.includes(c))ED.m[k]={...ED.m[k],quote:q}}saveED();refresh()};window.restoreQ=(P,q)=>{
+ const W=q.trim().split(/\s+/),al=c=>/[a-z0-9]/i.test(c||" "),K=a=>a.join("").toLowerCase().replace(/[^a-z0-9]/g,"");
+ const ix=[];let k="";
+ for(let i=0;i<P.length;i++)if(al(P[i])){k+=P[i].toLowerCase();ix.push(i)}
+ const ws=i=>{while(i>0&&!/\s/.test(P[i-1]))i--;return i},we=i=>{while(i<P.length&&!/\s/.test(P[i]))i++;return i};
+ const back=(i,n)=>{while(n--){while(i>0&&/\s/.test(P[i-1]))i--;i=ws(i)}return i};
+ const fwd=(i,n)=>{while(n--){while(i<P.length&&/\s/.test(P[i]))i++;i=we(i)}return i};
+ let s,e;const kq=K(W),p=kq.length>12?k.indexOf(kq):-1;
+ if(p>=0){s=ix[p];e=ix[p+kq.length-1]+1;if(!al(P[s-1])&&!al(P[e]))return q}
+ else{
+  if(W.length<8)return q;
+  // anchors skip the first and last word (maybe cut) and slide past dropped words
+  let h=-1,hk,hi,t=-1,tk,ti;
+  for(let i=1;i<W.length-2&&h<0;i++){let j=i+1;while(j<W.length-1&&K(W.slice(i,j)).length<14)j++;
+   if(K(W.slice(i,j)).length<14)break;hk=K(W.slice(i,j));h=k.indexOf(hk);hi=i}
+  if(h<0)return q;
+  for(let i=W.length-2;i>hi&&t<0;i--){let j=i;while(j>hi&&K(W.slice(j,i+1)).length<14)j--;
+   if(K(W.slice(j,i+1)).length<14)break;tk=K(W.slice(j,i+1));t=k.indexOf(tk,h+hk.length);ti=i}
+  if(t<0)return q;
+  s=back(ix[h],hi);e=fwd(ix[t+tk.length-1]+1,W.length-1-ti)
+ }
+ s=ws(s);e=we(e);
+ const T="[.?!][\"\u201d\u2019')\\]]*",END=new RegExp(T+"(?=\\s+[A-Z\u201c\"(]|\\s*$)");
+ if(!new RegExp(T+"$").test(P.slice(s,e))){const m=END.exec(P.slice(e));if(m&&m.index<200)e+=m.index+m[0].length}
+ const f0=new RegExp(T+"\\s+(?=[A-Z\u201c\"(])").exec(P.slice(s,e));if(f0&&f0.index<40)s+=f0.index+f0[0].length;else if(s>0&&!new RegExp(T+"\\s*$").test(P.slice(0,s))){const m=[...P.slice(0,s).matchAll(new RegExp(T+"\\s+(?=[A-Z\u201c\"(])","g"))].pop(),b=m?m.index+m[0].length:0;if(s-b<300)s=b;else if(/^[a-z]/.test(P.slice(s,e))){const f=new RegExp(T+"\\s+(?=[A-Z\u201c\"(])").exec(P.slice(s,e));if(f)s+=f.index+f[0].length}}
+ const r=P.slice(s,e).trim(),rw=new Set(r.toLowerCase().match(/[a-z0-9]+/g)),qw=q.toLowerCase().match(/[a-z0-9]+/g).slice(1,-1);
+ return qw.filter(w=>rw.has(w)).length<qw.length*.8||r.length>q.length*1.5+250?q:r};
+const hlQ=m=>{const hs=m.g?[...rd.querySelectorAll(".hl")].filter(e=>e._m.g===m.g):[],t=hs.map(e=>e._m.t).find(Boolean)||"";const q=hs.sort((a,b)=>a._m.n-b._m.n||a._m.y-b._m.y||a._m.x-b._m.x).map(e=>{const r=e.getBoundingClientRect(),d=e.parentElement;return [...d.querySelectorAll(".textLayer span")].map(p=>{const k=p.getBoundingClientRect(),c=Math.min(r.bottom,k.bottom)-Math.max(r.top,k.top),tw=document.createTreeWalker(p,NodeFilter.SHOW_TEXT);if(c<Math.min(r.height,k.height)/2||Math.min(r.right,k.right)<=Math.max(r.left,k.left))return"";const q=document.createRange();let o="";for(let tn;tn=tw.nextNode();)for(let x=0;x<tn.data.length;x++){q.setStart(tn,x);q.setEnd(tn,x+1);const w=q.getBoundingClientRect(),m=w.left+w.width/2;if(w.width&&m>=r.left&&m<r.right)o+=tn.data[x]}return o.trim()}).join(" ")}).join(" ").replace(/\s+/g," ").trim();return{q:t||q,pg:m.n,hg:m.g}};window.hlQ=hlQ;const ctx=e=>{const x=sel_(1),h=hitHL(e);if(!x&&!h)return;e.preventDefault();pend=x||(h?hlQ(h._m):{});pend.hit=h&&h._m;flash(h&&h._m.g);if(x){x.rects=rectsNow();if(x.rects[0])x.rects[0].t=x.q}const[a,sw,rm]=cm.children;a.hidden=!(x||pend.q);sw.hidden=!x;rm.hidden=!h;if(x||pend.q){a.disabled=pend.q.length<20;a.title=a.disabled?"Select at least 20 characters to add a claim":""}(document.fullscreenElement||document.body).append(cm);cm.style.left=Math.min(e.clientX,innerWidth-170)+"px";cm.style.top=Math.min(e.clientY,innerHeight-130)+"px";cm.hidden=false;(!x&&a.hidden?rm:a.disabled?sw.querySelector("button"):a).focus()};
+rd.addEventListener("contextmenu",ctx);rd.addEventListener("click",e=>{if(getSelection().isCollapsed)ctx(e)});
+cm.children[2].onclick=()=>{hide();const m=pend&&pend.hit;if(!m)return;const o=HL();o[cur]=(o[cur]||[]).filter(k=>m.g?k.g!==m.g:!(k.n===m.n&&k.x===m.x&&k.y===m.y&&k.c===m.c));saveHL(o);rd.querySelectorAll(".hl").forEach(e=>{const k=e._m;if(m.g?k.g===m.g:k.x===m.x&&k.y===m.y&&k.n===m.n)e.remove()});toast("Highlight removed",1)};
+cm.firstChild.onclick=()=>{hide();pend&&capture(pend.q,pend.pg,pend.rects,pend.hg)};
+cm.onclick=e=>{const c=e.target.dataset&&e.target.dataset.c;if(c){hide();pend&&mark(c,pend.rects)}};
+$("hs").innerHTML=swHTML;$("hs").onmousedown=e=>e.preventDefault();$("hs").onclick=e=>{const c=e.target.dataset&&e.target.dataset.c;if(c)mark(c,rectsNow())};
+document.addEventListener("mousedown",e=>{if(!cm.contains(e.target))hide()});document.addEventListener("fullscreenchange",hide);
+document.addEventListener("keydown",e=>{if(e.key==="Escape")hide();if(e.altKey&&e.key==="a"){const x=sel_();if(x)capture(x.q,x.pg,rectsNow())}});
+rd.addEventListener("scroll",()=>{cm.hidden=true});
+lpn.onclick=()=>lpn.className&&$("lpf").click();
+$("lp").onclick=()=>$("lpf").click();
+$("lpf").onchange=async e=>{const d=await db;for(const x of e.target.files){if(!/\.pdf$/i.test(x.name))continue;files[key(x.name)]=x;if(d)d.transaction("p","readwrite").objectStore("p").put(x,key(x.name))}cur="";showPdf(s.value)};
+s.onchange=()=>showPdf(s.value);
+(async()=>{const d=await db;if(d)await new Promise(r=>{const q=d.transaction("p").objectStore("p").openCursor();q.onsuccess=()=>{const c=q.result;if(c){files[c.key]=c.value;c.continue()}else r()};q.onerror=()=>r()});s.value&&showPdf(s.value)})()})();
+</script>
+
+</body>
+</html>

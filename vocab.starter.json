@@ -1,0 +1,13 @@
+{
+  "pathways": {},
+  "roles": {
+    "Q1": "Determinant: a cause of the variation you study",
+    "Q2": "Effect: an outcome of the variation you study",
+    "TYPOLOGY": "Defines or classifies a variant, without a cause or effect",
+    "OTHER": "Relevant context that fits none of the above"
+  },
+  "evidence": ["theory", "case-study", "cross-country-quantitative", "firm-level-quantitative", "historical", "review-of-literature", "author-assertion"],
+  "direction": ["+", "-", "mixed", "none"],
+  "q1_factors": [],
+  "q2_outcomes": []
+}

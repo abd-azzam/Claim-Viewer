@@ -1,17 +1,18 @@
 """Verify extracted quotes against the source PDF, then write a highlighted copy.
 
-Usage: python ClaimViewer/verify.py [source-id ...]   (default: all in sources.json)
-In : ClaimViewer/claims/<id>.json   {"claims": [{"id","quote",...}]}
-Out: ClaimViewer/claims/<id>.verified.json   (adds status/pdf_page/cite_page)
-     ClaimViewer/pdf/<id>.pdf                (copy with highlights; original untouched)
+Usage: python verify.py [source-id ...]   (default: all in sources.json)
+Paths are relative to this script's folder.
+In : sources.json                   [{"id","kind","pdf": "papers/x.pdf", ...}]  pdf = the ORIGINAL file
+     claims/<id>.json               {"claims": [{"id","quote",...}]}
+Out: claims/<id>.verified.json      (adds status/pdf_page/cite_page)
+     pdf/<id>.pdf                   (copy with highlights; the original is untouched, so keep it outside pdf/)
 status: exact | anchored | ambiguous | failed.  A failed quote is never rewritten.
 """
 import json, re, sys, unicodedata
 from pathlib import Path
 import pymupdf
 
-ROOT = Path(__file__).resolve().parent.parent
-HERE = ROOT / "ClaimViewer"
+HERE = Path(__file__).resolve().parent
 ANCHOR = 8  # words used at each end of a quote when the full quote does not match
 
 
@@ -70,7 +71,7 @@ def run(src):
         print(f"{sid}: no claims file, skipped")
         return
     data = json.loads(claims_path.read_text(encoding="utf-8"))
-    doc = pymupdf.open(ROOT / src["pdf"])
+    doc = pymupdf.open(HERE / src["pdf"])
     stream, owner, words = build_stream(doc)
     stats = {}
     for c in data["claims"]:
