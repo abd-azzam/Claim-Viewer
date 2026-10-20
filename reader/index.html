@@ -574,7 +574,7 @@ function card(c){
   if(now&&now.in_abstract)tags.push(`<span class="tag warn">abstract</span>`);
   return `<article class="card${sel===c.src+c.id?" sel":""}" tabindex="0" data-k="${esc(c.src+"\u0001"+c.id)}">
    <span class="dh" draggable="true" title="Drag to reorder (Alt+Up / Alt+Down on the keyboard)" aria-hidden="true"><svg class="i" viewBox="0 0 24 24"><path d="M9 6h.01M15 6h.01M9 12h.01M15 12h.01M9 18h.01M15 18h.01"/></svg></span>
-   <div><span class="quote" title="Double-click to edit">${esc(c.quote)}</span></div>${c.gist?`<div class="gist">${esc(c.gist)} <em>(paraphrase)</em></div>`:""}
+   <div><span class="quote" title="Double-click to edit">${esc(c.quote)}</span></div>${now&&c.gist?`<div class="gist">${esc(c.gist)} <em>(paraphrase)</em></div>`:""}  // the extractor wrote this, not the reader
    <div class="meta">${pg}${c.status==="failed"||c.status==="ambiguous"?`<span class="tag ${stCls[c.status]}">${esc(c.status)}</span>`:""}${tags.join("")}</div>${sel===c.src+c.id?`<button class="gbtn" data-g="1">Show in graph</button><button class="gbtn" data-ed="1">Edit</button><button class="gbtn" data-zknote="1">To note</button><button class="gbtn" data-del="1">Delete</button>`:""}</article>`;
 }
 let RQ=null;  // pending list fill
@@ -1003,7 +1003,7 @@ const zkSaveNote=()=>{const n=zkNote(zkSel);if(!n)return;
   n.links=[...$("zkrows").querySelectorAll(".zkrow")].map(r=>({to:r.querySelector(".zklto").value,kind:r.querySelector(".zklk").value})).filter(l=>l.to&&l.to!==zkSel);
   n.updated=Date.now();zkSave();zkRenderList();toast("Note "+zkSel+" saved")};
 const zkNew=(parent,seed)=>{const id=zkNext(parent);ZK.notes[id]={id,title:"",body:"",tags:[],links:[],created:Date.now()};
-  if(seed){if(seed.src)ZK.notes[id].src=seed.src;if(seed.page)ZK.notes[id].page=seed.page;if(seed.quote)ZK.notes[id].quote=seed.quote}
+  if(seed){if(seed.src)ZK.notes[id].src=seed.src;if(seed.page)ZK.notes[id].page=seed.page;if(seed.quote)ZK.notes[id].quote=seed.quote;if(seed.tags)ZK.notes[id].tags=seed.tags;if(seed.subt)ZK.notes[id].subt=seed.subt}
   zkSave();zkOpen(id);setTimeout(()=>{const t=$("zkt");if(t)t.focus()},0);return id};
 // the reading is the source: a note can carry the passage and the page it came from
 const zkFromPassage=(q,pg,src)=>{src=src||(window.curSrc?window.curSrc():"");const t=(q||"").trim();
@@ -1012,7 +1012,7 @@ const zkFromPassage=(q,pg,src)=>{src=src||(window.curSrc?window.curSrc():"");con
   zkHealNote(id);  // the same sentence restore the claim editor uses; the reading is open right now
   toast("Note started from page "+(pg||"?"))};
 // a claim is already a verified sentence: carry it into a note as the source passage
-const zkFromClaim=c=>{if(!c)return;const id=zkNew(null,{src:c.src,page:(c.pdf_page||[])[0]||null,quote:c.quote});show("notes");toast("Note started from a claim")};
+const zkFromClaim=c=>{if(!c)return;const id=zkNew(null,{src:c.src,page:(c.pdf_page||[])[0]||null,quote:c.quote,tags:(c.pathway||[]).slice(0,1),subt:(c.axisA||[]).slice(0,1)});show("notes");toast("Note started from a claim, filed under its pathway")};  // the note graph is where a claim becomes a tag branch
 const zkHealNote=async id=>{const n=zkNote(id);if(!n||!n.src||!n.page)return;
   const P=window.pageText?await window.pageText(n.src,n.page):"";
   if(!P){toast("Open that reading if you want the passage repaired");return}
@@ -1029,7 +1029,9 @@ const zkGraphSVG=()=>{
   if(!ids.length)return `<p class="empty">${ZK&&Object.keys(ZK.notes).length?"No note matches this filter.":"No notes yet. Start one in List, Notes."}</p>`;
   // tag -> nested sub-tags (depth from "a › b › c") -> notes
   const groups=new Map(),loose=[],NO="(no tag)";
-  const put=(g,paths,id)=>{if(!paths.length){g.direct.push(id);return}  // no sub-tag either: hang straight off the parent
+  // one pill per reading: every note from the same source converges on the same node
+  const keyOf=id=>{if(!MERGE)return "i:"+id;const n=zkNote(id);return n&&n.src?"s:"+n.src:"i:"+id};  // must exist before put(): a direct note is stored by pill key, not by id
+  const put=(g,paths,id)=>{if(!paths.length){g.direct.push(keyOf(id));return}  // no sub-tag either: hang straight off the parent
     paths.forEach(p=>{let key="";
       p.forEach((seg,di)=>{const k=key+"\u0001"+seg;
         if(!g.nodes.has(k))g.nodes.set(k,{seg,depth:di+1,parent:key,key:k,notes:[]});
@@ -1040,8 +1042,7 @@ const zkGraphSVG=()=>{
       put(groups.get(NO),paths,id);return}  // a note with sub-tags but no parent tag still shows its chain
     tags.forEach(t=>{if(!groups.has(t))groups.set(t,{nodes:new Map(),direct:[]});put(groups.get(t),paths,id)})});
   // one pill per reading: every note from the same source converges on the same node
-  const keyOf=id=>{if(!MERGE)return "i:"+id;const n=zkNote(id);return n&&n.src?"s:"+n.src:"i:"+id};
-  const byKey=new Map();ids.forEach(id=>{const k=keyOf(id);if(!byKey.has(k))byKey.set(k,[]);byKey.get(k).push(id)});
+    const byKey=new Map();ids.forEach(id=>{const k=keyOf(id);if(!byKey.has(k))byKey.set(k,[]);byKey.get(k).push(id)});
   const keys=[...byKey.keys()],first=k=>byKey.get(k)[0];
   const labK=k=>"("+zkCite(zkNote(first(k)))+")";
   const subK=k=>byKey.get(k).length>1?byKey.get(k).length+" notes":String(zkNote(first(k)).title||"").trim();
@@ -1059,7 +1060,7 @@ const zkGraphSVG=()=>{
     const byD={};g.nodes.forEach(nd=>{(byD[nd.depth]=byD[nd.depth]||[]).push(nd)});
     Object.keys(byD).forEach(d=>{const arr=byD[d].sort((a,b)=>NP[t+"\u0001"+a.key][1]-NP[t+"\u0001"+b.key][1]);
       let last=-1e9;arr.forEach(nd=>{const p=NP[t+"\u0001"+nd.key];if(p[1]-last<36)p[1]=last+36;last=p[1]})});
-    const all=[...g.nodes.values()].flatMap(nd=>nd.notes.map(keyOf)).map(k=>pos[k][1]).concat(g.direct.map(id=>pos[keyOf(id)][1]));
+    const all=[...g.nodes.values()].flatMap(nd=>nd.notes.map(keyOf)).map(k=>pos[k][1]).concat(g.direct.map(k=>pos[k][1]));  // direct holds pill keys already
     tagP[t]=[CT,all.length?all.reduce((a,b)=>a+b,0)/all.length:start];
     y+=GAP});
   loose.forEach(id=>{if(!pos[id]){pos[id]=[0,y];y+=ROW}});
@@ -1082,7 +1083,7 @@ const zkGraphSVG=()=>{
       e+=`<path class="edge ${nd.parent?"branch":"taglink"}" d="${curve(px+58,py,nx-58,ny)}"/>`});
     g.nodes.forEach(nd=>{const[sx,sy]=NP[t+"\u0001"+nd.key];
       nd.notes.forEach(id=>{const k=keyOf(id);pend.push({key:k,sx,sy})})});
-    g.direct.forEach(id=>pend.push({key:keyOf(id),sx:tx,sy:ty}))});
+    g.direct.forEach(k=>pend.push({key:k,sx:tx,sy:ty}))});
   // several chains ending on one reading pill used to meet at a single point, which reads as one link;
   // each now gets its own entry point along the pill's edge
   const byK={};pend.forEach(p=>{(byK[p.key]=byK[p.key]||[]).push(p)});
