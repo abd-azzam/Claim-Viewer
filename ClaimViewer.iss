@@ -1,7 +1,8 @@
 ; Inno Setup 6 script. Builds release\ClaimViewer-Setup-<version>.exe.
 ; Needs release\ClaimViewer.exe first (build_exe.bat makes it, then runs this script).
+; Installs like a normal per-user app in C:\Apps\ClaimViewer, with a Start menu entry.
 #define AppName "Claim Viewer"
-#define AppVersion "1.1.0"
+#define AppVersion "2.1.0"
 
 [Setup]
 ; Keep this AppId fixed: it is how a new setup finds the old install and upgrades it.
@@ -9,8 +10,10 @@ AppId={{80754954-3043-4550-991A-A9D2B0246EB4}
 AppName={#AppName}
 AppVersion={#AppVersion}
 VersionInfoVersion={#AppVersion}
-; Documents, not Program Files: the user adds PDFs and edits sources.js in this folder.
-DefaultDirName={userdocs}\{#AppName}
+AppPublisher=Azzam Abdullah
+; The app folder, not Program Files: no admin needed, and the library PDFs live here.
+DefaultDirName={sd}\Apps\ClaimViewer
+DisableDirPage=no
 DisableProgramGroupPage=yes
 PrivilegesRequired=lowest
 ArchitecturesAllowed=x64compatible
@@ -23,21 +26,27 @@ WizardStyle=modern
 UninstallDisplayIcon={app}\ClaimViewer.exe
 
 [Tasks]
-Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
+Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
 
 [Files]
-Source: "release\ClaimViewer.exe"; DestDir: "{app}"; Flags: ignoreversion
-; index.html holds the user's claims data and sources.js their PDF list: never overwrite, never uninstall.
-Source: "reader\index.html"; DestDir: "{app}"; Flags: onlyifdoesntexist uninsneveruninstall
-Source: "reader\sources.js"; DestDir: "{app}"; Flags: onlyifdoesntexist uninsneveruninstall
-Source: "LICENSE"; DestName: "LICENSE.txt"; DestDir: "{app}"; Flags: ignoreversion
+Source: "dist\ClaimViewer.exe"; DestDir: "{app}"; Flags: ignoreversion
+; pdf.js and pdf-lib, so the viewer works offline. Replaced on every upgrade.
+Source: "dist\lib\*"; DestDir: "{app}\lib"; Flags: ignoreversion
+; The page and the reading list: user data, never replaced on upgrade, never uninstalled.
+Source: "dist\index.html"; DestDir: "{app}"; Flags: onlyifdoesntexist uninsneveruninstall skipifsourcedoesntexist
+Source: "dist\sources.js"; DestDir: "{app}"; Flags: onlyifdoesntexist uninsneveruninstall skipifsourcedoesntexist
 
 [Dirs]
 Name: "{app}\pdf"; Flags: uninsneveruninstall
+Name: "{app}\data"; Flags: uninsneveruninstall
 
 [Icons]
-Name: "{autoprograms}\{#AppName}"; Filename: "{app}\ClaimViewer.exe"
-Name: "{autodesktop}\{#AppName}"; Filename: "{app}\ClaimViewer.exe"; Tasks: desktopicon
+Name: "{autoprograms}\{#AppName}"; Filename: "{app}\ClaimViewer.exe"; WorkingDir: "{app}"
+Name: "{autodesktop}\{#AppName}"; Filename: "{app}\ClaimViewer.exe"; WorkingDir: "{app}"; Tasks: desktopicon
 
 [Run]
 Filename: "{app}\ClaimViewer.exe"; Description: "{cm:LaunchProgram,{#AppName}}"; Flags: nowait postinstall skipifsilent
+
+[UninstallDelete]
+; Only the uninstaller's own leftovers. index.html, sources.js, pdf/ and data/ are yours.
+Type: files; Name: "{app}\*.tmp"
