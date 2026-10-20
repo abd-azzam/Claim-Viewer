@@ -396,7 +396,14 @@ try{JSON.parse(localStorage.getItem("cv:src")||"[]").forEach(s=>{if(!DATA.source
 const HID=new Set((()=>{try{return JSON.parse(localStorage.getItem("cv:hide")||"[]")}catch(e){return[]}})());  // readings taken out with the remove button (lower-case ids); the PDF file itself stays
 DATA.sources=DATA.sources.filter(s=>!HID.has(s.id.toLowerCase()));
 const $=id=>document.getElementById(id);
-const nask=(text,title)=>new Promise(r=>{try{if(window.pywebview&&pywebview.api&&pywebview.api.ask){pywebview.api.ask(title||"Claim Viewer",text).then(r);return}}catch(e){}ask(text,"",true).then(r)});
+// in-app confirm: a native MessageBox can open behind a full-screen window and never answer
+const nask=text=>new Promise(res=>{const d=document.createElement("dialog");d.id="ask";
+  d.innerHTML='<p></p><div><button value="0">Cancel</button><button value="1" autofocus>OK</button></div>';
+  d.firstChild.textContent=text;let ok=0;
+  d.querySelectorAll("button").forEach(b=>b.onclick=()=>{ok=+b.value;d.close()});
+  d.onclose=()=>{d.remove();res(!!ok)};document.body.append(d);d.showModal()});
+// a file dialog that never answers must not wedge the button forever
+const apito=(p,ms=120000)=>Promise.race([p,new Promise((_,rej)=>setTimeout(()=>rej(new Error("tmo")),ms))]);
 const perf=(n,t)=>{try{const ms=Math.round(performance.now()-t);if(window.pywebview&&pywebview.api&&pywebview.api.log)pywebview.api.log(n+"\t"+ms);else{const a=JSON.parse(store0()||"[]");}}catch(e){}};  // timing goes to perf.log via the exe
 function store0(){try{return localStorage.getItem("cv:perf")}catch(e){return null}}
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -1644,7 +1651,8 @@ $("libtree").addEventListener("click",async e=>{
   }else if(e.target.classList.contains("lpdf")){
     if(!(window.pywebview&&pywebview.api&&pywebview.api.import_pdfs))return $("libmsg").textContent="Adding PDFs needs the app window.";
     $("libmsg").textContent="Choose PDFs for "+cPath(id)+"\u2026";
-    const r=await pywebview.api.import_pdfs(id);
+    let r=null;try{r=await apito(pywebview.api.import_pdfs(id))}
+    catch(e){return $("libmsg").textContent=e.message==="tmo"?"The file dialog did not answer. Try again.":"Import failed: "+e.message}
     if(!r||r.error)return $("libmsg").textContent="Import failed: "+((r&&r.error)||"no answer");
     if(!r.added||!r.added.length)return $("libmsg").textContent="No new PDFs.";
     if(r.library){LIB.collections=r.library.collections||LIB.collections;LIB.items=r.library.items||LIB.items}
@@ -1741,10 +1749,10 @@ $("sv").onclick=async()=>{if(!curBuf)return;const hl=HL()[cur]||[],nm=cur+(hl.le
  if(!P&&window.showSaveFilePicker){try{fh=await showSaveFilePicker({suggestedName:nm,types:[{description:"PDF",accept:{"application/pdf":[".pdf"]}}]})}catch(e){if(e.name==="AbortError")return}}
  let out=curBuf,note="";if(hl.length){try{out=await withMarks(hl)}catch(e){note=" Highlights not added: "+e.message+"."}}
  const blob=new Blob([out],{type:"application/pdf"});
- try{if(P){const b64=await new Promise(r=>{const f=new FileReader;f.onload=()=>r(f.result.split(",")[1]);f.readAsDataURL(blob)}),p=await P(nm,b64);if(!p)return;toast("Saved "+p+"."+note)}
+ try{if(P){const b64=await new Promise(r=>{const f=new FileReader;f.onload=()=>r(f.result.split(",")[1]);f.readAsDataURL(blob)}),p=await apito(P(nm,b64));if(!p)return;toast("Saved "+p+"."+note)}
  else if(fh){const w=await fh.createWritable();await w.write(blob);await w.close();toast("Saved."+note)}
  else{const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=nm;a.click();toast("Saved."+note)}}
- catch(e){toast("Save failed: "+e.message)}};
+ catch(e){toast(e.message==="tmo"?"The save dialog did not answer. Try again.":"Save failed: "+e.message)}};
 $("hc").onclick=async()=>{if(!await ask("Remove all highlights in this PDF?","clearhl"))return;const o=HL();delete o[cur];saveHL(o);rd.querySelectorAll(".hl").forEach(e=>e.remove())};
 window.showPdf=async(id,pg)=>{if(!id)return;  // the dropdown starts on "(pick a reading)"; loading pdf/.pdf only 404s
  if(pg==null){try{pg=(JSON.parse(localStorage.getItem("cv:lastpg")||"{}"))[id]||null}catch(e){}}  // resume where the user left off

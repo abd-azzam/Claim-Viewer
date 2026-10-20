@@ -68,8 +68,14 @@ def safe_id(path):
 
 class Api:
     def save_pdf(self, name, b64):  # PDF-only save dialog; "" when cancelled
-        r = win.create_file_dialog(webview.FileDialog.SAVE, save_filename=name,
-                                   file_types=("PDF files (*.pdf)",))
+        try:  # window=win keeps the dialog owned by the app, so it cannot open behind it
+            r = win.create_file_dialog(webview.FileDialog.SAVE, save_filename=name,
+                                       file_types=("PDF files (*.pdf)",), window=win)
+        except TypeError:  # pywebview without the window= argument
+            r = win.create_file_dialog(webview.FileDialog.SAVE, save_filename=name,
+                                       file_types=("PDF files (*.pdf)",))
+        except Exception:
+            return ""
         if not r:
             return ""
         f = r if isinstance(r, str) else r[0]
@@ -96,7 +102,7 @@ class Api:
         else:
             try:
                 picked = win.create_file_dialog(webview.FileDialog.OPEN, allow_multiple=True,
-                                                file_types=("PDF files (*.pdf)",))
+                                                file_types=("PDF files (*.pdf)",), window=win)
             except Exception as e:
                 return {"error": str(e)}
         if not picked:
@@ -122,12 +128,6 @@ class Api:
             write_lib(lib)
             write_sources(lib)
         return {"added": added, "library": lib}  # the page adopts this: its in-memory LIB is stale after a write
-
-    def ask(self, title, text):  # native Windows dialog, not the browser's confirm()
-        MB_YESNO, MB_ICONQUESTION, MB_SETFOREGROUND = 0x04, 0x20, 0x10000
-        r = ctypes.windll.user32.MessageBoxW(win.native_handle if hasattr(win, "native_handle") else 0,
-                                             text, title or "Claim Viewer", MB_YESNO | MB_ICONQUESTION | MB_SETFOREGROUND)
-        return r == 6  # IDYES
 
     def log(self, line):  # the page's timing probes land in perf.log next to the exe
         try:
