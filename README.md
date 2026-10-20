@@ -26,6 +26,7 @@ Zotero keeps your PDFs and highlights, but it does not draw a graph of how the c
 - **Pathways: type on Add, pick on Edit.** The **Add claim** box has a plain text field, so you invent a pathway name as you write the claim. The **Edit claim** box offers those names in a dropdown; a name you invent while adding is in the list the next time you edit anything. Pathways are stored by name everywhere, never by an internal number.
 - **Connect claims across readings.** In the claim editor, link a claim to a specific claim (and its paragraph) in another reading, including readings outside the current folder. Four connection models, each with its own types and colors: *Stance* (supports / challenges / qualifies), *Causal* (causes / mediates / moderates / prevents), *Argument* (premise / rebuttal / counterexample / extension), *Bibliographic* (cites / extends / replicates / supersedes).
 - **Copy with citation.** Each claim card has a **Copy** chip: it copies the sentence ending `(Author, Year, p. N)`, parsed from the reading's title. Alt+click a card does the same.
+- **One card, one shape.** Every claim card looks the same: Copy, the PDF page, the role, its pathway, its factor and outcome tags, its evidence and section. No pipeline bookkeeping. A `failed` or `ambiguous` chip appears only when the saved quote could not be matched against the PDF text, so it warns you without shouting.
 - **Filter and group** the list by the axes, pathways, direction, evidence, author, free text, reading, links, and collection.
 
 ### Notes (Zettelkasten)
