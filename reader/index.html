@@ -19,7 +19,7 @@ aside{background:var(--panel);border-right:1px solid var(--line);padding:12px;ov
 #flt{display:grid;grid-template-columns:1fr 1fr;gap:0 8px}#flt{gap:0 8px}#flt label.f{margin:9px 0 3px;font-size:10px;line-height:1.2;color:var(--mute);text-transform:none;letter-spacing:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#flt .w{grid-column:1/-1}
 #flt select,#flt input{padding:4px 6px}
 #reads{flex:1;min-height:0;overflow:auto;margin-top:4px;display:grid;grid-template-columns:1fr 1fr;column-gap:8px;align-content:start}#reads .f{grid-column:1/-1}#reads .read{margin-top:2px;font-size:12.5px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-main{padding:14px;border-right:1px solid var(--line)}
+main{padding:0 14px 14px;border-right:1px solid var(--line)}
 h1{font-size:16px;margin:0 0 10px}
 label.f{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--mute);margin:12px 0 3px}
 select,input[type=search]{width:100%;padding:6px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);font:inherit}
@@ -52,7 +52,8 @@ iframe{flex:1;border:0;width:100%}
 .read{display:flex;gap:6px;align-items:center;margin-top:8px;font-size:13px}
 #gv{display:none;grid-column:2/4;overflow:auto;height:100vh;padding:14px}
 body.graph main,body.graph section{display:none}body.graph #gv{display:flex;flex-direction:column;min-height:0;overflow:hidden}
-.tabs{display:flex;gap:6px;margin:0 0 8px}.pgnow{font:11px ui-monospace,monospace;color:var(--mut,var(--muted));height:var(--h);width:86px;margin-left:auto;padding:0 6px;text-align:center;background:var(--bg);border:1px solid var(--ctl);border-radius:var(--r)}/* type a page, Enter jumps */.rnw{margin:0 0 8px}.rnh{display:block;font-size:11px;color:var(--mut,var(--muted));margin:0 0 4px;font-weight:400}.tabs.rn{margin-top:0}.tabs.rn label{flex:1;display:flex;align-items:center;gap:4px;font-size:11px;color:var(--mut,var(--muted));min-width:0}.tabs.rn input{flex:1;min-width:0;padding:4px 6px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);font:inherit;font-size:12px}.tabs button{flex:1;padding:6px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);font:inherit;cursor:pointer}.tabs button.on{border-color:var(--acc);color:var(--acc);font-weight:700}
+.tabs{display:flex;gap:6px;margin:0 0 8px}#rt .pgbrk{flex-basis:100%;height:0}
+.pgnow{font:11px ui-monospace,monospace;color:var(--mut,var(--muted));height:var(--h);width:86px;margin:0 auto;padding:0 6px;text-align:center;background:var(--bg);border:1px solid var(--ctl);border-radius:var(--r)}/* type a page, Enter jumps */.rnw{margin:0 0 8px}.rnh{display:block;font-size:11px;color:var(--mut,var(--muted));margin:0 0 4px;font-weight:400}.tabs.rn{margin-top:0}.tabs.rn label{flex:1;display:flex;align-items:center;gap:4px;font-size:11px;color:var(--mut,var(--muted));min-width:0}.tabs.rn input{flex:1;min-width:0;padding:4px 6px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);font:inherit;font-size:12px}.tabs button{flex:1;padding:6px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);font:inherit;cursor:pointer}.tabs button.on{border-color:var(--acc);color:var(--acc);font-weight:700}
 #gv svg{width:100%;height:auto;min-width:760px}#gv text{fill:var(--ink);font-size:12px}#gv .cnt{fill:var(--mute)}#gv .hd{font-weight:700;fill:var(--mute);font-size:11px;text-transform:uppercase}
 #gv .e{fill:none;opacity:.45;cursor:pointer}#gv .e:hover{opacity:.95}#gv .n{cursor:pointer}#gv .n rect{fill:var(--panel);stroke:var(--line)}#gv .n:hover rect{stroke:var(--acc)}
 #gv .e.dim{opacity:.08}#gv .e.hit{opacity:1}#gv .n.dim{opacity:.35}#gv .n.hit rect{fill:var(--hl);stroke:var(--acc);stroke-width:2.5}
@@ -89,7 +90,7 @@ body:has(dialog[open]) #hl,body:has(dialog[open]) #hr{display:none!important}  /
 #libsel label{display:flex;gap:6px;align-items:center;font-size:12px;padding:2px 0}
 #libp .libadd #libmsg{color:var(--mute);font-size:11px}
 #vl .it{display:flex;gap:4px}#vl .dg{cursor:grab;color:var(--mut,var(--muted));user-select:none;padding:0 2px;align-self:center;font-size:15px}#vl .it{cursor:grab}#vl .it.drag{cursor:grabbing;opacity:.45}#vl .it input,#vl .it .x{cursor:auto}#vl .it input{flex:1;min-width:0;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:6px}#vl .it .k{flex:0 0 40px;text-align:center;font-weight:700}#vl .x{padding:2px 9px;color:var(--dn);border-color:var(--line)}#vl .add{border-style:dashed}
-.bar{position:sticky;top:0;z-index:5;background:var(--bg);padding:6px 0;margin:0;display:flex;gap:6px;align-items:center;flex-wrap:wrap}.bar button,.bar .gbtn{margin:0;padding:4px 10px;border:1px solid var(--line);border-radius:4px;background:var(--bg);color:var(--ink);font:inherit;cursor:pointer}.bar button:hover,.bar .gbtn:hover{border-color:var(--acc)}#count button{margin-left:8px;padding:1px 8px;border:1px solid var(--line);border-radius:4px;background:var(--bg);color:var(--acc);font:inherit;cursor:pointer}button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible,.card:focus-visible,.gbtn:focus-within{outline:2px solid var(--acc);outline-offset:2px}
+.bar{position:sticky;top:0;z-index:5;background:var(--bg);padding:14px 0 6px;margin:0;display:flex;gap:6px;align-items:center;flex-wrap:wrap}.bar button,.bar .gbtn{margin:0;padding:4px 10px;border:1px solid var(--line);border-radius:4px;background:var(--bg);color:var(--ink);font:inherit;cursor:pointer}.bar button:hover,.bar .gbtn:hover{border-color:var(--acc)}#count button{margin-left:8px;padding:1px 8px;border:1px solid var(--line);border-radius:4px;background:var(--bg);color:var(--acc);font:inherit;cursor:pointer}button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible,.card:focus-visible,.gbtn:focus-within{outline:2px solid var(--acc);outline-offset:2px}
 .selbar{border:1px solid var(--acc);border-radius:6px;padding:8px 10px;margin:8px 0;font-size:13px;background:var(--panel)}.selbar button,.gbtn{margin-left:8px;padding:3px 8px;border:1px solid var(--acc);border-radius:5px;background:var(--bg);color:var(--acc);font:inherit;cursor:pointer}
 .lg{display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:var(--mute);margin:6px 0}.lg i{display:inline-block;width:18px;height:4px;vertical-align:middle;margin-right:4px}
 .lk-supporting{--c:var(--dp)}.lk-against{--c:var(--dn)}.lk-ambiguous{--c:var(--dm)}
@@ -130,7 +131,7 @@ body.gz #gx{display:none!important}  /* the Layers scroller has no meaning on th
 body{font-family:"Segoe UI Variable Text","Segoe UI",system-ui,sans-serif}
 *{scrollbar-width:thin;scrollbar-color:var(--ctl) transparent}
 aside{padding:16px 12px}
-main{padding:16px}
+main{padding:0 16px 16px}
 .top{margin:0 0 12px}.top h1{font-size:15px;font-weight:600}
 .tabs{gap:4px;margin:0 0 12px}
 .tabs button,.bar button,.bar .gbtn,#rt button,#fb,#lr,#th{min-height:var(--h);border-radius:var(--r);transition:border-color .12s,background-color .12s}
@@ -194,7 +195,7 @@ body.nor>#gv{grid-column:2/3}
 .tabs button:hover,#rt button:hover{border-color:var(--acc)}
 .tabs button{padding:0 8px;height:var(--h)}
 .tabs button.on{background:var(--bg);font-weight:600}
-.bar{gap:4px;padding:8px 0}
+.bar{gap:4px;padding:16px 0 6px}
 #count button{padding:2px 10px;border-radius:var(--r)}
 /* The filter panel scrolls so a short window never clips the last filters. */
 #flt{overflow:auto;min-height:0}
@@ -371,7 +372,7 @@ body.notes #libp{display:none}
 </div>
 </main>
 <div id="gv"><h1 id="gt"></h1><div class="gc" id="gc2"></div><div id="lkc" class="lg" role="group" aria-label="Declared connections between readings"></div><div id="gx" aria-label="Horizontal scroll" role="group"><div id="gxi"></div></div><div id="gout"></div></div>
-<section><div class="empty" id="ph">Pick a reading.</div><div class="rtop"><div class="rsel"><select id="pdfsel" aria-label="Reading"></select><button id="lr" type="button" title="Remove this reading from the viewer (the PDF file on your computer stays)" aria-label="Remove this reading from the viewer"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h7l4 4v14H7zM14 3v4h4M10 12l4 4m0-4-4 4"/></svg></button></div><div id="lpn"></div></div><div id="rt" hidden><button id="zo" type="button" aria-label="Zoom out">−</button><span id="zv">100%</span><button id="zi" type="button" aria-label="Zoom in">+</button><button id="zf" type="button" title="Fit width" aria-label="Fit width"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button><button id="fb" type="button" title="Read this PDF full screen (Esc to exit)" aria-label="Read this PDF full screen" aria-pressed="false"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 15v5h-5M15 4h5v5M9 20H4v-5"/></svg></button><button id="sv" type="button" title="Save PDF" aria-label="Save PDF"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m-4-4 4 4 4-4M5 20h14"/></svg></button><span class="sw" id="hs" role="group" aria-label="Highlight colour"></span><button id="zks" type="button" title="Note on the selected passage" aria-label="Note on the selected passage"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11l3 3v13H5zM8 9h8M8 13h6"/></svg></button><button id="hc" type="button" title="Clear all highlights in this PDF (right-click one highlight to remove only it)" aria-label="Clear all highlights"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13"/></svg></button><input id="pgnow" class="pgnow" inputmode="numeric" aria-label="Page, type a number and press Enter" title="Type a page number, then Enter"></div><iframe id="pdf" allowfullscreen title="Source PDF" hidden></iframe><div id="rd" hidden></div></section>
+<section><div class="empty" id="ph">Pick a reading.</div><div class="rtop"><div class="rsel"><select id="pdfsel" aria-label="Reading"></select><button id="lr" type="button" title="Remove this reading from the viewer (the PDF file on your computer stays)" aria-label="Remove this reading from the viewer"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h7l4 4v14H7zM14 3v4h4M10 12l4 4m0-4-4 4"/></svg></button></div><div id="lpn"></div></div><div id="rt" hidden><button id="zo" type="button" aria-label="Zoom out">−</button><span id="zv">100%</span><button id="zi" type="button" aria-label="Zoom in">+</button><button id="zf" type="button" title="Fit width" aria-label="Fit width"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button><button id="fb" type="button" title="Read this PDF full screen (Esc to exit)" aria-label="Read this PDF full screen" aria-pressed="false"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 15v5h-5M15 4h5v5M9 20H4v-5"/></svg></button><button id="sv" type="button" title="Save PDF" aria-label="Save PDF"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m-4-4 4 4 4-4M5 20h14"/></svg></button><span class="sw" id="hs" role="group" aria-label="Highlight colour"></span><button id="zks" type="button" title="Note on the selected passage" aria-label="Note on the selected passage"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11l3 3v13H5zM8 9h8M8 13h6"/></svg></button><button id="hc" type="button" title="Clear all highlights in this PDF (right-click one highlight to remove only it)" aria-label="Clear all highlights"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13"/></svg></button><span class="pgbrk" aria-hidden="true"></span><input id="pgnow" class="pgnow" inputmode="numeric" aria-label="Page, type a number and press Enter" title="Type a page number, then Enter"></div><iframe id="pdf" allowfullscreen title="Source PDF" hidden></iframe><div id="rd" hidden></div></section>
 <button id="hl" type="button" class="edge" title="Hide the left panel" aria-label="Hide the left panel" aria-pressed="false"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button>
 <button id="hr" type="button" class="edge" title="Hide the PDF pane" aria-label="Hide the PDF pane" aria-pressed="false"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
 <script src="lib/pdf.min.js"></script><script src="sources.js"></script>
@@ -561,22 +562,20 @@ function card(c){
   const pg=c.pdf_page.length?`<span class="pg cp" title="Click to copy this claim with (author, year, p. xx)">Copy</span> <span class="pg">PDF p.${c.pdf_page.map(esc).join(", ")}</span>`:`<span class="pg cp" title="Click to copy this claim with (author, year, p. xx)">Copy</span> <span class="pg">no page</span>`;
   const tags=c.role.map(r=>`<span class="tag q">${esc(r)}</span>`);
   (c.pathway||[]).forEach(p=>tags.push(`<span class="tag">${esc(VB.pathways[p]||p)}</span>`));
-  c.axisA.forEach(f=>tags.push(`<span class="tag">${esc(f)}</span>`));
+  const now=c.status==="user"?c:null;  // imported claims carry extractor fields the app never writes; do not dress them up as tags
+  (now?now.axisA:[]).forEach(f=>tags.push(`<span class="tag">${esc(f)}</span>`));
   const dr=c.direction.map(esc).join(" / ");  // the signs are not paired to single axis-B values, so each one lists all of them
-  c.axisB.forEach(o=>tags.push(`<span class="tag">${esc(o)}${dr?" · change "+dr:""}</span>`));
-  if(!c.axisB.length&&dr)tags.push(`<span class="tag">change ${dr}</span>`);
-  c.tags.forEach(t=>tags.push(`<span class="tag tg">#${esc(t)}</span>`));
+  (now?now.axisB:[]).forEach(o=>tags.push(`<span class="tag">${esc(o)}${dr?" · change "+dr:""}</span>`));
+  if(now&&!now.axisB.length&&dr)tags.push(`<span class="tag">change ${dr}</span>`);
   if(c.dir_flag)tags.push(`<span class="tag warn" title="Workers coded the sign of this outcome inconsistently. Read the quote.">direction unverified</span>`);
-  if(c.expected)tags.push(c.own_claim.includes(true)?`<span class="tag warn" title="Forecast, expectation or limit, not a measured effect.">expectation, not a finding</span>`:`<span class="tag warn" title="A view the author reports from others. Not tested here.">reported view, untested</span>`);
-  c.evidence.forEach(e=>tags.push(`<span class="tag">${esc(e)}</span>`));
   c.links.forEach(l=>{const t=DATA.sources.find(s=>s.id===l.to),d=LT[l.t]||{label:l.t,color:"var(--mute)",modelName:""};tags.push(`<span class="tag lk" style="--c:${d.color}" title="${esc(d.modelName)} connection · ${esc(t?colPath(Array.isArray(t.col)?t.col[t.col.length-1]:t.col):"reading")}${l.c?" · "+(claimOf(l)?"\u201c"+(claimOf(l).quote||"").slice(0,120)+"\u201d":"claim "+l.c):""}">${esc(d.label)} → ${esc(t?t.title.slice(0,30):l.to)}${l.p?" · p."+esc(l.p):""}</span>`)});
-  if(c.scope)tags.push(`<span class="tag">${esc(c.scope)}</span>`);
+  if(now&&now.scope)tags.push(`<span class="tag">${esc(now.scope)}</span>`);
   if(c.own_claim.includes(false))tags.push(`<span class="tag warn">reported</span>`);
-  if(c.in_abstract)tags.push(`<span class="tag warn">abstract</span>`);
+  if(now&&now.in_abstract)tags.push(`<span class="tag warn">abstract</span>`);
   return `<article class="card${sel===c.src+c.id?" sel":""}" tabindex="0" data-k="${esc(c.src+"\u0001"+c.id)}">
    <span class="dh" draggable="true" title="Drag to reorder (Alt+Up / Alt+Down on the keyboard)" aria-hidden="true"><svg class="i" viewBox="0 0 24 24"><path d="M9 6h.01M15 6h.01M9 12h.01M15 12h.01M9 18h.01M15 18h.01"/></svg></span>
    <div><span class="quote" title="Double-click to edit">${esc(c.quote)}</span></div>${c.gist?`<div class="gist">${esc(c.gist)} <em>(paraphrase)</em></div>`:""}
-   <div class="meta">${pg}${c.status==="failed"||c.status==="ambiguous"?`<span class="tag ${stCls[c.status]}">${esc(c.status)}</span>`:""}${tags.join("")}${c.section.map(s=>`<span class="tag">${esc(s)}</span>`).join("")}</div>${sel===c.src+c.id?`<button class="gbtn" data-g="1">Show in graph</button><button class="gbtn" data-ed="1">Edit</button><button class="gbtn" data-zknote="1">To note</button><button class="gbtn" data-del="1">Delete</button>`+related(c):""}</article>`;
+   <div class="meta">${pg}${c.status==="failed"||c.status==="ambiguous"?`<span class="tag ${stCls[c.status]}">${esc(c.status)}</span>`:""}${tags.join("")}</div>${sel===c.src+c.id?`<button class="gbtn" data-g="1">Show in graph</button><button class="gbtn" data-ed="1">Edit</button><button class="gbtn" data-zknote="1">To note</button><button class="gbtn" data-del="1">Delete</button>`:""}</article>`;
 }
 let RQ=null;  // pending list fill
 const NSHOW=260;  // cards painted before waiting for a scroll
@@ -617,12 +616,6 @@ function lkLegend(){
 }
 $("lkc").onclick=e=>{const b=e.target.closest("button");if(!b)return;const r=$("rl");r.value=r.value===b.dataset.t?"":b.dataset.t;graph()};
 // related[j] = index into `all` (same order as build.py); sim = TF-IDF cosine, word overlap only, not meaning
-function related(c){
-  const one=(j,tag)=>{const r=all[j[0]];return `<li><button data-k="${esc(r.src+"\u0001"+r.id)}">${tag} ${esc(r.srcTitle.slice(0,40))} · ${r.pdf_page.length?"p."+esc(r.cite_page||"?"):"no page"} · sim ${j[1]}</button><br><small>${esc(r.quote.slice(0,160))}…</small></li>`};
-  const live=j=>!all[j[0]].del;
-  const o=(c.opp||[]).filter(live).map(j=>one(j,"⚠ opposite sign:")),r=(c.rel||[]).filter(live).map(j=>one(j,"≈"));
-  return o.length+r.length?`<details open><summary>Other papers: ${o.length} opposite-sign, ${r.length} similar</summary><ul class="rl">${o.join("")}${r.join("")}</ul></details>`:"";
-}
 function open_(src,id){
   const c=all.find(x=>x.src===src&&x.id===id);if(!c)return;
   showAll();  // the target card may not be painted yet
