@@ -172,8 +172,8 @@ body.gz #znav{display:flex}
 #gout .snode.drag,#gout .tnode.drag{cursor:grabbing;opacity:.85;pointer-events:none}
 #gout .node.drag{cursor:grabbing;opacity:.9;pointer-events:none;filter:drop-shadow(0 6px 10px rgba(0,0,0,.45))}
 #gout .tnode.drop rect,#gout .snode.drop rect{stroke:var(--acc);stroke-width:3}
-#gout .e.novia{opacity:.38;filter:blur(.55px);stroke-dasharray:3 6}
-[data-theme="light"] #gout .e.novia{opacity:.42;filter:none}
+#gout .e.novia{opacity:.46;filter:blur(.55px);stroke-dasharray:3 6}
+[data-theme="light"] #gout .e.novia{opacity:.5;filter:none}
 #gout .e.novia:hover{opacity:.75;filter:none}
 #gout .tnode.none rect{fill:none;stroke-dasharray:4 3;fill-opacity:0}
 #gout .tnode.none text{fill:var(--mute);font-weight:600}
@@ -498,6 +498,15 @@ function rebuildVocabUI(){
 const REN=()=>all.forEach(c=>{const r=ED.r||{},cols=COL[c.src]||[];
   ["axisA","axisB","pathway"].forEach(k=>c[k]=U((c[k]||[]).map(x=>{for(const cc of cols){const v=r[cc+"\u0001"+x];if(v)return v}return r["\u0001"+x]||r[x]||x})))});
 all.forEach(norm);REN();
+// a reading renamed after a claim was written keeps its link: retarget by title word overlap
+(()=>{const ids=new Set(DATA.sources.map(s=>s.id)),tok=t=>new Set(String(t||"").toLowerCase().match(/[a-z0-9]+/g)||[]);
+  const T=DATA.sources.map(s=>({id:s.id,t:tok(s.title)})),jac=(a,b)=>{let i=0;a.forEach(x=>{if(b.has(x))i++});return i/((a.size+b.size-i)||1)};
+  let n=0;const fix=l=>{if(!l||!l.to||ids.has(l.to))return;const a=tok(l.to);let best=null,bs=0;
+    T.forEach(x=>{const sc=jac(a,x.t);if(sc>bs){bs=sc;best=x.id}});
+    if(best&&bs>=.5){l.to=best;n++}};
+  [ED.a,ED.m].forEach(m=>Object.values(m||{}).forEach(c=>{((c&&c.links)||[]).forEach(fix)}));
+  all.forEach(c=>(c.links||[]).forEach(fix));
+  if(n)localStorage.setItem("cv:edits",JSON.stringify(ED));})();
 // list order: source, then PDF page (default key c._k); a drag stores ED.o[group mode, group, claim] and wins, so a claim in two groups has one order per group. ponytail: fractional keys, about 19 drops between the same two neighbours before float precision runs out
 const SX={};DATA.sources.forEach((s,i)=>SX[s.id]=i);
 all.forEach((c,i)=>c._k=(SX[c.src]||0)*1e4+(pg0(c)||9999)+i/1e5);
@@ -1026,7 +1035,7 @@ const zkFromPassage=(q,pg,src)=>{src=src||(window.curSrc?window.curSrc():"");con
   zkHealNote(id);  // the same sentence restore the claim editor uses; the reading is open right now
   toast("Note started from page "+(pg||"?"))};
 // a claim is already a verified sentence: carry it into a note as the source passage
-const zkFromClaim=c=>{if(!c)return;const id=zkNew(null,{src:c.src,page:(c.pdf_page||[])[0]||null,quote:c.quote,tags:(c.pathway||[]).slice(0,1),subt:(c.axisA||[]).slice(0,1)});show("notes");toast("Note started from a claim, filed under its pathway")};  // the note graph is where a claim becomes a tag branch
+const zkFromClaim=c=>{if(!c)return;const id=zkNew(null,{src:c.src,page:(c.pdf_page||[])[0]||null,quote:c.quote,tags:(c.pathway||[]).slice(0,1),subt:(c.status==="user"?c.axisA||[]:[]).slice(0,1)});show("notes");toast("Note started from a claim, filed under its pathway")};  // the note graph is where a claim becomes a tag branch
 const zkHealNote=async id=>{const n=zkNote(id);if(!n||!n.src||!n.page)return;
   const P=window.pageText?await window.pageText(n.src,n.page):"";
   if(!P){toast("Open that reading if you want the passage repaired");return}
