@@ -80,7 +80,7 @@ When you open it by double-click, the browser cannot read the `pdf` folder by it
 
 The install folder is also the viewer folder: the app serves the `index.html` that sits next to `ClaimViewer.exe`. To use a viewer you built with `build.py`, replace `index.html` there. Setup never overwrites `index.html` or `sources.js`, and never deletes them, `pdf`, or your saved claims when you upgrade or uninstall.
 
-Needs the Microsoft WebView2 runtime (already on Windows 11 and current Windows 10). Notifications and confirmations are native to the app; no browser popups.
+Needs the Microsoft WebView2 runtime (already on Windows 11 and current Windows 10). Confirmations are drawn inside the app, never by Windows and never by the browser. The two file dialogs (import PDFs, save PDF) are native Windows dialogs owned by the app window, so they cannot open behind it, and the page gives up after two minutes instead of waiting forever.
 
 ## Build the installer yourself
 
