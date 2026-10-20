@@ -1,7 +1,7 @@
 ; Inno Setup 6 script. Builds release\ClaimViewer-Setup-<version>.exe.
 ; Needs release\ClaimViewer.exe first (build_exe.bat makes it, then runs this script).
 #define AppName "Claim Viewer"
-#define AppVersion "1.0.0"
+#define AppVersion "1.1.0"
 
 [Setup]
 ; Keep this AppId fixed: it is how a new setup finds the old install and upgrades it.

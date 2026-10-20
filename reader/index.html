@@ -342,7 +342,7 @@ body.notes #libp{display:none}
   <label>Gist <textarea name="gist" rows="2"></textarea></label>
   <fieldset data-n="role"><legend id="grole">Role (tick all that apply)</legend><div class="cbs"></div></fieldset>
   <div id="xed"></div>
-  <label id="lpath">Pathways (comma separated) <input name="pathway"></label>
+  <label id="lpath">Pathways <input name="pathway" placeholder="Type a pathway, or several separated by commas"><select name="pathwaySel" multiple size="4" hidden aria-label="Pick pathways"></select></label>
   <fieldset><legend id="gfa">Axis A (Enter adds one)</legend><div class="chips" data-n="axisA"><input list="dlf" aria-label="Add axis A value"></div></fieldset>
   <fieldset><legend id="goc">Axis B (Enter adds one)</legend><div class="chips" data-n="axisB"><input list="dlo" aria-label="Add axis B value"></div></fieldset>
   <fieldset data-n="direction"><legend id="gdir">Direction (tick all that apply)</legend><div class="cbs"></div></fieldset>
@@ -375,7 +375,7 @@ body.notes #libp{display:none}
 <button id="hr" type="button" class="edge" title="Hide the PDF pane" aria-label="Hide the PDF pane" aria-pressed="false"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
 <script src="lib/pdf.min.js"></script><script src="sources.js"></script>
 <script>
-const DATA=/*DATA*/null;
+const DATA={"vocab": {"pathways": {"1": "Pathway 1", "2": "Pathway 2", "3": "Pathway 3", "4": "Pathway 4", "5": "Pathway 5", "6": "Pathway 6"}, "roles": {"Q1": "Determinant: a cause of the variation", "Q2": "Effect: an outcome of the variation", "TYPOLOGY": "Defines or classifies, no cause or effect", "OTHER": "Other relevant context"}, "evidence": ["theory", "case-study", "cross-country-quantitative", "firm-level-quantitative", "historical", "review-of-literature", "author-assertion"], "direction": ["+", "-", "mixed", "none"], "direction_rule": "Direction is the sign of change in the NAMED outcome quantity, never good or bad. '+' = the quantity named in 'outcome' rises. '-' = it falls. 'mixed' = it rises in one place or time and falls in another. 'none' = no change, or the authors did not assess it. Example: SOE losses grow -> outcome 'fiscal and financial burden', direction '+'. Privatization cuts the state deficit -> same outcome, direction '-'.", "expected_rule": "expected = true when the quote is a forecast, an expectation, a hypothetical ('may', 'likely', 'if... then'), a stated limit of the study, or a view the authors report without testing. Such a claim keeps its role (Q2 if it names an outcome) and gets expected = true. expected = false for measured or observed findings.", "q1_factors": ["Factor 1", "Factor 2", "Factor 3"], "q2_outcomes": ["Outcome 1", "Outcome 2", "Outcome 3"]}, "sources": []};
 DATA.schema=Object.assign({a:{name:"Determinant",hint:"a cause of the variation"},b:{name:"Effect",hint:"what the variation does"},p:{name:"Pathway",hint:"a strand of the literature"}},DATA.schema||{});
 const SC={a:DATA.schema.a.name,b:DATA.schema.b.name,p:DATA.schema.p.name};
 // Connection models: pick a model, then a type. A link keeps both, so one claim can carry a stance link and a causal link.
@@ -1438,6 +1438,13 @@ async function editor(c){
   setCb("role",v.role);setCb("direction",v.direction);setCb("evidence",v.evidence);setCb("own_claim",v.own_claim.map(b=>b?"1":"0"));
   ["axisA","axisB","section","tags"].forEach(n=>setChips(n,v[n]));
   F.elements.pdf_page.value=v.pdf_page.join(", ");F.elements.pathway.value=(v.pathway||[]).join(",");
+  {const known=[...new Set([...Object.values(VB.pathways||{}),...all.flatMap(x=>x.pathway||[]),...(c?(c.pathway||[]):[])])]
+     .filter(Boolean).sort((a,b)=>a.localeCompare(b));
+   const sel=F.elements.pathwaySel,inp=F.elements.pathway;
+   sel.innerHTML=known.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join("");
+   [...sel.options].forEach(o=>o.selected=!!c&&(c.pathway||[]).includes(o.value));
+   sel.hidden=!c;sel.disabled=!c;inp.hidden=!!c;inp.disabled=!!c;   // Add types freely; Edit picks from what exists
+   $("lpath").firstChild.textContent=c?"Pathways (pick)":"Pathways";}
   $("xed").innerHTML=(VB.xcols||[]).map(x=>`<label>${esc(x.name||x.k)} <input name="xe:${esc(x.k)}" value="${esc(((v.x&&v.x[x.k])||[]).join(", "))}" placeholder="comma separated"></label>`).join("");
   $("lkrows").innerHTML="";v.links.forEach(addLink);
   F.elements.src.disabled=!!c||!!$("pdfsel").value;D.show();F.elements.quote.focus();
@@ -1451,7 +1458,9 @@ F.addEventListener("submit",e=>{
   const _x={};(VB.xcols||[]).forEach(x=>{const i=F.elements["xe:"+x.k];if(i)_x[x.k]=i.value.split(",").map(t=>t.trim()).filter(Boolean)});
   const f=norm({quote:g("quote"),gist:g("gist"),role:rl.length?rl:["OTHER"],section:ch("section"),axisA:ch("axisA"),axisB:ch("axisB"),tags:ch("tags"),direction:cb("direction"),
     evidence:cb("evidence"),own_claim:cb("own_claim").map(v=>v==="1"),links:lks(),
-    pdf_page:g("pdf_page").split(/[,\s]+/).map(Number).filter(n=>n>0).sort((a,b)=>a-b),pathway:g("pathway").split(",").map(x=>x.trim()).filter(Boolean)});  // free text: whatever the user typed is kept as the pathway name
+    pdf_page:g("pdf_page").split(/[,\s]+/).map(Number).filter(n=>n>0).sort((a,b)=>a-b),pathway:(()=>{const sel=F.elements.pathwaySel,inp=F.elements.pathway;
+     return (sel&&!sel.hidden)?[...sel.selectedOptions].map(o=>o.value).filter(Boolean)
+       :String(inp&&inp.value||"").split(",").map(x=>x.trim()).filter(Boolean)})()});  // free text: whatever the user typed is kept as the pathway name
   if(Object.keys(_x).length)f.x=_x;
   if(k){const c=all.find(x=>kc(x)===k);if(f.quote!==c.quote)f.rs=1;
     Object.assign(c,f);if(!ED.a.includes(c))ED.m[k]={...ED.m[k],...f};}

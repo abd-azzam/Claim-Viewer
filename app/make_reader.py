@@ -11,7 +11,7 @@ HERE = Path(__file__).resolve().parent.parent  # project folder; this script liv
 OUT = HERE / "reader"
 SOURCES_JS = """// One line per reading. id = file name in the pdf folder without .pdf. Add a line, drop the PDF in pdf/, reload.
 window.SOURCES=[
-  {id:"example-paper", title:"Example paper"}
+  {id:"smith-2020", title:"Smith (2020) - Why States Build Capacity"}
 ];
 """
 
