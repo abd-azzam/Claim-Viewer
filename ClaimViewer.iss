@@ -3,6 +3,13 @@
 ; Installs like a normal per-user app in C:\Apps\ClaimViewer, with a Start menu entry.
 #define AppName "Claim Viewer"
 #define AppVersion "2.1.0"
+; A page holding someone's claims is ~6 MB; the empty reader page is ~200 KB.
+; This refuses to package a page that big, whatever ran before ISCC.
+#if FileExists("dist\index.html")
+  #if FileSize("dist\index.html") > 1048576
+    #error "dist\index.html is too big to be the empty reader page. Refusing to package a personal page."
+  #endif
+#endif
 
 [Setup]
 ; Keep this AppId fixed: it is how a new setup finds the old install and upgrades it.
@@ -26,7 +33,7 @@ WizardStyle=modern
 UninstallDisplayIcon={app}\ClaimViewer.exe
 
 [Tasks]
-Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
+Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
 Source: "dist\ClaimViewer.exe"; DestDir: "{app}"; Flags: ignoreversion
