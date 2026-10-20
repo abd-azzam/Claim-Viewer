@@ -558,7 +558,8 @@ function keys(c){
   return(c.section.length?c.section:["(no section)"]).map(s=>c.srcTitle.slice(0,24)+" | "+s);
 }
 const stCls={exact:"ok",anchored:"warn",ambiguous:"warn",failed:"bad"};
-function card(c){
+function card(c){  // `now` keeps extractor-only fields (gist, factor, outcome, tags, section) off imported claims
+
   const pg=c.pdf_page.length?`<span class="pg cp" title="Click to copy this claim with (author, year, p. xx)">Copy</span> <span class="pg">PDF p.${c.pdf_page.map(esc).join(", ")}</span>`:`<span class="pg cp" title="Click to copy this claim with (author, year, p. xx)">Copy</span> <span class="pg">no page</span>`;
   const tags=c.role.map(r=>`<span class="tag q">${esc(r)}</span>`);
   (c.pathway||[]).forEach(p=>tags.push(`<span class="tag">${esc(VB.pathways[p]||p)}</span>`));
@@ -574,7 +575,7 @@ function card(c){
   if(now&&now.in_abstract)tags.push(`<span class="tag warn">abstract</span>`);
   return `<article class="card${sel===c.src+c.id?" sel":""}" tabindex="0" data-k="${esc(c.src+"\u0001"+c.id)}">
    <span class="dh" draggable="true" title="Drag to reorder (Alt+Up / Alt+Down on the keyboard)" aria-hidden="true"><svg class="i" viewBox="0 0 24 24"><path d="M9 6h.01M15 6h.01M9 12h.01M15 12h.01M9 18h.01M15 18h.01"/></svg></span>
-   <div><span class="quote" title="Double-click to edit">${esc(c.quote)}</span></div>${now&&c.gist?`<div class="gist">${esc(c.gist)} <em>(paraphrase)</em></div>`:""}  // the extractor wrote this, not the reader
+   <div><span class="quote" title="Double-click to edit">${esc(c.quote)}</span></div>${now&&c.gist?`<div class="gist">${esc(c.gist)} <em>(paraphrase)</em></div>`:""}
    <div class="meta">${pg}${c.status==="failed"||c.status==="ambiguous"?`<span class="tag ${stCls[c.status]}">${esc(c.status)}</span>`:""}${tags.join("")}</div>${sel===c.src+c.id?`<button class="gbtn" data-g="1">Show in graph</button><button class="gbtn" data-ed="1">Edit</button><button class="gbtn" data-zknote="1">To note</button><button class="gbtn" data-del="1">Delete</button>`:""}</article>`;
 }
 let RQ=null;  // pending list fill
