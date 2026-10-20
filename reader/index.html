@@ -692,7 +692,7 @@ const DCOL={"+":"var(--dp)","-":"var(--dn)",mixed:"var(--dm)",none:"var(--mute)"
 let G={m:"L",l:{f:1,p:1,o:1},k:{w:1,p:0,f:0,o:0}};
 try{const g=JSON.parse(store.get("cv:graph"));if(g&&g.l&&g.k)G=g}catch(e){}
 const ckb=(grp,list)=>list.map(([k,t])=>`<label><input type="checkbox" data-gc="${grp}${k}"> ${t}</label>`).join("");
-function gctl(){return `<div class="tabs"><button data-gc="mL">Layers</button><button data-gc="mC">Claim network</button><button data-gc="mK">Connected claims</button><button data-gc="mZ">Notes</button></div>${G.m==="Z"?"":`<div class="rnw" role="group" aria-label="Box names"><span class="rnh" id="rnh">Box names: they label the graph, the list and the edit box</span><div class="tabs rn"><label title="Left column">Left<input id="rna" aria-label="Left box name" value="${esc(SC.a)}"></label><label title="Middle column">Middle<input id="rnp" aria-label="Middle box name" value="${esc(SC.p)}"></label><label title="Right column">Right<input id="rnb" aria-label="Right box name" value="${esc(SC.b)}"></label></div></div><div class="ck ly" role="group" aria-label="Layers to show"><b>Show</b><span class="rnh">untick the middle box to draw direct lines</span>${ckb("l",[["f",SC.a],["p",SC.p],["o",SC.b],...(VB.xcols||[]).map(x=>[x.k,x.name||x.k])])}</div><div class="tabs"><button type="button" id="vbg" title="Edit the three lists for this folder">Edit lists</button></div><div class="ck lk" role="group" aria-label="Link claims that share"><b>Link by</b>${ckb("k",[["w","wording"],["p",SC.p],["f",SC.a],["o",SC.b]])}</div>`}<div class="tabs" id="znav" role="group" aria-label="Note graph"><button type="button" id="zkmerge" aria-pressed="${MERGE}" title="Join all notes of one reading into a single pill" onpointerdown="event.preventDefault();event.stopPropagation();zkToggleMerge()">Merge readings</button><button type="button" id="zkback" title="Back to the notes list" onpointerdown="event.stopPropagation();show('list');document.getElementById('vn').click()">Notes list</button><button type="button" id="zkgundo" title="Undo the last change" onpointerdown="event.preventDefault();event.stopPropagation();doUndo()">Undo</button><button type="button" id="zkgdel" title="Delete the clicked node (tag, sub-tag or note)" onpointerdown="event.preventDefault();event.stopPropagation();doDelete()">Delete</button></div>`}
+function gctl(){return `<div class="tabs"><button data-gc="mL">Layers</button><button data-gc="mC">Claim network</button><button data-gc="mK">Connected claims</button><button data-gc="mZ">Notes</button></div>${G.m==="Z"?"":`<div class="rnw" role="group" aria-label="Box names"><span class="rnh" id="rnh">Box names: they label the graph, the list and the edit box</span><div class="tabs rn"><label title="Left column">Left<input id="rna" aria-label="Left box name" value="${esc(SC.a)}"></label><label title="Middle column">Middle<input id="rnp" aria-label="Middle box name" value="${esc(SC.p)}"></label><label title="Right column">Right<input id="rnb" aria-label="Right box name" value="${esc(SC.b)}"></label></div></div><div class="ck ly" role="group" aria-label="Layers to show"><b>Show</b><span class="rnh">untick the middle box to draw direct lines</span>${ckb("l",[["f",SC.a],["p",SC.p],["o",SC.b],...(VB.xcols||[]).map(x=>[x.k,x.name||x.k])])}</div><div class="tabs"><button type="button" id="vbg" title="Edit the three lists for this folder">Edit lists</button></div><div class="ck lk" role="group" aria-label="Link claims that share"><b>Link by</b>${ckb("k",[["w","wording"],["p",SC.p],["f",SC.a],["o",SC.b]])}</div>`}<div class="tabs" id="znav" role="group" aria-label="Note graph"><button type="button" id="zkmerge" aria-pressed="${MERGE}" title="Join all notes of one reading into a single pill">Merge readings</button><button type="button" id="zkback" title="Back to the notes list">Notes list</button><button type="button" id="zkgundo" title="Undo the last change">Undo</button><button type="button" id="zkgdel" title="Delete the clicked node (tag, sub-tag or note)">Delete</button></div>`}
 function gsync(){
   document.body.classList.toggle("gnet",G.m==="C");document.body.classList.toggle("gcon",G.m==="K");document.body.classList.toggle("gz",G.m==="Z");
   document.querySelectorAll("[data-gc]").forEach(el=>{const k=el.dataset.gc;
@@ -700,6 +700,14 @@ function gsync(){
     else el.checked=!!G[k[0]][k[1]]});
 }
 function gset(){store.set("cv:graph",JSON.stringify(G));gsync();show("graph");}
+// the note-graph buttons were inline onpointerdown handlers, and inline handlers only see window.*; every one of them threw
+document.addEventListener("pointerdown",e=>{
+  const b=e.target.closest&&e.target.closest("#znav button");if(!b)return;
+  e.preventDefault();e.stopPropagation();
+  if(b.id==="zkmerge"){zkToggleMerge();b.setAttribute("aria-pressed",MERGE)}
+  else if(b.id==="zkback"){show("list");$("vn").click()}
+  else if(b.id==="zkgundo")doUndo();
+  else if(b.id==="zkgdel")doDelete();});
 document.addEventListener("click",e=>{if(e.target.closest("#vbg")){$("vb").click();return}
   const b=e.target.closest("button[data-gc]");if(!b)return;G.m=b.dataset.gc[1];gset();});
 document.addEventListener("change",e=>{const i=e.target.closest("#rna,#rnp,#rnb");if(!i)return;
@@ -711,6 +719,7 @@ document.addEventListener("change",e=>{const i=e.target.closest("input[data-gc]"
   if(!Object.values(G[g]).some(Boolean))G[g][k]=1;  // keep at least one layer / one link basis
   gset();});
 function graph(){
+  if(document.body.classList.contains("graph"))gsync();  // every render owns the toolbar, not only the tab click
   all.forEach(c=>{c.__via=0});  // every render starts clean, or a cleared filter keeps last render's flags
   let rows=all.filter(pass);const sc=sel&&all.find(x=>x.src+x.id===sel);
   {const faSel=$("fa").value;  // one variation chosen: keep what it connects to, not just claims that name it
@@ -846,10 +855,14 @@ function netGraph(rows,sc){
 const LKC=new Proxy({},{get:(_,t)=>LT[t]?LT[t].color:"var(--mute)"});
 function linkGraph(rows,sc){
   const S=srcs(),n=S.length,E=new Map();
-  rows.forEach(c=>c.links.forEach(l=>{if(!S.some(s=>s.id===l.to))return;  // one arrow per link; norm() keeps a claim to one link per (reading, type), so an arrow's number is still its claims
+  const gone=new Set();
+  rows.forEach(c=>c.links.forEach(l=>{if(l.to===c.src)return;  // a reading pointing at itself draws a loop nobody can read
+    if(!S.some(s=>s.id===l.to)){gone.add(l.to);return}  // renamed or removed reading: say so instead of drawing nothing
+    // one arrow per link; norm() keeps a claim to one link per (reading, type), so an arrow's number is still its claims
     const k=c.src+"|"+l.to+"|"+l.t,e=E.get(k)||{a:c.src,b:l.to,t:l.t,n:0,g:[]};e.n++;if(e.g.length<3)e.g.push((c.gist||c.quote||"").slice(0,90));E.set(k,e)}));
   const total=[...E.values()].reduce((s,e)=>s+e.n,0);
-  if(!E.size)return `<p class="count">No connections to draw. Open a claim with Edit, then pick a Connected reading and a Connection (supporting, against or ambiguous).</p>`;
+  const g=gone.size?`<p class="count">${gone.size} link${gone.size>1?"s":""} point to a reading that is not in the library: ${[...gone].slice(0,3).map(esc).join("; ")}${gone.size>3?"…":""}</p>`:"";
+  if(!E.size)return `<p class="count">No connections to draw. Open a claim with Edit, then pick a Connected reading and a Connection (supporting, against or ambiguous).</p>${g}`;
   const r=14,R=Math.max(120,Math.min(240,n*34)),cx=450,cy=R+90,ang=i=>n===1?-Math.PI/2:2*Math.PI*i/n-Math.PI/2,pt=i=>n===1?[cx,cy]:[cx+R*Math.cos(ang(i)),cy+R*Math.sin(ang(i))];
   const ix=id=>S.findIndex(s=>s.id===id),mx=Math.max(...[...E.values()].map(e=>e.n));
   const sk=sc?sc.links.filter(l=>S.some(s=>s.id===l.to)).map(l=>sc.src+"|"+l.to+"|"+l.t):[];  // arrows of the selected claim
@@ -887,7 +900,7 @@ function toList(set){
 }
 function show(m){const g=m==="graph",l=m==="lib",n=m==="notes";
   document.body.classList.toggle("graph",g);document.body.classList.toggle("library",l);document.body.classList.toggle("notes",n&&!g&&!l);
-  if(!g)document.body.classList.remove("gz");  // gz is the note-graph mode marker; it has no meaning outside the graph
+  if(!g)["gz","gnet","gcon"].forEach(c=>document.body.classList.remove(c));  // the graph mode markers have no meaning outside the graph
   $("tg").classList.toggle("on",g);$("tl").classList.toggle("on",!g&&!l);$("lb").classList.toggle("on",l);
   const nn=!g&&!l&&n;$("vn").classList.toggle("on",nn);$("vc").classList.toggle("on",!g&&!l&&!n);$("vn").setAttribute("aria-selected",nn);$("vc").setAttribute("aria-selected",!g&&!l&&!n);
   if(g)graph();else if(l)drawLib();else if(n){zkRenderList();if(zkSel&&zkNote(zkSel))zkOpen(zkSel);else $("zkpane").innerHTML=`<div class="empty">Pick a note on the left, or start a new one.</div>`}else render();}
@@ -899,9 +912,9 @@ try{let _fix=false;Object.values(ZK.notes||{}).forEach(n=>{if(!n)return;  // "" 
    if((n.tags||[]).some(t=>!String(t||"").trim())){n.tags=[...new Set((n.tags||[]).map(t=>String(t||"").trim()).filter(Boolean))];_fix=true}});
  if(_fix)localStorage.setItem("cv:zk",JSON.stringify(ZK))}catch(e){}
 const zkSave=()=>store.set(ZKKEY,JSON.stringify(ZK));
-let UNDO=[],zkPick=null;
-try{UNDO=JSON.parse(localStorage.getItem("cv:zkundo")||"[]");if(!Array.isArray(UNDO))UNDO=[]}catch(e){UNDO=[]}
-const saveUndo=()=>{try{localStorage.setItem("cv:zkundo",JSON.stringify(UNDO))}catch(e){}};
+let UNDO=[],zkPick=null;  // session only: a persisted stack let one click rewind the notes to a days-old state
+try{localStorage.removeItem("cv:zkundo")}catch(e){}
+const saveUndo=()=>{};
 const pushUndo=()=>{UNDO.push(JSON.stringify(ZK));if(UNDO.length>30)UNDO.shift();saveUndo()};
 const doUndo=()=>{if(!UNDO.length)return toast("Nothing to undo");ZK=JSON.parse(UNDO.pop());saveUndo();zkSave();zkRenderList();graph();if(zkSel&&zkNote(zkSel))zkOpen(zkSel);toast("Undone")};
 const doDelete=()=>{if(!zkPick)return toast("Click a node in the graph first");

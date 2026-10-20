@@ -39,7 +39,7 @@ Zotero keeps your PDFs and highlights, but it does not draw a graph of how the c
 - The **Notes** tab sits beside Claims in the list. Each note quotes a passage, names its reading and page, and carries **tags and nested sub-tags** (`Mainstream Parties › Core Supporters` — depth is free).
 - The **note graph** (Graph → Notes) draws tag → sub-tag → note trees; untagged notes stay visible under "(no tag)".
 - **Drag to fix mistakes**: drag a note onto a tag or sub-tag to re-file it; drag a node onto another of the same kind to **swap** them (any level, tag↔tag included); drop in the strip just below a node to nest it there. The open editor's fields follow every move.
-- **Undo** (30 steps, kept across app restarts) and **Delete** (the node you clicked last: note, tag or sub-tag) sit in the graph toolbar, deliberately small and right-aligned so they never compete with the mode tabs.
+- **Undo** (30 steps, this session only) and **Delete** (the node you clicked last: note, tag or sub-tag) sit in the graph toolbar, deliberately small and right-aligned so they never compete with the mode tabs. Undo does not survive a restart: a saved stack once rewound the notes to a days-old state.
 - **Merged readings**: by default every note gets its own pill; *Merge readings* joins all notes of one reading into a single pill whose click opens a menu of its notes with their branches.
 
 ![Graph of pathways, factors and outcomes](docs/screenshot-graph.png)
