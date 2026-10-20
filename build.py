@@ -1,6 +1,7 @@
-"""Build App/ClaimViewer/index.html from library.json + data/claims/*.verified.json.
+"""Build index.html from library.json + data/claims/*.verified.json.
 
-    python -I -X utf8 build.py
+    python -I -X utf8 build.py                  inputs beside this script
+    python -I -X utf8 build.py --from <dir>     another folder's library.json + data/
 
 The template holds the whole app; this script only fills its DATA payload:
 schema (the two renameable axes), the connection models, the library (collections)
@@ -12,7 +13,9 @@ import sys
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-TEMPLATE = HERE / "template" / "template.html"
+# Two layouts exist: the app folder keeps the template in template/, this repo keeps it at the root.
+TEMPLATE = next((p for p in (HERE / "template" / "template.html", HERE / "template.html") if p.exists()),
+                HERE / "template.html")
 OUT = HERE / "index.html"
 
 SCHEMA = {
@@ -62,15 +65,16 @@ def load(p, default=None):
     return json.loads(p.read_text(encoding="utf-8"))
 
 
-def main():
-    lib = load(HERE / "library.json", {"collections": [], "items": {}})
-    vocab = load(HERE / "data" / "vocab.json", {})
-    overrides = load(HERE / "data" / "overrides.json", {})
+def main(src=None):
+    src = Path(src).resolve() if src else HERE
+    lib = load(src / "library.json", {"collections": [], "items": {}})
+    vocab = load(src / "data" / "vocab.json", {})
+    overrides = load(src / "data" / "overrides.json", {})
 
     sources = []
     for sid, item in lib["items"].items():
         claims = []
-        p = HERE / "data" / "claims" / f"{sid}.verified.json"
+        p = src / "data" / "claims" / f"{sid}.verified.json"
         if p.exists():
             claims = load(p)["claims"]
         for c in claims:
@@ -167,4 +171,7 @@ def add_related(sources, flat):
 
 
 if __name__ == "__main__":
-    main()
+    # python build.py                 build from the inputs beside this file
+    # python build.py --from <dir>     build from another folder's library.json + data/
+    args = sys.argv[1:]
+    main(args[args.index("--from") + 1] if "--from" in args else None)
