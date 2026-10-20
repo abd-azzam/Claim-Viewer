@@ -60,7 +60,9 @@ body.graph main,body.graph section{display:none}body.graph #gv{display:flex;flex
 #ed,#vl{position:fixed;left:12px;top:12px;margin:0;max-height:92vh;overflow:auto;z-index:9;background:var(--panel);color:var(--ink);border:2px solid var(--acc);border-radius:8px;padding:14px}#ed label,#vl label{display:grid;gap:3px;font-size:12px;font-weight:700;color:var(--mute)}#ed input,#ed textarea,#ed select,#vl textarea{font:inherit;font-weight:400;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:6px}
 #ed button,#vl button{padding:6px 16px;border:1px solid var(--acc);border-radius:6px;background:var(--bg);color:var(--acc);font:inherit;cursor:pointer}#ed button[value=ok],#vl button[value=ok]{background:var(--acc);color:var(--bg);font-weight:700}
 #ed fieldset{border:1px solid var(--line);border-radius:5px;margin:0;padding:4px 8px 6px;min-width:0}#ed legend{font-size:12px;font-weight:700;color:var(--mute);padding:0 4px}#ed .cbs{display:flex;flex-wrap:wrap;gap:2px 12px}#ed label.cb{display:flex;align-items:center;gap:4px;font-weight:400;color:var(--ink)}#ed .cb input{padding:0;margin:0}
-#ed .chips{display:flex;flex-wrap:wrap;gap:4px;align-items:center}#ed .chip{display:inline-flex;align-items:center;gap:2px;border:1px solid var(--line);border-radius:12px;padding:1px 4px 1px 8px;font-size:12px;background:var(--bg)}#ed .chip button,#ed .lkrow button{padding:0 4px;border:0;background:none;color:var(--mute)}#ed .chips input{flex:1;min-width:8em}#ed .lkrow{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:4px}#ed .lkrow select{flex:1;min-width:0}#ed .lkrow .lkc{flex:2}#ed #lkadd{padding:4px 8px;border-style:dashed}
+#ed .chips{display:flex;flex-wrap:wrap;gap:4px;align-items:center}#ed .chip{display:inline-flex;align-items:center;gap:2px;border:1px solid var(--line);border-radius:12px;padding:1px 4px 1px 8px;font-size:12px;background:var(--bg)}#ed .chip button,#ed .lkrow button{padding:0 4px;border:0;background:none;color:var(--mute)}#ed .chips input{flex:1;min-width:8em}#ed .lkrow{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:4px}
+.lka{clear:both;margin-top:6px}  /* the button owns its own line, always last */
+.lka button{display:inline-block}#ed .lkrow select{flex:1;min-width:0}#ed .lkrow .lkc{flex:2}#ed #lkadd{padding:4px 8px;border-style:dashed}
 #vl{left:50%;top:50%;transform:translate(-50%,-50%)}#vl form{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;width:min(1000px,92vw)}#vl form>b,#vl form>small,#vl form>div:last-child{grid-column:1/-1}#vl form>b{font-size:16px}
 #vl .col{display:flex;flex-direction:column;gap:8px;min-width:0}#vl h4{margin:0}#vl .items{display:grid;gap:6px;max-height:55vh;overflow:auto;padding-right:2px}
 #libp{display:none;flex:1;min-height:0;overflow:auto;margin-top:6px}
@@ -340,7 +342,7 @@ body.notes #libp{display:none}
   <label>Gist <textarea name="gist" rows="2"></textarea></label>
   <fieldset data-n="role"><legend id="grole">Role (tick all that apply)</legend><div class="cbs"></div></fieldset>
   <div id="xed"></div>
-  <label id="lpath">Pathways (comma separated) <input name="pathway" list="dlp" placeholder="Type a pathway, or pick one"></label><datalist id="dlp"></datalist>
+  <label id="lpath">Pathways (comma separated) <input name="pathway"></label>
   <fieldset><legend id="gfa">Axis A (Enter adds one)</legend><div class="chips" data-n="axisA"><input list="dlf" aria-label="Add axis A value"></div></fieldset>
   <fieldset><legend id="goc">Axis B (Enter adds one)</legend><div class="chips" data-n="axisB"><input list="dlo" aria-label="Add axis B value"></div></fieldset>
   <fieldset data-n="direction"><legend id="gdir">Direction (tick all that apply)</legend><div class="cbs"></div></fieldset>
@@ -349,7 +351,7 @@ body.notes #libp{display:none}
   <label>PDF pages (e.g. 12, 14) <input name="pdf_page"></label>
   <fieldset><legend>Tags (Enter adds one)</legend><div class="chips" data-n="tags"><input aria-label="Add tag"></div></fieldset>
   <fieldset><legend>Sections (Enter adds one)</legend><div class="chips" data-n="section"><input aria-label="Add section"></div></fieldset>
-  <fieldset><legend>Connected readings and claims</legend><div id="lkrows"></div><button type="button" id="lkadd">+ Add connection</button></fieldset>
+  <fieldset><legend>Connected readings and claims</legend><div id="lkrows"></div><div class="lka"><button type="button" id="lkadd">+ Add connection</button></div></fieldset>
   <datalist id="dlf"></datalist><datalist id="dlo"></datalist>
   <div><button value="ok">Save</button> <button value="x" formnovalidate>Cancel</button></div>
 </form></dialog>
@@ -1436,8 +1438,6 @@ async function editor(c){
   setCb("role",v.role);setCb("direction",v.direction);setCb("evidence",v.evidence);setCb("own_claim",v.own_claim.map(b=>b?"1":"0"));
   ["axisA","axisB","section","tags"].forEach(n=>setChips(n,v[n]));
   F.elements.pdf_page.value=v.pdf_page.join(", ");F.elements.pathway.value=(v.pathway||[]).join(",");
-  $("dlp").innerHTML=[...new Set([...Object.values(VB.pathways),...all.flatMap(x=>x.pathway||[])])].filter(Boolean)
-    .sort((a,b)=>a.localeCompare(b)).map(n=>`<option value="${esc(n)}">`).join("");  // type freely, or pick a known one
   $("xed").innerHTML=(VB.xcols||[]).map(x=>`<label>${esc(x.name||x.k)} <input name="xe:${esc(x.k)}" value="${esc(((v.x&&v.x[x.k])||[]).join(", "))}" placeholder="comma separated"></label>`).join("");
   $("lkrows").innerHTML="";v.links.forEach(addLink);
   F.elements.src.disabled=!!c||!!$("pdfsel").value;D.show();F.elements.quote.focus();
