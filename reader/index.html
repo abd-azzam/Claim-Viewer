@@ -43,7 +43,6 @@ iframe{flex:1;border:0;width:100%}
 #rd .pg{isolation:isolate}.hl{position:absolute;z-index:1;mix-blend-mode:multiply;background:var(--hc);pointer-events:none}.hl.on{outline:2px solid var(--acc);outline-offset:-2px}
 #rt{display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:0 6px 6px}#rt[hidden]{display:none}
 #rt button{padding:4px 10px;border:1px solid var(--ctl);border-radius:4px;background:var(--bg);color:var(--ink);font:inherit;cursor:pointer}
-#rt.nat>:not(#nv){display:none}
 .sw{display:inline-flex;gap:6px;align-items:center}.sw button{width:22px;height:22px;padding:0;border:2px solid var(--ctl);border-radius:50%;cursor:pointer}
 #cm .sw{display:flex;padding:6px 12px}#cm .sw button{display:inline-block;padding:0}
 #cm button:disabled{color:var(--ctl);cursor:not-allowed}.textLayer span{position:absolute;white-space:pre;color:transparent;transform-origin:0 0}.textLayer ::selection{background:transparent}.bsel{position:absolute;z-index:2;background:rgba(0,90,255,.35);pointer-events:none}.rtop{padding:8px 10px 4px}.rsel{display:flex;gap:8px;align-items:center}.rsel select{flex:1;min-width:0}#lpn{margin-top:6px;font-size:.8rem;opacity:.65}#lpn:empty{display:none}#lpn.warn{display:block;cursor:pointer;background:#fde68a;color:#3b2f00;padding:6px 8px;font-weight:600}#toast.top{top:14px;transform:translateX(-50%)}#toast{pointer-events:none;position:fixed;left:50%;top:45%;transform:translate(-50%,-50%);z-index:9;background:#1f2937;color:#fff;padding:10px 16px;border-radius:8px;max-width:min(60vw,420px);max-height:40vh;overflow:hidden;overflow-wrap:anywhere;text-align:center}#ask{border:1px solid var(--ctl);border-radius:10px;padding:18px 20px;max-width:min(360px,90vw);overflow-wrap:anywhere;font:inherit}#ask p{margin:0 0 12px}#ask label{display:block;margin:0 0 12px;font-size:.9em}#ask div{display:flex;gap:8px;justify-content:flex-end}
@@ -53,7 +52,7 @@ iframe{flex:1;border:0;width:100%}
 .read{display:flex;gap:6px;align-items:center;margin-top:8px;font-size:13px}
 #gv{display:none;grid-column:2/4;overflow:auto;height:100vh;padding:14px}
 body.graph main,body.graph section{display:none}body.graph #gv{display:flex;flex-direction:column;min-height:0;overflow:hidden}
-.tabs{display:flex;gap:6px;margin:0 0 8px}.pgnow{font:11px ui-monospace,monospace;color:var(--mut,var(--muted));padding:0 6px;white-space:nowrap}.rnw{margin:0 0 8px}.rnh{display:block;font-size:11px;color:var(--mut,var(--muted));margin:0 0 4px;font-weight:400}.tabs.rn{margin-top:0}.tabs.rn label{flex:1;display:flex;align-items:center;gap:4px;font-size:11px;color:var(--mut,var(--muted));min-width:0}.tabs.rn input{flex:1;min-width:0;padding:4px 6px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);font:inherit;font-size:12px}.tabs button{flex:1;padding:6px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);font:inherit;cursor:pointer}.tabs button.on{border-color:var(--acc);color:var(--acc);font-weight:700}
+.tabs{display:flex;gap:6px;margin:0 0 8px}.pgnow{font:11px ui-monospace,monospace;color:var(--mut,var(--muted));height:var(--h);width:86px;margin-left:auto;padding:0 6px;text-align:center;background:var(--bg);border:1px solid var(--ctl);border-radius:var(--r)}/* type a page, Enter jumps */.rnw{margin:0 0 8px}.rnh{display:block;font-size:11px;color:var(--mut,var(--muted));margin:0 0 4px;font-weight:400}.tabs.rn{margin-top:0}.tabs.rn label{flex:1;display:flex;align-items:center;gap:4px;font-size:11px;color:var(--mut,var(--muted));min-width:0}.tabs.rn input{flex:1;min-width:0;padding:4px 6px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);font:inherit;font-size:12px}.tabs button{flex:1;padding:6px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);font:inherit;cursor:pointer}.tabs button.on{border-color:var(--acc);color:var(--acc);font-weight:700}
 #gv svg{width:100%;height:auto;min-width:760px}#gv text{fill:var(--ink);font-size:12px}#gv .cnt{fill:var(--mute)}#gv .hd{font-weight:700;fill:var(--mute);font-size:11px;text-transform:uppercase}
 #gv .e{fill:none;opacity:.45;cursor:pointer}#gv .e:hover{opacity:.95}#gv .n{cursor:pointer}#gv .n rect{fill:var(--panel);stroke:var(--line)}#gv .n:hover rect{stroke:var(--acc)}
 #gv .e.dim{opacity:.08}#gv .e.hit{opacity:1}#gv .n.dim{opacity:.35}#gv .n.hit rect{fill:var(--hl);stroke:var(--acc);stroke-width:2.5}
@@ -372,7 +371,7 @@ body.notes #libp{display:none}
 </div>
 </main>
 <div id="gv"><h1 id="gt"></h1><div class="gc" id="gc2"></div><div id="lkc" class="lg" role="group" aria-label="Declared connections between readings"></div><div id="gx" aria-label="Horizontal scroll" role="group"><div id="gxi"></div></div><div id="gout"></div></div>
-<section><div class="empty" id="ph">Pick a reading.</div><div class="rtop"><span id="pgnow" class="pgnow" aria-live="polite" title="Page you are on"></span><div class="rsel"><select id="pdfsel" aria-label="Reading"></select><button id="fb" type="button" title="Read this PDF full screen (Esc to exit)" aria-label="Read this PDF full screen" aria-pressed="false"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 15v5h-5M15 4h5v5M9 20H4v-5"/></svg></button><button id="lr" type="button" title="Remove this reading from the viewer (the PDF file on your computer stays)" aria-label="Remove this reading from the viewer"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h7l4 4v14H7zM14 3v4h4M10 12l4 4m0-4-4 4"/></svg></button></div><div id="lpn"></div></div><div id="rt" hidden><button id="zo" type="button" aria-label="Zoom out">−</button><span id="zv">100%</span><button id="zi" type="button" aria-label="Zoom in">+</button><button id="zf" type="button" title="Fit width" aria-label="Fit width"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button><button id="sv" type="button" title="Save PDF" aria-label="Save PDF"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m-4-4 4 4 4-4M5 20h14"/></svg></button><span class="sw" id="hs" role="group" aria-label="Highlight colour"></span><button id="zks" type="button" title="Note on the selected passage" aria-label="Note on the selected passage"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11l3 3v13H5zM8 9h8M8 13h6"/></svg></button><button id="hc" type="button" title="Clear all highlights in this PDF (right-click one highlight to remove only it)" aria-label="Clear all highlights"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13"/></svg></button><button id="nv" type="button" title="Open in Chrome viewer" aria-label="Switch viewer"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 9h18"/></svg></button></div><iframe id="pdf" allowfullscreen title="Source PDF" hidden></iframe><div id="rd" hidden></div></section>
+<section><div class="empty" id="ph">Pick a reading.</div><div class="rtop"><div class="rsel"><select id="pdfsel" aria-label="Reading"></select><button id="lr" type="button" title="Remove this reading from the viewer (the PDF file on your computer stays)" aria-label="Remove this reading from the viewer"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h7l4 4v14H7zM14 3v4h4M10 12l4 4m0-4-4 4"/></svg></button></div><div id="lpn"></div></div><div id="rt" hidden><button id="zo" type="button" aria-label="Zoom out">−</button><span id="zv">100%</span><button id="zi" type="button" aria-label="Zoom in">+</button><button id="zf" type="button" title="Fit width" aria-label="Fit width"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button><button id="fb" type="button" title="Read this PDF full screen (Esc to exit)" aria-label="Read this PDF full screen" aria-pressed="false"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 15v5h-5M15 4h5v5M9 20H4v-5"/></svg></button><button id="sv" type="button" title="Save PDF" aria-label="Save PDF"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m-4-4 4 4 4-4M5 20h14"/></svg></button><span class="sw" id="hs" role="group" aria-label="Highlight colour"></span><button id="zks" type="button" title="Note on the selected passage" aria-label="Note on the selected passage"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11l3 3v13H5zM8 9h8M8 13h6"/></svg></button><button id="hc" type="button" title="Clear all highlights in this PDF (right-click one highlight to remove only it)" aria-label="Clear all highlights"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13"/></svg></button><input id="pgnow" class="pgnow" inputmode="numeric" aria-label="Page, type a number and press Enter" title="Type a page number, then Enter"></div><iframe id="pdf" allowfullscreen title="Source PDF" hidden></iframe><div id="rd" hidden></div></section>
 <button id="hl" type="button" class="edge" title="Hide the left panel" aria-label="Hide the left panel" aria-pressed="false"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button>
 <button id="hr" type="button" class="edge" title="Hide the PDF pane" aria-label="Hide the PDF pane" aria-pressed="false"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
 <script src="lib/pdf.min.js"></script><script src="sources.js"></script>
@@ -453,6 +452,7 @@ function VOC(){
     ["f","o"].forEach(k=>{if(Array.isArray(o[k]))o[k].forEach(v=>{if(v&&!out[k].includes(v))out[k].push(v)})});
     Object.keys(o.p||{}).forEach(k=>{if(!(k in out.p))out.p[k]=o.p[k]});  // never rename a pathway id that the built-in list already defines
     (o.xcols||[]).forEach(xc=>{if(!out.xcols.some(y=>y.k===xc.k))out.xcols.push(Object.assign({},xc))});
+    if(Array.isArray(o.order)&&!out.order)out.order=o.order;  // the dragged column order must survive the merge
     Object.keys(o.x||{}).forEach(k=>{out.x[k]=out.x[k]||[];o.x[k].forEach(v=>{if(!out.x[k].includes(v))out.x[k].push(v)})})};
   add(d);(cid?kids.map(k=>D[k]):Object.values(D)).forEach(add);
   ["A","B","P"].forEach(k=>{if(d[k])out[k]=d[k]});
@@ -1512,7 +1512,9 @@ $("vb").onclick=()=>{const _sc=$("vscope");if(_sc)_sc.textContent=$("col").value
   VL.querySelectorAll(".col").forEach(d=>{const c=d.dataset.c;if(c.startsWith("x")&&!xcolsOf().some(x=>x.k===c))return;
     d.querySelector(".items").innerHTML=cols[c]?cols[c]().map(v=>row(c,Array.isArray(v)?v[0]:"",Array.isArray(v)?v[1]:v)).join(""):""});drawX();
   const _ord=(VOC().order||[]),_keys=_ord.length?_ord:["f","p","o",...xcolsOf().map(x=>x.k)],_stage=$("xcols");  // the dialog follows the order you dragged in the graph
-  _keys.filter(k=>["f","p","o"].includes(k)).forEach(k=>{const c=VL.querySelector(`.col[data-c="${CSS.escape(k)}"]`);if(c&&_stage.parentNode)VL.insertBefore(c,_stage)});  // only the three base columns reorder; sections stay in #xcols
+  _keys.forEach(k=>{const c=VL.querySelector(`.col[data-c="${CSS.escape(k)}"]`);if(!c)return;
+    if(["f","p","o"].includes(k)){if(_stage.parentNode)VL.insertBefore(c,_stage)}
+    else _stage.appendChild(c)});  // base columns reorder in the form; sections reorder inside #xcols, never copied
   $("vl").show();};
 VL.addEventListener("click",e=>{
   const x=e.target.closest(".x"),a=e.target.closest(".add");
@@ -1663,10 +1665,24 @@ const key=n=>n.replace(/\.pdf$/i,"").toLowerCase();
 const fallback=(id,pg)=>{$("rt").hidden=true;rd.hidden=true;f.hidden=false;const u=`pdf/${encodeURIComponent(id)}.pdf`;f.src=pg?`${u}?v=${Date.now()}#page=${pg}`:((f.getAttribute("src")||"").startsWith(u)?f.src:u)};
 const scroll=pg=>{const e=pg&&rd.querySelector(`.pg[data-n="${pg}"]`);if(e)rd.scrollTop=e.offsetTop-rd.offsetTop-6;setTimeout(()=>showPage&&showPage(),120)};  // a jump that does not fire scroll still updates the page label
 const pgn=$("pgnow"),showPage=()=>{const pgs=[...rd.querySelectorAll(".pg[data-n]")];if(!pgn)return;
-  if(!pgs.length||!docC){pgn.textContent="";return}
+  if(!pgs.length||!docC){pgn.value="";return}
   const top=rd.getBoundingClientRect().top+10;let n=1;
   pgs.forEach(e=>{if(e.getBoundingClientRect().top<=top)n=+e.dataset.n||n});
-  pgn.textContent="p. "+n+" / "+docC.numPages};
+  if(document.activeElement!==pgn)pgn.value=n+" / "+docC.numPages};
+if(pgn){pgn.onfocus=()=>pgn.select();
+  pgn.onkeydown=e=>{if(e.key!=="Enter")return;e.preventDefault();
+    const m=String(pgn.value).match(/\d+/);
+    if(m&&docC)scroll(Math.min(Math.max(1,+m[0]),docC.numPages));
+    pgn.blur()};
+  pgn.onblur=()=>showPage()}
+// arrow keys turn pages, unless a field or a dialog has the keys
+document.addEventListener("keydown",e=>{
+  if(e.altKey||e.ctrlKey||e.metaKey||e.shiftKey)return;
+  if(e.target.closest&&e.target.closest("input,textarea,select,[contenteditable],dialog,#list,#zklist,#zflt,#libp"))return;
+  if(!docC||rd.hidden)return;
+  if(e.key==="ArrowRight"||e.key==="PageDown"){e.preventDefault();scroll(Math.min(PAGEN()+1,docC.numPages))}
+  else if(e.key==="ArrowLeft"||e.key==="PageUp"){e.preventDefault();scroll(Math.max(PAGEN()-1,1))}
+});
 rd.addEventListener("scroll",()=>{clearTimeout(rd._pt);rd._pt=setTimeout(showPage,80)});
 const savePage=()=>{if(!cur)return;try{const o=JSON.parse(localStorage.getItem("cv:lastpg")||"{}");o[cur]=PAGEN();localStorage.setItem("cv:lastpg",JSON.stringify(o))}catch(e){}};
 const PAGEN=()=>{const pgs=[...rd.querySelectorAll(".pg[data-n]")];if(!pgs.length||!docC)return 1;
@@ -1676,7 +1692,7 @@ window.addEventListener("beforeunload",savePage);
 const xhr=u=>new Promise(r=>{try{const x=new XMLHttpRequest();x.open("GET",u);x.responseType="arraybuffer";x.onload=()=>r(x.response&&(x.status===200||x.status===0)?x.response:null);x.onerror=()=>r(null);x.send()}catch(e){r(null)}});
 async function bytes(id){const k=key(id);if(files[k])return files[k].arrayBuffer();const u=`pdf/${encodeURIComponent(id)}.pdf`;if(location.protocol==="file:")return xhr(u);try{const r=await fetch(u);if(r.ok)return r.arrayBuffer()}catch(e){}return null}
 async function ready(){if(!window.pdfjsLib)return false;if(!window.pdfjsWorker){pdfjsLib.GlobalWorkerOptions.workerSrc=B+"pdf.worker.min.js";await new Promise((r,j)=>{const e=document.createElement("script");e.src=B+"pdf.worker.min.js";e.onload=r;e.onerror=j;document.head.append(e)})}return true}
-let Z=1,docC=null,curBuf=null,bt=0;const rt=$("rt"),zv=$("zv"),nv=$("nv");
+let Z=1,docC=null,curBuf=null,bt=0;const rt=$("rt"),zv=$("zv");
 const HC={b:"#6ec1ff",y:"#ffe14d",p:"#ffab40",g:"#7ee08a",r:"#ff6b6b"},HN={b:"blue",y:"yellow",p:"orange",g:"green",r:"red"},HM={b:"definition / term",y:"key argument",p:"important",g:"method / example",r:"critique of other work"};
 const swHTML=Object.keys(HC).map(k=>`<button type="button" data-c="${k}" aria-label="Highlight ${HN[k]}: ${HM[k]}" title="${HN[k]}: ${HM[k]}" style="background:${HC[k]}"></button>`).join("");
 const HL=()=>{try{return JSON.parse(localStorage.getItem("cv:hl")||"{}")}catch(e){return{}}},saveHL=o=>{try{localStorage.setItem("cv:hl",JSON.stringify(o))}catch(e){}};
@@ -1712,7 +1728,6 @@ $("sv").onclick=async()=>{if(!curBuf)return;const hl=HL()[cur]||[],nm=cur+(hl.le
  else if(fh){const w=await fh.createWritable();await w.write(blob);await w.close();toast("Saved."+note)}
  else{const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=nm;a.click();toast("Saved."+note)}}
  catch(e){toast("Save failed: "+e.message)}};
-nv.onclick=()=>{if(rt.classList.toggle("nat")){rd.hidden=true;f.hidden=false;f.src=files[key(cur)]?URL.createObjectURL(files[key(cur)]):`pdf/${encodeURIComponent(cur)}.pdf`;nv.title="Back to claim reader"}else{f.hidden=true;rd.hidden=false;nv.title="Open in Chrome viewer"}};
 $("hc").onclick=async()=>{if(!await ask("Remove all highlights in this PDF?","clearhl"))return;const o=HL();delete o[cur];saveHL(o);rd.querySelectorAll(".hl").forEach(e=>e.remove())};
 window.showPdf=async(id,pg)=>{if(!id)return;  // the dropdown starts on "(pick a reading)"; loading pdf/.pdf only 404s
  if(pg==null){try{pg=(JSON.parse(localStorage.getItem("cv:lastpg")||"{}"))[id]||null}catch(e){}}  // resume where the user left off
@@ -1721,7 +1736,7 @@ $("ph").hidden=true;const my=++tok;let buf=null;try{if(await ready())buf=await b
  lpn.className="";lpn.textContent="Select text in the PDF, then right-click to add a claim";if(cur===id&&!rd.hidden)return scroll(pg);
  cur=id;f.hidden=true;rd.hidden=false;rd.innerHTML="";
  const doc=await pdfjsLib.getDocument({data:new Uint8Array(buf.slice(0))}).promise;if(my!==tok)return;
- docC=doc;curBuf=buf;Z=1;await build(pg);showPage();rt.hidden=false;rt.classList.remove("nat");nv.title="Open in Chrome viewer"};
+ docC=doc;curBuf=buf;Z=1;await build(pg);showPage();rt.hidden=false};
 window.cvIdle=()=>{tok++;cur="";rt.hidden=true;rd.hidden=true;f.hidden=true;f.removeAttribute("src");$("ph").hidden=false};  // leave the pane empty instead of parsing a new PDF
 const toast=(m,top)=>{let t=$("toast");if(!t){t=document.createElement("div");t.id="toast";t.setAttribute("aria-live","polite");document.body.append(t)}(document.fullscreenElement||document.body).append(t);t.textContent=m;t.classList.toggle('top',!!top);t.hidden=false;clearTimeout(t._h);t._h=setTimeout(()=>t.hidden=true,3500)};
 window.toast=toast;

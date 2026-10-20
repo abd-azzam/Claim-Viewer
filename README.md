@@ -14,8 +14,10 @@ Zotero keeps your PDFs and highlights, but it does not draw a graph of how the c
 
 - **Library** like Zotero: nested folders, each PDF filed in one or more collections, with add-folder, rename, and per-folder PDF import. The reading menu, the list and the graph always follow the collection you picked.
 - **Read** PDFs in the app with zoom, fit width, and per-page rendering. Switching collection or PDF never reloads the app.
+- **Turn pages**: the left and right arrow keys (or PageUp / PageDown) move one page; they are ignored while you type in a field or use the list.
+- **Jump to a page**: the page box above the PDF is editable. It shows `8 / 50`; type a page number and press Enter to go there.
 - **Resume where you left off.** The app remembers the last page of every PDF (saved every few seconds) and opens it there next time, even after closing the app.
-- **Full-screen reading**: one button hides everything but the PDF; Esc or the same button brings the panes back.
+- **Full-screen reading**: one button in the zoom row hides everything but the PDF; Esc or the same button brings the panes back.
 - **Dictionary**: right-click any word in the claim or note lists (or pick a single word in the PDF and choose *Define*) for its English definition from Wiktionary. Results are cached, so repeat lookups work offline.
 - **Four highlight colors**, and *Save PDF* writes your highlights into the PDF as real highlight annotations.
 
@@ -24,7 +26,7 @@ Zotero keeps your PDFs and highlights, but it does not draw a graph of how the c
 - **Save claims.** Select 20 or more characters, right-click, and choose **Add as claim** (or press Alt+A). Double-click a quote to fix its wording.
 - **Renameable axes.** The old fixed Q1/Q2 is gone: you name the left, middle and right graph columns (default Determinant / Pathway / Effect), per collection, in Edit lists.
 - **Pathways: type on Add, pick on Edit.** The **Add claim** box has a plain text field, so you invent a pathway name as you write the claim. The **Edit claim** box offers those names in a dropdown; a name you invent while adding is in the list the next time you edit anything. The **Lists** dialog keeps one plain text row per pathway (no dropdown); renaming a row renames it on every claim that carries it. Pathways are stored by name everywhere, never by an internal number.
-- **Extra graph layers**: **+ Add section** in the Lists dialog adds a layer of its own; the button always sits on its own line below the sections, and the ✕ on a section removes it.
+- **Extra graph layers**: **+ Add section** in the Lists dialog adds a layer of its own; the button always sits on its own line below the sections, the ✕ on a section removes it, and the dialog lists columns in the order you dragged them in the graph.
 - **Connect claims across readings.** In the claim editor, link a claim to a specific claim (and its paragraph) in another reading, including readings outside the current folder. Four connection models, each with its own types and colors: *Stance* (supports / challenges / qualifies), *Causal* (causes / mediates / moderates / prevents), *Argument* (premise / rebuttal / counterexample / extension), *Bibliographic* (cites / extends / replicates / supersedes).
 - **Copy with citation.** Each claim card has a **Copy** chip: it copies the sentence ending `(Author, Year, p. N)`, parsed from the reading's title. Alt+click a card does the same.
 - **One card, one shape.** Every claim card looks the same: Copy, the PDF page, the role, its pathway, its factor and outcome tags, its evidence and section. No pipeline bookkeeping. A `failed` or `ambiguous` chip appears only when the saved quote could not be matched against the PDF text, so it warns you without shouting.
