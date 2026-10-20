@@ -11,3 +11,6 @@ reader/pdf/*.pdf
 /sources.json
 /overrides.json
 /vocab.json
+# build output and local backups
+dist/
+*.bak

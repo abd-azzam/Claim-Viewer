@@ -73,8 +73,8 @@ When you open it by double-click, the browser cannot read the `pdf` folder by it
 
 ## Use it as a Windows app
 
-1. Download [`ClaimViewer-Setup-1.1.0.exe`](release/ClaimViewer-Setup-1.1.0.exe) and run it.
-2. Pick the folder (default: `Documents\Claim Viewer`) and, if you want, a Desktop shortcut. It always adds a Start menu shortcut.
+1. Download [`ClaimViewer-Setup-2.1.0.exe`](release/ClaimViewer-Setup-2.1.0.exe) and run it.
+2. Pick the folder (default: `C:\Apps\ClaimViewer`) and, if you want, a Desktop shortcut. It always adds a Start menu shortcut.
 3. Put your PDFs in the `pdf` folder inside it and list them in `sources.js`.
 4. Open **Claim Viewer** from the Start menu. It opens its own window (no browser) and stops when you close it.
 
@@ -88,7 +88,7 @@ Needs the Microsoft WebView2 runtime (already on Windows 11 and current Windows 
 build_exe.bat
 ```
 
-Needs Python 3 and [Inno Setup 6](https://jrsoftware.org/isinfo.php) (`winget install JRSoftware.InnoSetup`). The script refreshes `reader/index.html` from `template.html`, then builds `release/ClaimViewer.exe` (PyInstaller) and `release/ClaimViewer-Setup-<version>.exe`. Change the version in `ClaimViewer.iss`. Git tracks only the `ClaimViewer-Setup-*.exe` file in `release/`.
+Needs Python 3 and [Inno Setup 6](https://jrsoftware.org/isinfo.php) (`winget install JRSoftware.InnoSetup`). The script refreshes `reader/index.html` from `template.html`, builds `dist/ClaimViewer.exe` (PyInstaller), stages `dist/` with the empty reader page and the pdf.js libs, then writes `release/ClaimViewer-Setup-<version>.exe`. Change the version in `ClaimViewer.iss`. Git tracks only `release/ClaimViewer-Setup-*.exe`: `dist/` and `index.html` stay out, because a built page holds somebody's claims.
 
 ## Optional: fill the viewer with claims you prepared
 

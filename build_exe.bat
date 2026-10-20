@@ -1,9 +1,14 @@
 @echo off
-rem Refreshes reader\index.html from template.html, builds release\ClaimViewer.exe, then release\ClaimViewer-Setup-<version>.exe (needs Inno Setup 6: winget install JRSoftware.InnoSetup)
+rem Builds dist\ClaimViewer.exe, stages the empty reader page and the pdf.js libs, then release\ClaimViewer-Setup-<version>.exe
+rem Needs Inno Setup 6: winget install JRSoftware.InnoSetup
 set "ISCC=%LOCALAPPDATA%\Programs\Inno Setup 6\ISCC.exe"
 if not exist "%ISCC%" set "ISCC=%ProgramFiles(x86)%\Inno Setup 6\ISCC.exe"
 if not exist "%ISCC%" echo Inno Setup 6 not found. Run: winget install JRSoftware.InnoSetup && exit /b 1
-python app\make_reader.py || exit /b 1
 pip install pywebview pyinstaller || exit /b 1
-python -m PyInstaller --onefile --noconsole --collect-all webview --name ClaimViewer --distpath release --workpath build --specpath build app\launch.py || exit /b 1
+python app\make_reader.py || exit /b 1
+python -m PyInstaller --noconfirm --onefile --noconsole --collect-all webview --name ClaimViewer --distpath dist --workpath build --specpath build app\launch.py || exit /b 1
+rem the installer ships the EMPTY reader page: a page holding a user's claims must never be packaged
+copy /y reader\index.html dist\index.html >nul || exit /b 1
+copy /y reader\sources.js dist\sources.js >nul || exit /b 1
+xcopy /y /i reader\lib dist\lib >nul || exit /b 1
 "%ISCC%" ClaimViewer.iss || exit /b 1
