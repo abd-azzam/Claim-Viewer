@@ -64,7 +64,9 @@ body.graph main,body.graph section{display:none}body.graph #gv{display:flex;flex
 .lka{clear:both;margin-top:6px}  /* the button owns its own line, always last */
 .lka button{display:inline-block}#ed .lkrow select{flex:1;min-width:0}#ed .lkrow .lkc{flex:2}#ed #lkadd{padding:4px 8px;border-style:dashed}
 #vl{left:50%;top:50%;transform:translate(-50%,-50%)}#vl form{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;width:min(1000px,92vw)}#vl form>b,#vl form>small,#vl form>div:last-child{grid-column:1/-1}#vl form>b{font-size:16px}
-#vl .col{display:flex;flex-direction:column;gap:8px;min-width:0}#vl h4{margin:0}#vl .items{display:grid;gap:6px;max-height:55vh;overflow:auto;padding-right:2px}
+#vl .col{display:flex;flex-direction:column;gap:8px;min-width:0}
+#vl #xcols{grid-column:1/-1;display:grid;grid-template-columns:repeat(3,1fr);gap:12px}  /* sections own their row */
+#vl #xaddrow{grid-column:1/-1}  /* the button stays under every section, never beside one */#vl h4{margin:0}#vl .items{display:grid;gap:6px;max-height:55vh;overflow:auto;padding-right:2px}
 #libp{display:none;flex:1;min-height:0;overflow:auto;margin-top:6px}
 #zflt{display:none;flex:1;min-height:0;overflow:auto}
 #zflt select,#zflt input{max-width:100%;min-width:0}
@@ -331,7 +333,7 @@ body.notes #libp{display:none}
   <div class="col" data-c="p"><h4 id="hpw">Pathways</h4><div class="items"></div><button type="button" class="add">+ Add</button></div>
   <div class="col" data-c="o"><h4 id="hoc">Axis B</h4><div class="items"></div><button type="button" class="add">+ Add</button></div>
   <div id="xcols"></div>
-  <div><button type="button" id="xadd" title="Add another layer to the graph">+ Add section</button> <small>extra layers sit right of the last box</small></div>
+  <div id="xaddrow"><button type="button" id="xadd" title="Add another layer to the graph">+ Add section</button> <small>extra layers sit right of the last box</small></div>
   <div><button value="ok">Save</button> <button value="x" formnovalidate>Cancel</button></div>
 </form></dialog>
 
@@ -491,8 +493,10 @@ function rebuildVocabUI(){
   (ED.a||[]).forEach(_fix);Object.values(ED.m||{}).forEach(_fix);
   Object.values(ED.v||{}).forEach(v=>{const p=(v||{}).p;if(p){const q={};Object.keys(p).forEach(k=>{const n=/^\d+$/.test(k)?(p[k]||k):k;q[n]=p[k]});if(JSON.stringify(q)!==JSON.stringify(p)){v.p=q;_ch=true}}});
   if(_ch)localStorage.setItem("cv:edits",JSON.stringify(ED));}  // pathways are names now: convert anything still numeric
-all.forEach(c=>{norm(c);const r=ED.r||{},cols=COL[c.src]||[];
-  ["axisA","axisB"].forEach(k=>c[k]=U(c[k].map(x=>{for(const cc of cols){const v=r[cc+"\u0001"+x];if(v)return v}return r["\u0001"+x]||r[x]||x})))});  // a rename is scoped to its folder: a global map let one folder rename another folder's terms
+// a rename is scoped to its folder: a global map let one folder rename another folder's terms
+const REN=()=>all.forEach(c=>{const r=ED.r||{},cols=COL[c.src]||[];
+  ["axisA","axisB","pathway"].forEach(k=>c[k]=U((c[k]||[]).map(x=>{for(const cc of cols){const v=r[cc+"\u0001"+x];if(v)return v}return r["\u0001"+x]||r[x]||x})))});
+all.forEach(norm);REN();
 // list order: source, then PDF page (default key c._k); a drag stores ED.o[group mode, group, claim] and wins, so a claim in two groups has one order per group. ponytail: fractional keys, about 19 drops between the same two neighbours before float precision runs out
 const SX={};DATA.sources.forEach((s,i)=>SX[s.id]=i);
 all.forEach((c,i)=>c._k=(SX[c.src]||0)*1e4+(pg0(c)||9999)+i/1e5);
@@ -1367,7 +1371,7 @@ document.addEventListener("click",e=>{const g=e.target.closest(".card");if(!g||d
   cardMenu.querySelector(".cpc").onclick=()=>{cardMenu.hidden=true;copyText(cardCopy(c))};
   setTimeout(()=>document.addEventListener("pointerdown",ev=>{if(!cardMenu.contains(ev.target))cardMenu.hidden=true},{once:true}),0)});
 const D=$("ed"),F=D.querySelector("form"),saveED=()=>store.set("cv:edits",JSON.stringify(ED));
-const refresh=()=>{const t=performance.now();show(document.body.classList.contains("notes")?"notes":document.body.classList.contains("library")?"lib":document.body.classList.contains("graph")?"graph":"list");perf("refresh",t)};
+const refresh=()=>{REN();const t=performance.now();show(document.body.classList.contains("notes")?"notes":document.body.classList.contains("library")?"lib":document.body.classList.contains("graph")?"graph":"list");perf("refresh",t)};
 // A collection change must never parse a PDF: pdf.js on a 10 MB file blocks the UI for seconds.
 function pickPdf(){const cur=$("pdfsel").value,list=srcs();
   $("pdfsel").innerHTML='<option value="">(pick a reading)</option>'+list.map(x=>`<option value="${esc(x.id)}">${esc(x.title)}</option>`).join("");
@@ -1476,15 +1480,9 @@ function dedupeDupes(){const seen=new Set();let n=0;
 function del_(c){all.filter(x=>sameClaim(x,c)).forEach(x=>{x.del=true;const k=kc(x);if(!ED.d.includes(k))ED.d.push(k)});
   c.del=true;const k=kc(c);if(!ED.d.includes(k))ED.d.push(k);store.set("cv:edits",JSON.stringify(ED));sel=null;refresh();}
 const VL=$("vl").querySelector("form");
-const row=(c,o,v)=>`<div class="it" data-o="${esc(o)}" draggable="true"><span class="dg" title="Drag to move or reorder">⠿</span>${c==="p"?(()=>{const ids=Object.keys(VB.pathways),next=String(Math.max(0,...ids.filter(x=>/^\d+$/.test(x)).map(Number))+1);return `<select class="k" aria-label="${esc(SC.p)}" draggable="false">${ids.map(id=>`<option value="${esc(id)}"${String(id)===String(v[0])?" selected":""}>${esc(VB.pathways[id])}</option>`).join("")}<option value="${next}">New pathway</option></select>`})():""}<input value="${esc(c==="p"?v[1]:v)}" aria-label="name" draggable="false"><button type="button" class="x" title="Remove">✕</button></div>`;
+const row=(c,o,v)=>`<div class="it" data-o="${esc(o)}" draggable="true"><span class="dg" title="Drag to move or reorder">⠿</span><input value="${esc(Array.isArray(v)?v[1]:v)}" aria-label="name" draggable="false"><button type="button" class="x" title="Remove">✕</button></div>`;
 const cols={p:()=>Object.keys(VB.pathways).map(n=>[n,n]),f:()=>VB.axisA_list,o:()=>VB.axisB_list};
 let DRAG=null;
-const fitCol=r=>{const c=r.closest(".col").dataset.c,k=r.querySelector(".k");
-  if(c==="p"&&!k){const p=VL.querySelector('.col[data-c="p"] .it .k');void p;  // number boxes live only in the pathway column
-    const n=document.createElement("input");n.className="k";n.setAttribute("aria-label","number");n.draggable=false;
-    const used=[...VL.querySelectorAll('.col[data-c="p"] .it .k')].map(e=>+e.value||0);n.value=String(Math.max(0,...used)+1);
-    r.insertBefore(n,r.querySelector("input"))}
-  else if(c!=="p"&&k)k.remove()};
 VL.addEventListener("dragstart",e=>{const r=e.target.closest(".it");if(!r)return;DRAG=r;r.classList.add("drag");e.dataTransfer.effectAllowed="move";e.dataTransfer.setData("text/plain","row")});
 VL.addEventListener("dragover",e=>{if(!DRAG)return;const box=e.target.closest(".items");if(!box)return;e.preventDefault();
   const after=[...box.querySelectorAll(".it")].find(x=>x!==DRAG&&e.clientY<x.getBoundingClientRect().top+x.getBoundingClientRect().height/2);
@@ -1496,11 +1494,12 @@ const drawX=()=>{const box=$("xcols");if(!box)return;
   box.innerHTML=xcolsOf().map(x=>`<div class="col" data-c="${esc(x.k)}"><h4><input class="xn" value="${esc(x.name||x.k)}" aria-label="Layer name"> <button type="button" class="xdel" title="Remove this layer, keeping the claims">✕</button></h4><div class="items"></div><button type="button" class="add">+ Add</button></div>`).join("");
   xcolsOf().forEach(x=>{const d=box.querySelector(`[data-c="${CSS.escape(x.k)}"] .items`);
     if(d)d.innerHTML=((VOC().x||{})[x.k]||[]).map(v=>row(x.k,"",v)).join("")})};
-$("xcols").addEventListener("click",e=>{const b=e.target.closest(".xdel");if(!b)return;
+VL.addEventListener("pointerdown",e=>{if(e.target.closest(".xdel"))e.preventDefault()});  // a blur here re-draws the row and the click never lands
+VL.addEventListener("click",e=>{const b=e.target.closest(".xdel");if(!b)return;
   const cid=$("col").value||"",v=ED.v=ED.v||{};v[cid]=v[cid]||{};const _v=v[cid];
   _v.xcols=((VOC().xcols)||[]).filter(x=>x.k!==b.closest(".col").dataset.c);const _own=v[cid].x||(v[cid].x={});delete _own[b.closest(".col").dataset.c];
   saveED();drawX()});
-$("xcols").addEventListener("change",e=>{const i=e.target.closest(".xn");if(!i)return;
+VL.addEventListener("change",e=>{const i=e.target.closest(".xn");if(!i)return;
   const cid=$("col").value||"",k=i.closest(".col").dataset.c,v=ED.v=ED.v||{};v[cid]=v[cid]||{};
   v[cid].xcols=(VOC().xcols||[]).map(x=>x.k===k?{k,name:i.value.trim()||k}:x);saveED()});
 $("xadd").onclick=()=>{const cid=$("col").value||"";
@@ -1511,23 +1510,22 @@ $("xadd").onclick=()=>{const cid=$("col").value||"";
 $("vb").onclick=()=>{const _sc=$("vscope");if(_sc)_sc.textContent=$("col").value?"Editing this folder's lists. Type to rename. ✕ removes.":"Editing the default lists for all folders. Pick a folder to override them.";
   VL.querySelectorAll(".col").forEach(d=>{const c=d.dataset.c;if(c.startsWith("x")&&d.parentNode!==$("xcols"))d.remove()});  // drop last open's moved copies, or every open adds a twin
   VL.querySelectorAll(".col").forEach(d=>{const c=d.dataset.c;if(c.startsWith("x")&&!xcolsOf().some(x=>x.k===c))return;
-    d.querySelector(".items").innerHTML=cols[c]?cols[c]().map(v=>row(c,c==="p"?"":v,v)).join(""):""});drawX();
+    d.querySelector(".items").innerHTML=cols[c]?cols[c]().map(v=>row(c,Array.isArray(v)?v[0]:"",Array.isArray(v)?v[1]:v)).join(""):""});drawX();
   const _ord=(VOC().order||[]),_keys=_ord.length?_ord:["f","p","o",...xcolsOf().map(x=>x.k)],_stage=$("xcols");  // the dialog follows the order you dragged in the graph
-  _keys.forEach(k=>{const c=VL.querySelector(`.col[data-c="${CSS.escape(k)}"]`);if(c&&_stage.parentNode)VL.insertBefore(c,_stage)});
+  _keys.filter(k=>["f","p","o"].includes(k)).forEach(k=>{const c=VL.querySelector(`.col[data-c="${CSS.escape(k)}"]`);if(c&&_stage.parentNode)VL.insertBefore(c,_stage)});  // only the three base columns reorder; sections stay in #xcols
   $("vl").show();};
 VL.addEventListener("click",e=>{
   const x=e.target.closest(".x"),a=e.target.closest(".add");
   if(x)x.parentNode.remove();
   if(a){const d=a.closest(".col"),c=d.dataset.c,it=d.querySelector(".items");
-    const n=Math.max(0,...[...d.querySelectorAll(".k")].map(i=>+i.value||0))+1;
-    it.insertAdjacentHTML("beforeend",row(c,"",c==="p"?[String(n),""]:""));it.lastElementChild.querySelector("input:last-of-type").focus();}
+    it.insertAdjacentHTML("beforeend",row(c,"",""));it.lastElementChild.querySelector("input:last-of-type").focus();}
 });
 VL.addEventListener("submit",e=>{
   if(e.submitter&&e.submitter.value!=="ok")return;
   const R=ED.r||(ED.r={}),_col=$("col").value||"";
   const get=c=>[...VL.querySelectorAll(`.col[data-c=${c}] .it`)].map(r=>{const i=r.querySelectorAll("input"),t=i[i.length-1].value.trim(),o=r.dataset.o;
     if(t&&o&&o!==t){Object.keys(R).forEach(k=>{if(R[k]===o&&k.split("\u0001")[0]===_col)R[k]=t});R[_col+"\u0001"+o]=t;}
-    return[r.querySelector(".k")?r.querySelector(".k").value.trim():"",t];}).filter(x=>x[1]);
+    return[o||t,t];}).filter(x=>x[1]);
   const p={};get("p").forEach(([k,t])=>{if(k)p[k]=t});
   const _cid=_col;  // "" is the shared default, used by every folder without its own lists
   const _base=VOC(),_e={p,f:get("f").map(x=>x[1]),o:get("o").map(x=>x[1])},_j=v=>JSON.stringify(v);
