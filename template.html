@@ -986,6 +986,7 @@ const zkPass=n=>{const{q,t,s}=zkFilter();if(!n)return false;
   return true};
 const zkIdsAll=()=>zkIds();
 const zkIdsF=()=>zkIds().filter(id=>zkPass(zkNote(id)));
+const zkNo=()=>{const m=new Map();zkIdsF().forEach((id,i)=>m.set(id,i+1));return m};  // display numbers: always 1..N for the current view
 const zkFillFilters=()=>{const tags=new Set(),subs=new Set();
   zkIds().forEach(id=>{const n=zkNote(id);(n.tags||[]).forEach(t=>tags.add(t));zkSegs(n).forEach(t=>subs.add(t))});
   const opt=(set,cur)=>'<option value="">Any</option>'+[...set].sort((a,b)=>a.localeCompare(b)).map(t=>`<option value="${esc(t)}"${t===cur?" selected":""}>${esc(t)}</option>`).join("");
@@ -999,12 +1000,12 @@ const zkFillFilters=()=>{const tags=new Set(),subs=new Set();
       .map(x=>`<option value="${esc(x.id)}"${x.id===rv?" selected":""}>${esc(x.title||x.id)}</option>`).join("")+"</optgroup>").join("");
   if(rv&&!$("zsrc").value)$("zsrc").value=""};
 const zkRenderList=()=>{zkFillFilters();
-  const ids=zkIdsF();
+  const ids=zkIdsF(),no=zkNo();
   $("zklist").innerHTML=ids.length?ids.map(id=>{const n=zkNote(id),lb=(n.links||[]).length,bc=zkBack(id).length;
-    return `<div class="zkc${id===zkSel?" sel":""}" data-zk="${esc(id)}" tabindex="0"><div><b>${esc(id)}</b><span class="zt">${esc(n.title||"(untitled)")}</span></div>
+    return `<div class="zkc${id===zkSel?" sel":""}" data-zk="${esc(id)}" tabindex="0"><div><b>${no.get(id)}</b><span class="zt">${esc(n.title||"(untitled)")}</span></div>
       <div class="zs"><span>${lb} link${lb===1?"":"s"}</span><span>${bc} backlink${bc===1?"":"s"}</span>${n.page?`<span class="tag">p.${esc(n.page)}</span>`:""}${(n.tags||[]).map(t=>`<span class="tag">#${esc(t)}</span>`).join("")}${(n.subt||[]).map(t=>`<span class="tag">›${esc(t)}</span>`).join("")}</div></div>`}).join("")
     :`<div class="empty">No notes yet. Start one with "New note": one idea, in your own words.</div>`};
-const zkOpts=sel=>zkIds().map(id=>`<option value="${esc(id)}"${id===sel?" selected":""}>${esc(id)} · ${esc((zkNote(id).title||"").slice(0,48))}</option>`).join("");
+const zkOpts=sel=>{const no=zkNo();return zkIds().map(id=>`<option value="${esc(id)}"${id===sel?" selected":""}>${no.get(id)||esc(id)} · ${esc((zkNote(id).title||"").slice(0,48))}</option>`).join("")};
 const zkRow=(to,kind)=>`<div class="zkrow"><select class="zklto" aria-label="Linked note">${zkOpts(to)}</select><select class="zklk" aria-label="Kind of link">${Object.entries(zkKinds).map(([k,v])=>`<option value="${k}"${kind===k?" selected":""}>${v}</option>`).join("")}</select><button type="button" class="zkx" aria-label="Remove link">✕</button></div>`;
 const zkOpen=id=>{const n=zkNote(id);if(!n)return;zkSel=id;
   document.querySelectorAll("#zklist .zkc").forEach(r=>r.classList.toggle("sel",r.dataset.zk===id));
@@ -1012,7 +1013,7 @@ const zkOpen=id=>{const n=zkNote(id);if(!n)return;zkSel=id;
   const back=zkBack(id);
   const srcLine=n.src?`<div class="zsrc"><div><b>${esc((DATA.sources.find(s=>s.id===n.src)||{}).title||n.src)}</b>${n.page?" · page "+esc(n.page):""} <button type="button" id="zkgo">Open in reader</button>${n.quote?" <button type=\"button\" id=\"zkqe\">Edit passage</button><button type=\"button\" id=\"zkqh\">Fix passage</button>":""}</div>${n.quote?`<blockquote>${esc(n.quote)}</blockquote>`:""}</div>`:"";
   $("zkpane").innerHTML=`<div class="zked">
-    <div class="zhead"><span>Note <span class="zid">${esc(id)}</span></span><button type="button" id="zkclose" title="Close this note and go back to the list" aria-label="Close this note"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>${srcLine}
+    <div class="zhead"><span>Note <span class="zid">${esc((zkNo().get(id)||id))}</span></span><button type="button" id="zkclose" title="Close this note and go back to the list" aria-label="Close this note"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>${srcLine}
     <label>Title<input id="zkt" value="${esc(n.title||"")}" placeholder="The idea in one line"></label>
     <label>Note<textarea id="zkb" placeholder="Say it in your own words, then say what it connects to">${esc(n.body||"")}</textarea></label>
     <label>Tags, comma separated<input id="zkk" value="${esc((n.tags||[]).join(", "))}" placeholder="state capacity, industrial policy"></label>
@@ -1047,11 +1048,9 @@ const zkHealNote=async id=>{const n=zkNote(id);if(!n||!n.src||!n.page)return;
   if(!P){toast("Open that reading if you want the passage repaired");return}
   const q=window.restoreQ?window.restoreQ(P,n.quote,true):"";  // notes want the whole sentence, not only a repair of a split word
   if(q&&q.length>=20&&q!==n.quote){n.quote=q;zkSave();zkOpen(id);toast("Passage restored to the full sentence")}};
-const zkScope=n=>{const rs=$("zsrc"),rv=rs?rs.value:"";if(rv&&n.src!==rv)return false;
-  const cc=$("col").value||"";return !cc||inCol(COL[n.src]||[],cc)};  // index follows the collection and reading filter
-const zkIndex=()=>{const m=new Map();zkIds().filter(id=>zkScope(zkNote(id))).forEach(id=>(zkNote(id).tags||[]).forEach(t=>{if(!m.has(t))m.set(t,[]);m.get(t).push(id)}));
+const zkIndex=()=>{const m=new Map(),no=zkNo();zkIdsF().forEach(id=>(zkNote(id).tags||[]).forEach(t=>{if(!m.has(t))m.set(t,[]);m.get(t).push(id)}));
   const rows=[...m.entries()].sort((a,b)=>a[0].localeCompare(b[0]));
-  $("zkpane").innerHTML=`<h2 style="margin:0 0 10px">Keyword index</h2>`+(rows.length?`<div class="zidx">`+rows.map(([t,ids])=>`<div class="ztag"><b>${esc(t)}</b><div>${ids.map(i=>`<a data-zk="${esc(i)}">${esc(i)} ${esc((zkNote(i).title||"").slice(0,44))}</a>`).join("")}</div></div>`).join("")+`</div>`
+  $("zkpane").innerHTML=`<h2 style="margin:0 0 10px">Keyword index</h2>`+(rows.length?`<div class="zidx">`+rows.map(([t,ids])=>`<div class="ztag"><b>${esc(t)}</b><div>${ids.map(i=>`<a data-zk="${esc(i)}">${esc(no.get(i)||i)} ${esc((zkNote(i).title||"").slice(0,44))}</a>`).join("")}</div></div>`).join("")+`</div>`
     :`<div class="empty">No keywords yet. A keyword is an entry point into the slip-box: give each note one or two.</div>`)};
 let MERGE=(localStorage.getItem("cv:zkmerge")==="1");  // one pill per reading is opt-in: it joins chains that are separate
 const zkToggleMerge=()=>{MERGE=!MERGE;localStorage.setItem("cv:zkmerge",MERGE?"1":"0");graph()};
@@ -1754,12 +1753,15 @@ $("hc").onclick=async()=>{if(!await ask("Remove all highlights in this PDF?","cl
 window.showPdf=async(id,pg)=>{if(!id)return;  // the dropdown starts on "(pick a reading)"; loading pdf/.pdf only 404s
  if(!window.pdfjsLib){lpn.className="warn";lpn.textContent="The reader files are missing: lib/pdf.min.js is not next to the page. The PDF opens in a plain frame until it is restored.";fallback(id,pg);return}  // no CDN to fall back on
  if(pg==null){try{pg=(JSON.parse(localStorage.getItem("cv:lastpg")||"{}"))[id]||null}catch(e){}}  // resume where the user left off
-$("phint")&&($("phint").hidden=true);const my=++tok;let buf=null;try{if(await ready())buf=await bytes(id)}catch(e){}
- if(my!==tok)return;if(!buf){lpn.className="warn";lpn.textContent="PDF not found in the pdf folder. Use Library > PDF on a folder to add it.";return fallback(id,pg)}
+$("phint")&&($("phint").hidden=true);const my=++tok;let buf=null,rErr=null;try{if(await ready())buf=await bytes(id)}catch(e){rErr=e}
+ if(my!==tok)return;
+ if(rErr){lpn.className="warn";lpn.textContent="The reader could not start (a reader file is missing: lib/pdf.worker.min.js). The PDF is open in a plain frame instead.";return fallback(id,pg)}
+ if(!buf){lpn.className="warn";lpn.textContent="PDF not found in the pdf folder. Use Library > PDF on a folder to add it.";return fallback(id,pg)}
  lpn.className="";lpn.textContent="Select text in the PDF, then right-click to add a claim";if(cur===id&&!rd.hidden)return scroll(pg);
  cur=id;f.hidden=true;rd.hidden=false;rd.innerHTML="";
- const doc=await pdfjsLib.getDocument({data:new Uint8Array(buf.slice(0))}).promise;if(my!==tok)return;
- docC=doc;curBuf=buf;Z=1;await build(pg);showPage();rt.hidden=false};
+ try{const doc=await pdfjsLib.getDocument({data:new Uint8Array(buf.slice(0))}).promise;if(my!==tok)return;
+  docC=doc;curBuf=buf;Z=1;await build(pg);showPage();rt.hidden=false}
+ catch(e){if(my!==tok)return;lpn.className="warn";lpn.textContent="The reader could not open this PDF"+(/worker/i.test(String(e&&e.message))?" (lib/pdf.worker.min.js is missing)":"")+". It is open in a plain frame instead.";fallback(id,pg)}};
 window.cvIdle=()=>{tok++;cur="";rt.hidden=true;rd.hidden=true;f.hidden=true;f.removeAttribute("src");$("phint")&&($("phint").hidden=false)};  // leave the pane empty instead of parsing a new PDF
 const toast=(m,top)=>{let t=$("toast");if(!t){t=document.createElement("div");t.id="toast";t.setAttribute("aria-live","polite");document.body.append(t)}(document.fullscreenElement||document.body).append(t);t.textContent=m;t.classList.toggle('top',!!top);t.hidden=false;clearTimeout(t._h);t._h=setTimeout(()=>t.hidden=true,3500)};
 window.toast=toast;
