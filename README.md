@@ -154,7 +154,7 @@ Run these from the project folder (the one that holds `template.html`). `build.p
 
 ## Known limits
 
-- The reader loads pdf.js (and pdf-lib, when you save a PDF) from cdnjs, so it needs internet. Dictionary lookups also need internet until a word is cached. These are the only network requests it makes.
+- Reading and saving PDFs works **offline**: `pdf.js` and `pdf-lib` ship in `lib/` next to the page, not from a CDN. The only network request the page makes is a dictionary lookup on Wiktionary, and only for a word that is not already in the local cache. A lookup that fails (offline, timeout) is not cached, so the same word is tried again next time.
 - Your edits live in the browser or app storage for that folder. The Windows app keys storage to the folder path, so moving the folder loses them: use Export first, then Import.
 - Claim citations are parsed from the PDF title; if a title has no year the citation shows `(Author, p. N)`.
 - The merged-reading pill in the note graph joins a reading's notes into one node; chains that share a reading but sit on different branches all point at that node. Turn *Merge readings* off to keep every note separate.
