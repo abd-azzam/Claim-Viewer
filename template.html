@@ -151,7 +151,8 @@ main{padding:0 16px 16px}
 /* Icon-only buttons are exact squares: padding plus the 1px border made them 34x32, which reads as stretched. */
 /* both panels can be folded away; the toggles float so they survive hiding either one */
 aside,section{position:relative}
-.edge{position:fixed;top:44%;z-index:40;width:26px;height:60px;padding:0;display:flex;align-items:center;justify-content:center;border:1px solid var(--acc);background:color-mix(in srgb,var(--acc) 16%,var(--panel));color:var(--acc);cursor:pointer;border-radius:var(--r);box-shadow:var(--sh)}
+.edge{position:fixed;top:44%;z-index:40;width:26px;height:60px;padding:0;display:flex;align-items:center;justify-content:center;border:1px solid var(--acc);background:color-mix(in srgb,var(--acc) 16%,var(--panel));color:var(--acc);cursor:pointer;border-radius:var(--r);box-shadow:var(--sh);opacity:0;transition:opacity .16s ease}
+body.tabsr .edge{opacity:1}  /* both folds appear together, once the panel widths are measured */
 @supports not (background:color-mix(in srgb,red 10%,blue)){.edge{background:var(--panel)}}
 .edge svg{width:16px;height:16px;stroke-width:2.2}
 .edge:hover{color:var(--bg);background:var(--acc);border-color:var(--acc)}
@@ -1284,6 +1285,7 @@ const sides=()=>{document.body.classList.toggle("nol",!!SIDES.l);document.body.c
 $("hl").onclick=()=>{SIDES.l=!SIDES.l;sides();syncTabs();if(!SIDES.l)setTimeout(()=>{try{document.querySelector("aside").scrollTop=0}catch(e){}},0)};
 $("hr").onclick=()=>{SIDES.r=!SIDES.r;sides();syncTabs()};
 sides();syncTabs();setTimeout(syncTabs,0);setTimeout(dedupeDupes,600);setTimeout(syncTabs,300);
+requestAnimationFrame(()=>document.body.classList.add("tabsr"));setTimeout(()=>document.body.classList.add("tabsr"),400);  // reveal both folds at once, and never leave them hidden if a script error stops the first call
 $("zks").onclick=()=>{const x=window.selQ&&window.selQ();if(!x){toast("Select a sentence in the reading first");return}zkFromPassage(x.q,x.pg)};
 $("zknew").onclick=()=>zkNew(null);
 $("zkidx").onclick=zkIndex;
