@@ -124,6 +124,9 @@ body.gz #gx{display:none!important}  /* the Layers scroller has no meaning on th
 #gout svg{width:auto;height:auto;max-width:none;display:block}  /* 1:1: #gv svg{width:100%} would scale the labels down */
 #gout .tnode rect{fill:var(--acc);fill-opacity:.14;stroke:var(--acc);stroke-width:1.5}
 #gout .tnode text{font-weight:700;fill:var(--acc)}
+#gout text.hd{cursor:grab}
+#gout text.hd.drag{opacity:.35}
+#gout text.hd.hit{fill:var(--acc)}  /* the column a drop would swap with */
 #gout .snode rect{fill:var(--panel);stroke:var(--ctl);stroke-width:1.2}
 #gout .snode text{fill:var(--ink)}
 #gv .lnl{paint-order:stroke;stroke:var(--bg);stroke-width:3px}
@@ -870,22 +873,28 @@ const pOf=c=>(c.pathway||[]).length?c.pathway.map(String):["none"];
   <p class="count">${rows.length} claims. Click a box or line to list them. Number = claims.</p>
   <div class="lg"><span><i style="background:var(--acc)"></i>${esc(SC.a)}</span><span><i style="background:var(--dp)"></i>${esc(SC.b)} +</span><span><i style="background:var(--dn)"></i>${esc(SC.b)} -</span><span><i style="background:var(--dm)"></i>mixed</span><span><i style="background:var(--mute)"></i>no change / not assessed</span><span>Sign = change in the named value, not good or bad. Line color = most common sign.</span>${on.join("")==="fo"?`<span>Solid line = one claim carries both ${esc(SC.a)} and ${esc(SC.b)}. Width = number of such claims.</span><span>Dashed line = derived: ${esc(SC.a)} and ${esc(SC.b)} claims sit on the same ${esc(SC.p)}, but no claim states the link. Width = shared ${esc(SC.p)}s.</span>`:""}</div>`+s+"</svg>";
 }
-function wireColDrag(){
-  const g=$("gout");if(!g||g._wired)return;g._wired=1;
+function wireColDrag(){  // drag one column header onto another and the two columns trade places
+  const g=$("gout");if(!g||g._cw)return;g._cw=1;
   let drag=null;
-  const hd=()=>[...g.querySelectorAll("text.hd")];
-  const svgX=cx=>{const s=g.querySelector("svg");if(!s)return 0;const r=s.getBoundingClientRect(),vb=s.viewBox.baseVal;return (cx-r.left)*(vb.width||r.width)/(r.width||1)};
+  const heads=()=>[...g.querySelectorAll("text.hd")];
+  const over=(el,x,y)=>{const r=el.getBoundingClientRect();return x>=r.left-40&&x<=r.right+40&&y>=r.top-26&&y<=r.bottom+120};
+  const clear=()=>heads().forEach(h=>h.classList.remove("hit","drag"));
+  const order=()=>{const cid=$("col").value||"",v=ED.v=ED.v||{},own=v[cid]=v[cid]||{};
+    const DEF=["f","p","o",...(VB.xcols||[]).map(x=>x.k)],base=(own.order||[]).filter(k=>DEF.includes(k));
+    return {own,full:base.concat(DEF.filter(k=>!base.includes(k)))}};
   g.addEventListener("pointerdown",e=>{const t=e.target.closest("text.hd");if(!t||G.m!=="L")return;
-    drag=t.dataset.k;t.style.cursor="grabbing";e.preventDefault()});
-  g.addEventListener("pointerup",e=>{if(!drag)return;
-    const k=drag;drag=null;hd().forEach(t=>t.style.cursor="grab");
-    const list=hd().map(t=>({k:t.dataset.k,x:+t.getAttribute("x")})).sort((a,b)=>a.x-b.x);
-    const x=svgX(e.clientX);let idx=0,best=1e9;
-    list.forEach((c,i)=>{const d=Math.abs(c.x-x);if(d<best){best=d;idx=i}});
-    const cid=$("col").value||"",v=ED.v=ED.v||{},own=v[cid]=v[cid]||{};
-    const cur=list.map(c=>c.k).filter(c=>c!==k);cur.splice(idx,0,k);
-    own.order=cur;saveED();setVocab();rebuildVocabUI();gsync();refresh();
-  });
+    drag={k:t.dataset.k,el:t,x:e.clientX,y:e.clientY,moved:false};e.preventDefault()});
+  g.addEventListener("pointermove",e=>{if(!drag)return;
+    if(!drag.moved&&Math.hypot(e.clientX-drag.x,e.clientY-drag.y)>4){drag.moved=true;drag.el.classList.add("drag")}
+    if(!drag.moved)return;e.preventDefault();
+    heads().forEach(h=>h.classList.toggle("hit",h!==drag.el&&over(h,e.clientX,e.clientY)))});
+  g.addEventListener("pointerup",e=>{if(!drag)return;const d=drag;drag=null;
+    const target=d.moved?heads().find(h=>h!==d.el&&over(h,e.clientX,e.clientY)):null;
+    clear();if(!target)return;
+    const {own,full}=order();const i=full.indexOf(d.k),j=full.indexOf(target.dataset.k);
+    if(i<0||j<0||i===j)return;
+    [full[i],full[j]]=[full[j],full[i]];own.order=full;saveED();setVocab();rebuildVocabUI();gsync();refresh()});
+  g.addEventListener("pointercancel",()=>{drag=null;clear()});
 }
 function netGraph(rows,sc){
   const CAP=60,shown=rows.slice(0,CAP),n=shown.length;
