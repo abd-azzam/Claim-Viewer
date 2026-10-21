@@ -1712,8 +1712,11 @@ rd.addEventListener("scroll",()=>{clearTimeout(rd._pt);rd._pt=setTimeout(showPag
 const savePage=()=>{if(!cur)return;try{const o=JSON.parse(localStorage.getItem("cv:lastpg")||"{}");o[cur]=PAGEN();localStorage.setItem("cv:lastpg",JSON.stringify(o))}catch(e){}};
 const PAGEN=()=>{const pgs=[...rd.querySelectorAll(".pg[data-n]")];if(!pgs.length||!docC)return 1;
   const top=rd.getBoundingClientRect().top+10;let n=1;pgs.forEach(e=>{if(e.getBoundingClientRect().top<=top)n=+e.dataset.n||n});return n};
-setInterval(()=>{if(cur&&!rd.hidden)savePage()},4000);  // periodic, so closing the app mid-page still remembers it
-window.addEventListener("beforeunload",savePage);
+// the page is saved as soon as scrolling stops, so a close costs nothing; the timer is only a backstop
+let _sv=0;rd.addEventListener("scroll",()=>{clearTimeout(_sv);_sv=setTimeout(savePage,200)},{passive:true});
+["pagehide","beforeunload"].forEach(ev=>window.addEventListener(ev,savePage));
+document.addEventListener("visibilitychange",()=>{if(document.hidden)savePage()});
+setInterval(()=>{if(cur&&!rd.hidden)savePage()},15000);
 const xhr=u=>new Promise(r=>{try{const x=new XMLHttpRequest();x.open("GET",u);x.responseType="arraybuffer";x.onload=()=>r(x.response&&(x.status===200||x.status===0)?x.response:null);x.onerror=()=>r(null);x.send()}catch(e){r(null)}});
 async function bytes(id){const k=key(id);if(files[k])return files[k].arrayBuffer();const u=`pdf/${encodeURIComponent(id)}.pdf`;if(location.protocol==="file:")return xhr(u);try{const r=await fetch(u);if(r.ok)return r.arrayBuffer()}catch(e){}return null}
 async function ready(){if(!window.pdfjsLib)return false;if(!window.pdfjsWorker){pdfjsLib.GlobalWorkerOptions.workerSrc=B+"pdf.worker.min.js";await new Promise((r,j)=>{const e=document.createElement("script");e.src=B+"pdf.worker.min.js";e.onload=r;e.onerror=j;document.head.append(e)})}return true}
