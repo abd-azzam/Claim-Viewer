@@ -59,7 +59,7 @@ Zotero keeps your PDFs and highlights, but it does not draw a graph of how the c
 
 ### Graph
 
-- **Layers** draws your named columns with a line wherever claims carry both tags. Empty-pathway links are blurred so the real structure stands out. Graph controls (Show checkboxes, box names, Edit lists) belong to Layers only and are not rendered in the other modes.
+- **Layers** draws your named columns with a line wherever claims carry both tags. **Drag a column header onto another and the two columns swap places** — the header you hold dims, the column under the cursor highlights, and the order is saved for that collection (hidden columns keep their slot, and the Lists dialog follows the same order). Empty-pathway links are blurred so the real structure stands out. Graph controls (Show checkboxes, box names, Edit lists) belong to Layers only and are not rendered in the other modes.
 - **Claim network** links up to 60 claims at a time by similar wording or shared tags.
 - **Connected claims** shows the declared cross-reading connections.
 - **Roles** puts each role in the middle with the readings that carry it around it: the role pill on top, a spine down, one arm to every reading with a claim of that role. The reading pill's tooltip gives the number of such claims. It follows the collection, reading, role and every other filter, and it uses the role names you set.
