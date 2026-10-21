@@ -4,6 +4,8 @@ Read a PDF, save passages as claims, tag them, connect them to other readings, k
 
 ![Claim list next to the PDF, with the quotes highlighted in the page](docs/screenshot-list.png)
 
+*Sample data: both papers, their text and their claims are invented.*
+
 ## Why this exists
 
 Zotero keeps your PDFs and highlights, but it does not draw a graph of how the claims across your readings fit together, and it has no place for your own reading notes. This is a small viewer that does the reading, the tagging, the notes and the graph in one place. It was built with Claude Code, under my supervision.
@@ -43,7 +45,7 @@ Zotero keeps your PDFs and highlights, but it does not draw a graph of how the c
 - **Undo** (30 steps, this session only) and **Delete** (the node you clicked last: note, tag or sub-tag) sit in the graph toolbar, deliberately small and right-aligned so they never compete with the mode tabs. Undo does not survive a restart: a saved stack once rewound the notes to a days-old state.
 - **Merged readings**: by default every note gets its own pill; *Merge readings* joins all notes of one reading into a single pill whose click opens a menu of its notes with their branches.
 
-![Graph of pathways, factors and outcomes](docs/screenshot-graph.png)
+![Graph of determinants, pathways and effects](docs/screenshot-graph.png)
 
 ### Graph
 
