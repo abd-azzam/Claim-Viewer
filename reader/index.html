@@ -211,6 +211,9 @@ select,input[type=search]{min-height:var(--h);padding:0 8px;border-radius:var(--
 .tag,.quote{border-radius:var(--r)}
 /* A long chip used to push the card wider than the column. It now wraps, so the text is never clipped or hidden. */
 .pg.cp{cursor:pointer;color:var(--acc);font-weight:600;text-decoration:underline dotted}.pg.cp:hover{text-decoration-color:var(--acc)}
+.pg.cpb{height:24px;margin:0 2px 0 0;padding:0 10px;border:1px solid var(--ctl);border-radius:var(--r);background:var(--bg);color:var(--acc);font:inherit;font-size:11.5px;font-weight:600;cursor:pointer}
+.pg.cpb:hover{border-color:var(--acc)}
+.pg.cpb:active{transform:translateY(1px)}
 .meta .tag{max-width:100%;white-space:normal;overflow-wrap:anywhere;line-height:1.35}
 #ed,#vl{border:1px solid var(--ctl);border-radius:var(--rl);padding:16px;box-shadow:var(--sh)}
 #ed input,#ed textarea,#ed select,#vl textarea,#vl .it input{border-radius:var(--r)}
@@ -585,7 +588,8 @@ function keys(c){
 const stCls={exact:"ok",anchored:"warn",ambiguous:"warn",failed:"bad"};
 function card(c){  // `now` keeps extractor-only fields (gist, factor, outcome, tags, section) off imported claims
 
-  const pg=c.pdf_page.length?`<span class="pg cp" title="Click to copy this claim with (author, year, p. xx)">Copy</span> <span class="pg">PDF p.${c.pdf_page.map(esc).join(", ")}</span>`:`<span class="pg cp" title="Click to copy this claim with (author, year, p. xx)">Copy</span> <span class="pg">no page</span>`;
+  const cpBtn=`<button type="button" class="pg cpb" data-copy="1" title="Copy this claim with (author, year, p. xx)">Copy</button>`;
+  const pg=c.pdf_page.length?`${cpBtn} <span class="pg">PDF p.${c.pdf_page.map(esc).join(", ")}</span>`:`${cpBtn} <span class="pg">no page</span>`;
   const tags=c.role.map(r=>`<span class="tag q">${esc(ROLE()[r]||r)}</span>`);
   (c.pathway||[]).forEach(p=>tags.push(`<span class="tag">${esc(VB.pathways[p]||p)}</span>`));
   const now=c.status==="user"?c:null;  // imported claims carry extractor fields the app never writes; do not dress them up as tags
@@ -657,7 +661,8 @@ const ask=(msg,key,info)=>new Promise(res=>{if(key&&store.get("cv:skip:"+key)===
   d.onclose=()=>{const c=d.querySelector("input");if(ok&&c&&c.checked&&key)store.set("cv:skip:"+key,"1");d.remove();res(!!ok)};
   document.body.append(d);d.showModal()});
 
-$("list").addEventListener("click",async e=>{if(e.target.closest("[contenteditable],.dh"))return;if(e.detail>1&&e.target.closest(".quote"))return editQ(e.target.closest(".quote"));if(e.target.closest("button[data-g]"))return show("graph");
+$("list").addEventListener("click",async e=>{if(e.target.closest("[contenteditable],.dh"))return;
+  if(e.target.closest("[data-copy]")){e.stopPropagation();const c=all.find(x=>x.src+x.id===sel);if(c){copyText(cardCopy(c))}return}if(e.detail>1&&e.target.closest(".quote"))return editQ(e.target.closest(".quote"));if(e.target.closest("button[data-g]"))return show("graph");
   if(e.target.closest("[data-ed]"))return editor(all.find(x=>x.src+x.id===sel));
   if(e.target.closest("[data-zknote]")){const c=all.find(x=>x.src+x.id===sel);if(c)zkFromClaim(c);return}
   if(e.target.closest("[data-del]")){const c=all.find(x=>x.src+x.id===sel);
