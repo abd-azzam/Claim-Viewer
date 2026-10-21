@@ -14,3 +14,5 @@ reader/pdf/*.pdf
 # build output and local backups
 dist/
 *.bak
+/data/
+/library.json
