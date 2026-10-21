@@ -16,3 +16,5 @@ dist/
 *.bak
 /data/
 /library.json
+# per-user reading positions, written by the app
+last-pages.json

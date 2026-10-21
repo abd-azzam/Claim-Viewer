@@ -1770,10 +1770,18 @@ document.addEventListener("keydown",e=>{
   else if(e.key==="ArrowLeft"||e.key==="PageUp"){e.preventDefault();scroll(Math.max(PAGEN()-1,1))}
 });
 rd.addEventListener("scroll",()=>{clearTimeout(rd._pt);rd._pt=setTimeout(showPage,80)});
+const pullPages=()=>{try{if(!(window.pywebview&&pywebview.api&&pywebview.api.load_pages))return;
+  pywebview.api.load_pages().then(d=>{if(!d||!Object.keys(d).length)return;
+    const o=JSON.parse(localStorage.getItem("cv:lastpg")||"{}");let ch=0;
+    Object.entries(d).forEach(([k,v])=>{if(!o[k]&&+v>0){o[k]=+v;ch++}});
+    if(ch)localStorage.setItem("cv:lastpg",JSON.stringify(o))}).catch(()=>{})}catch(e){}};
+window.addEventListener("pywebviewready",pullPages);setTimeout(pullPages,300);
 let lastPg=1,lastPgId="";  // the page on screen and the document it belongs to
 const forgetPage=id=>{try{const o=JSON.parse(localStorage.getItem("cv:lastpg")||"{}");if(id in o){delete o[id];localStorage.setItem("cv:lastpg",JSON.stringify(o))}}catch(e){}};  // a file that cannot open keeps no place
+let _pp=0;
+const pushPages=o=>{clearTimeout(_pp);_pp=setTimeout(()=>{try{if(window.pywebview&&pywebview.api&&pywebview.api.save_pages)pywebview.api.save_pages(JSON.stringify(o)).catch(()=>{})}catch(e){}},300)};  // a file survives a wiped profile; the browser storage does not
 const savePage=()=>{if(!cur||lastPgId!==cur)return;  // no measuring here: a save can fire mid-layout, and a wrong measurement would stick
-  try{const o=JSON.parse(localStorage.getItem("cv:lastpg")||"{}");o[cur]=lastPg;localStorage.setItem("cv:lastpg",JSON.stringify(o))}catch(e){}};
+  try{const o=JSON.parse(localStorage.getItem("cv:lastpg")||"{}");o[cur]=lastPg;localStorage.setItem("cv:lastpg",JSON.stringify(o));pushPages(o)}catch(e){}};
 const PAGEN=()=>{const pgs=[...rd.querySelectorAll(".pg[data-n]")];if(!pgs.length||!docC)return 1;
   const top=rd.getBoundingClientRect().top+10;let n=1;
   for(const e of pgs){const r=e.getBoundingClientRect();if(r.bottom>top){n=+e.dataset.n||n;break}}  // the page on screen, not the farthest one that started above the fold
