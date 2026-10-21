@@ -129,7 +129,7 @@ body.gz #gx{display:none!important}  /* the Layers scroller has no meaning on th
 #zkpick .zkpick{display:grid;gap:6px;padding:8px}
 #zkpick button{height:30px;padding:0 12px;white-space:nowrap;justify-self:stretch;border:1px solid var(--ctl);border-radius:var(--r);background:var(--bg);color:var(--ink);font:inherit;font-size:13px;cursor:pointer}
 #zkpick button:hover{border-color:var(--acc);color:var(--acc)}
-#zklist .zkc.kid{margin-left:26px;border-left:1px dashed var(--ctl);border-radius:0 var(--r) var(--r) 0}
+#zklist .zkc.kid{border-left:1px dashed var(--ctl);border-radius:0 var(--r) var(--r) 0}  /* the indent comes from data-d, so a grandchild sits further in */
 #zklist .zkc.kid b{font-size:11px;color:var(--mute)}
 #zklist .zkc.kid .zt{font-size:12.5px}
 #zkpick button:disabled{opacity:.45;cursor:default}
@@ -1064,7 +1064,7 @@ const zkPass=n=>{const{q,t,s}=zkFilter();if(!n)return false;
   if(q&&!((n.title||"")+" "+(n.body||"")+" "+(n.tags||[]).join(" ")+" "+(n.subt||[]).join(" ")+" "+n.id).toLowerCase().includes(q))return false;
   return true};
 const zkIdsAll=()=>zkIds();
-const zkParentOf=id=>{const p=String(id).replace(/[a-z]+$/,"");return p!==id&&ZK.notes[p]?p:null};  // 1a hangs from 1, 1aa from 1a
+const zkParentOf=id=>{const t=String(id);if(!/[a-z]$/.test(t))return null;const p=t.slice(0,-1);return ZK.notes[p]?p:null};  // one letter per level: 1a hangs from 1, 1aa from 1a
 const zkIsChild=id=>!!zkParentOf(id);
 const zkKids=id=>zkIds().filter(k=>zkParentOf(k)===id);
 const zkHome=n=>{let id=n&&n.id,k=0;while(id&&k++<9){const m=ZK.notes[id];if(!m)break;if(m.src||m.col)return m;
@@ -1089,7 +1089,7 @@ const zkRenderList=()=>{zkFillFilters();
   const ids=zkIdsF(),no=zkNo();
   const numOf=id=>{const p=zkParentOf(id);return no.get(id)||(p&&no.get(p)?no.get(p)+id.slice(p.length):id)};
   const line=(id,d)=>{const n=zkNote(id),lb=(n.links||[]).length,bc=zkBack(id).length,kid=d>0;
-    return `<div class="zkc${id===zkSel?" sel":""}${kid?" kid":""}" data-zk="${esc(id)}" tabindex="0"><div><b>${esc(numOf(id))}</b><span class="zt">${esc(n.title||"(untitled)")}</span></div>
+    return `<div class="zkc${id===zkSel?" sel":""}${kid?" kid":""}" data-zk="${esc(id)}" data-d="${d}" tabindex="0"${kid?` style="margin-left:${26*d}px"`:""}><div><b>${esc(numOf(id))}</b><span class="zt">${esc(n.title||"(untitled)")}</span></div>
       <div class="zs"><span>${lb} link${lb===1?"":"s"}</span><span>${bc} backlink${bc===1?"":"s"}</span>${n.page?`<span class="tag">p.${esc(n.page)}</span>`:""}${(n.tags||[]).map(t=>`<span class="tag">#${esc(t)}</span>`).join("")}${(n.subt||[]).map(t=>`<span class="tag">›${esc(t)}</span>`).join("")}</div></div>`};
   const draw=(id,d)=>{let h=line(id,d);if(d<9&&(zkSel===id||(zkSel!==null&&String(zkSel).startsWith(id))))
       zkKids(id).filter(k=>ids.includes(k)).forEach(k=>{h+=draw(k,d+1)});return h};
@@ -1176,7 +1176,7 @@ const zkGraphSVG=()=>{
   // tag -> nested sub-tags (depth from "a › b › c") -> notes
   const groups=new Map(),loose=[],NO="(no tag)";
   // one pill per reading: every note from the same source converges on the same node
-  const keyOf=id=>{if(!MERGE)return "i:"+id;const n=zkNote(id);return n&&n.src?"s:"+n.src:"i:"+id};  // must exist before put(): a direct note is stored by pill key, not by id
+  const keyOf=id=>{if(!MERGE)return "i:"+id;const h=zkHome(zkNote(id));return h&&h.src?"s:"+h.src:"i:"+id};  // must exist before put(): a direct note is stored by pill key, not by id
   const put=(g,paths,id)=>{if(!paths.length){g.direct.push(keyOf(id));return}  // no sub-tag either: hang straight off the parent
     paths.forEach(p=>{let key="";
       p.forEach((seg,di)=>{const k=key+"\u0001"+seg;
@@ -1191,7 +1191,8 @@ const zkGraphSVG=()=>{
     const byKey=new Map();ids.forEach(id=>{const k=keyOf(id);if(!byKey.has(k))byKey.set(k,[]);byKey.get(k).push(id)});
   const keys=[...byKey.keys()],first=k=>byKey.get(k)[0];
   const labK=k=>"("+zkCite(zkNote(first(k)))+")";
-  const subK=k=>byKey.get(k).length>1?byKey.get(k).length+" notes":String(zkNote(first(k)).title||"").trim();
+  const subK=k=>{const a=byKey.get(k),c=a.length>1?a.filter(id=>zkIsChild(id)).length:0;  // a merged pill says how many of its notes are children
+    return (a.length>1?a.length+" notes":String(zkNote(first(k)).title||"").trim())+(c?" \u00b7 "+c+" child"+(c>1?"ren":""):"")};
   const widK=k=>Math.min(260,Math.max(96,Math.max(7.6*labK(k).length,6.4*subK(k).length)+22));
   const ROW=64,GAP=26,PAD=44,STEP=236,CT=120;
   let y=PAD;const pos={},tagP={},NP={};
