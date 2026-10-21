@@ -1465,9 +1465,9 @@ async function editor(c){
   setCb("role",v.role);setCb("direction",v.direction);setCb("evidence",v.evidence);setCb("own_claim",v.own_claim.map(b=>b?"1":"0"));
   ["pathway","axisA","axisB","section","tags"].forEach(n=>setChips(n,v[n]));
   F.elements.pdf_page.value=v.pdf_page.join(", ");
-  {const known=[...new Set([...Object.values(VB.pathways||{}),...all.flatMap(x=>x.pathway||[]),...(c?(c.pathway||[]):[])])]
+  {const own=(VOC().p)||{},known=[...new Set([...Object.values(own),...(c?(c.pathway||[]):[])])]
      .filter(Boolean).sort((a,b)=>a.localeCompare(b));
-   $("dlp").innerHTML=known.map(n=>`<option value="${esc(n)}">`).join("");}  // suggestions only; typing anything is allowed
+   $("dlp").innerHTML=known.map(n=>`<option value="${esc(n)}">`).join("");}  // the list of this folder, not every folder's
   $("xed").innerHTML=(VB.xcols||[]).map(x=>`<label>${esc(x.name||x.k)} <input name="xe:${esc(x.k)}" value="${esc(((v.x&&v.x[x.k])||[]).join(", "))}" placeholder="comma separated"></label>`).join("");
   $("lkrows").innerHTML="";v.links.forEach(addLink);
   F.elements.src.disabled=!!c||!!$("pdfsel").value;D.show();F.elements.quote.focus();
