@@ -1125,8 +1125,11 @@ const zkScopeIds=()=>{const cc=$("col").value||"",rs=$("zsrc"),rv=rs?rs.value:""
   return zkIds().filter(id=>{const h=zkHome(zkNote(id));if(!h)return false;
     if(rv&&h.src!==rv)return false;
     return !cc||inCol(h.src?(COL[h.src]||[]):(h.col?[h.col]:[]),cc)})};
-const zkFillFilters=()=>{const tags=new Set(),subs=new Set();
-  zkScopeIds().forEach(id=>{const n=zkNote(id);zkTags(n).forEach(t=>tags.add(t));zkSegsOf(n).forEach(t=>subs.add(t))});
+const zkFillFilters=()=>{const tags=new Set(),subs=new Set(),paths=new Set();
+  zkScopeIds().forEach(id=>{const n=zkNote(id);zkTags(n).forEach(t=>tags.add(t));zkSegsOf(n).forEach(t=>subs.add(t));
+    zkPaths({subt:zkNest(n)}).forEach(p=>paths.add(p.join(" \u203a ")))});
+  const dl=(el,vals)=>{if(el)el.innerHTML=[...vals].sort((a,b)=>a.localeCompare(b)).map(v=>`<option value="${esc(v)}"></option>`).join("")};
+  dl($("zdlk"),tags);dl($("zdls"),paths.size?paths:subs);  // typing a tag or a sub-tag offers what is already in this folder
   const opt=(set,cur)=>'<option value="">Any</option>'+[...set].sort((a,b)=>a.localeCompare(b)).map(t=>`<option value="${esc(t)}"${t===cur?" selected":""}>${esc(t)}</option>`).join("");
   if($("zft"))$("zft").innerHTML=opt(tags,($("zft").value||""));
   if($("zfs"))$("zfs").innerHTML=opt(subs,($("zfs").value||""));
@@ -1165,8 +1168,9 @@ const zkOpen=id=>{const n=zkNote(id);if(!n)return;if(zkSel&&zkSel!==id){const go
     <div class="zhead"><span>Note <span class="zid">${esc(zkLabels().get(id)||id)}</span></span><button type="button" id="zkclose" title="Close this note and go back to the list" aria-label="Close this note"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>${srcLine}
     <label>Title<input id="zkt" value="${esc(n.title||"")}" placeholder="The idea in one line"></label>
     <label>Note<textarea id="zkb" placeholder="Say it in your own words, then say what it connects to">${esc(n.body||"")}</textarea></label>
-    <label>Tags, comma separated<input id="zkk" value="${esc((n.tags||[]).join(", "))}" placeholder="state capacity, industrial policy"></label>
-    <label>Sub-tags<input id="zksub" value="${esc((n.subt||[]).join(", "))}" placeholder="implementation, embedded autonomy"></label>
+    <label>Tags, comma separated<input id="zkk" list="zdlk" autocomplete="off" value="${esc((n.tags||[]).join(", "))}" placeholder="state capacity, industrial policy"></label>
+    <label>Sub-tags<input id="zksub" list="zdls" autocomplete="off" value="${esc((n.subt||[]).join(", "))}" placeholder="implementation, embedded autonomy"></label>
+    <datalist id="zdlk"></datalist><datalist id="zdls"></datalist>
     <div class="zhint"><button type="button" id="zkdeep">+ One level deeper</button> <small>Nests the tag: implementation \u203a bureaucracy \u203a street level.</small></div>
     <fieldset style="border:1px solid var(--line);border-radius:var(--r);padding:8px 10px"><legend>Links to other notes</legend>
       <div id="zkrows">${rows}</div>
