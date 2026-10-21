@@ -278,6 +278,9 @@ body.notes #libp{display:none}
 #zkv{container-type:inline-size}
 @container (max-width:720px){.zbody{grid-template-columns:minmax(0,1fr)}.zbody #zkpane{order:-1}#zklist{max-height:42vh}}
 @media (max-width:1240px){.zbody{grid-template-columns:minmax(0,1fr)}.zbody #zkpane{order:-1}#zklist{max-height:42vh}}
+body.zopen .zbody{grid-template-columns:minmax(0,1fr)}  /* editing gets the full width; the list is not repeated under the editor */
+body.zopen #zklist{display:none}
+body.zopen .zked .zhead{position:sticky;top:0;z-index:2;background:var(--bg);padding-bottom:6px}  /* the close button stays reachable while you scroll the note
 #zkpane{max-width:100%}.zked{max-width:100%}
 .zhead{display:flex;align-items:center;justify-content:space-between;gap:8px}
 #zkclose{width:28px;height:28px;display:inline-flex;align-items:center;justify-content:center;border:1px solid transparent;border-radius:var(--r);background:transparent;color:var(--mute);cursor:pointer}
@@ -1036,7 +1039,7 @@ function show(m){const g=m==="graph",l=m==="lib",n=m==="notes";
   if(!g)["gz","gnet","gcon"].forEach(c=>document.body.classList.remove(c));  // the graph mode markers have no meaning outside the graph
   $("tg").classList.toggle("on",g);$("tl").classList.toggle("on",!g&&!l);$("lb").classList.toggle("on",l);
   const nn=!g&&!l&&n;$("vn").classList.toggle("on",nn);$("vc").classList.toggle("on",!g&&!l&&!n);$("vn").setAttribute("aria-selected",nn);$("vc").setAttribute("aria-selected",!g&&!l&&!n);
-  if(g)graph();else if(l)drawLib();else if(n){zkRenderList();if(zkSel&&zkNote(zkSel))zkOpen(zkSel);else $("zkpane").innerHTML=`<div class="empty">Pick a note on the left, or start a new one.</div>`}else render();}
+  if(g)graph();else if(l)drawLib();else if(n){zkRenderList();if(zkSel&&zkNote(zkSel))zkOpen(zkSel);else{document.body.classList.remove("zopen");$("zkpane").innerHTML=`<div class="empty">Pick a note on the left, or start a new one.</div>`}}else render();}
 
 // Notes: one idea per note, in your own words. Ids branch like 1, 1a, 1aa (a..z then aa, ab); links are note to note.
 const ZKKEY="cv:zk";let ZK={seq:0,notes:{}};
@@ -1159,7 +1162,7 @@ const zkRenderList=()=>{zkFillFilters();
     :`<div class="empty">No notes yet. Start one with "New note": one idea, in your own words.</div>`};
 const zkOpts=sel=>{const no=zkLabels();return zkIds().map(id=>`<option value="${esc(id)}"${id===sel?" selected":""}>${no.get(id)||esc(id)} · ${esc((zkNote(id).title||"").slice(0,48))}</option>`).join("")};
 const zkRow=(to,kind)=>`<div class="zkrow"><select class="zklto" aria-label="Linked note">${zkOpts(to)}</select><select class="zklk" aria-label="Kind of link">${Object.entries(zkKinds).map(([k,v])=>`<option value="${k}"${kind===k?" selected":""}>${v}</option>`).join("")}</select><button type="button" class="zkx" aria-label="Remove link">✕</button></div>`;
-const zkOpen=id=>{const n=zkNote(id);if(!n)return;if(zkSel&&zkSel!==id){const gone=zkSel;if(zkNote(gone))zkSaveNote();zkDrop(gone)}zkSel=id;
+const zkOpen=id=>{const n=zkNote(id);if(!n)return;document.body.classList.add("zopen");if(zkSel&&zkSel!==id){const gone=zkSel;if(zkNote(gone))zkSaveNote();zkDrop(gone)}zkSel=id;
   document.querySelectorAll("#zklist .zkc").forEach(r=>r.classList.toggle("sel",r.dataset.zk===id));
   const rows=(n.links||[]).filter(l=>zkNote(l.to)).map(l=>zkRow(l.to,l.kind)).join("");
   const back=zkBack(id);
@@ -1336,7 +1339,7 @@ const addRole=()=>{const i=$("rnew");if(!i)return;const nm=(i.value||"").replace
 document.addEventListener("click",e=>{if(e.target.id==="rnewb"){e.preventDefault();addRole()}});
 document.addEventListener("keydown",e=>{if(e.target.id==="rnew"&&e.key==="Enter"){e.preventDefault();addRole()}});
 document.addEventListener("click",e=>{if(e.target.closest&&e.target.closest(".rlab")){e.preventDefault();e.stopPropagation()}},true);
-document.addEventListener("click",e=>{if(e.target.closest("#zkclose")){const gone=zkSel;if(gone&&zkNote(gone))zkSaveNote();zkSel=null;zkDrop(gone);zkRenderList();
+document.addEventListener("click",e=>{if(e.target.closest("#zkclose")){const gone=zkSel;if(gone&&zkNote(gone))zkSaveNote();zkSel=null;document.body.classList.remove("zopen");zkDrop(gone);zkRenderList();
   document.querySelectorAll("#zklist .zkc.sel").forEach(r=>r.classList.remove("sel"));
   $("zkpane").innerHTML=`<div class="empty">Pick a note on the left, or start a new one.</div>`;return}
   const un=e.target.closest&&e.target.closest("[data-zkunlink]");
@@ -1396,7 +1399,7 @@ $("zkv").addEventListener("click",e=>{
   if(e.target.id==="zkdel"){if(!zkSel)return;const id=zkSel;
     ask("Delete note "+id+"? Its links from other notes are removed too.","zkdelnote").then(ok=>{if(!ok)return;
       delete ZK.notes[id];Object.values(ZK.notes).forEach(n=>{n.links=(n.links||[]).filter(l=>l.to!==id)});
-      zkSave();zkSel=null;$("zkpane").innerHTML=`<div class="empty">Pick a note on the left, or start a new one.</div>`;zkRenderList();toast("Note deleted")})}});
+      zkSave();zkSel=null;document.body.classList.remove("zopen");$("zkpane").innerHTML=`<div class="empty">Pick a note on the left, or start a new one.</div>`;zkRenderList();toast("Note deleted")})}});
 
 const syncGX=()=>{const g=$("gout"),x=$("gx"),xi=$("gxi");if(!g||!x||!xi)return;
   const need=g.scrollWidth-g.clientWidth>2;x.classList.toggle("on",need);
