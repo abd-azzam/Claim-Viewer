@@ -1295,16 +1295,26 @@ const zkOpen=id=>{const n=zkNote(id);if(!n)return;document.body.classList.add("z
 const zkSugg=(inp,listId)=>{if(!inp||inp.dataset.sugg)return;inp.dataset.sugg="1";
   const box=document.createElement("div");box.className="sugg";box.hidden=true;
   inp.parentElement.insertBefore(box,inp.nextSibling);
-  const cut=()=>{const v=inp.value,i=v.lastIndexOf(",")+1;return{i,t:v.slice(i).trim()}};
-  const show=()=>{const t=cut().t.toLowerCase();
-    if(!t){box.hidden=true;return}
-    const v=[...document.querySelectorAll("#"+listId+" option")].map(o=>o.value).filter(x=>x.toLowerCase().includes(t)).slice(0,80);
+  const SEP=" \u203a ",all=()=>[...document.querySelectorAll("#"+listId+" option")].map(o=>o.value);
+  const where=()=>{const v=inp.value,i=v.lastIndexOf(",")+1,tok=v.slice(i),ps=tok.split("\u203a");
+    return{i,pre:ps.slice(0,-1).map(x=>x.trim()).filter(Boolean),cur:ps[ps.length-1].trim().toLowerCase()}};  // the level being typed, and the levels before it
+  const kids=(pre,cur)=>{const out=new Set();  // only the next segment, never the whole branch
+    all().forEach(p=>{const sp=p.split(/\s*\u203a\s*/);
+      if(sp.length<=pre.length)return;
+      if(!pre.every((x,k)=>x.toLowerCase()===String(sp[k]).toLowerCase()))return;
+      const nx=sp[pre.length];if(nx&&(!cur||nx.toLowerCase().includes(cur)))out.add(nx)});
+    return [...out].sort((a,b)=>a.localeCompare(b))};
+  const show=()=>{const{pre,cur}=where();
+    if(!cur&&!pre.length){box.hidden=true;return}
+    const v=kids(pre,cur);
     if(!v.length){box.hidden=true;return}
-    box.innerHTML=v.map(x=>`<button type="button">${esc(x)}</button>`).join("");box.hidden=false};  // the full branch, wrapped, never clipped by the field width
+    box.innerHTML=v.slice(0,80).map(x=>`<button type="button">${esc(x)}</button>`).join("");box.hidden=false};
   inp.addEventListener("input",show);inp.addEventListener("focus",show);
   inp.addEventListener("blur",()=>setTimeout(()=>{box.hidden=true},140));
   box.addEventListener("mousedown",e=>{const b=e.target.closest("button");if(!b)return;e.preventDefault();
-    const{i}=cut();inp.value=inp.value.slice(0,i)+(i?", ":"")+b.textContent;
+    const{i,pre}=where(),seg=b.textContent,head=inp.value.slice(0,i)+(pre.length?pre.join(SEP)+SEP:(i?", ":""));
+    inp.value=head+seg;
+    if(kids([...pre,seg],"").length)inp.value+=SEP;  // there is another level under it: offer that one next
     box.hidden=true;inp.focus();inp.dispatchEvent(new Event("input",{bubbles:true}))})};
 const zkSaveNote=(back)=>{const n=zkNote(zkSel);if(!n)return;
   if(!$("zkt")||!$("zkb")||!$("zkk")||!$("zksub")||!$("zkrows"))return;  // the pane is showing the index, or nothing: the fields are not there to read
