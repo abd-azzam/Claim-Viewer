@@ -893,7 +893,11 @@ function wireColDrag(){  // drag one column header onto another and the two colu
     clear();if(!target)return;
     const {own,full}=order();const i=full.indexOf(d.k),j=full.indexOf(target.dataset.k);
     if(i<0||j<0||i===j)return;
-    [full[i],full[j]]=[full[j],full[i]];own.order=full;saveED();setVocab();rebuildVocabUI();gsync();refresh()});
+    [full[i],full[j]]=[full[j],full[i]];own.order=full;saveED();setVocab();rebuildVocabUI();
+    {const vl=$("vl");if(vl&&vl.open){const stage=$("xcols");  // an open Lists dialog follows the swap without losing typed values
+       full.forEach(k=>{const c=vl.querySelector(`.col[data-c="${CSS.escape(k)}"]`);if(!c)return;
+         if(["f","p","o"].includes(k)){if(stage&&stage.parentNode)vl.insertBefore(c,stage)}else if(stage)stage.appendChild(c)})}}
+    gsync();refresh()});
   g.addEventListener("pointercancel",()=>{drag=null;clear()});
 }
 function netGraph(rows,sc){
@@ -1627,14 +1631,15 @@ VL.addEventListener("pointerdown",e=>{if(e.target.closest(".xdel"))e.preventDefa
 VL.addEventListener("click",e=>{const b=e.target.closest(".xdel");if(!b)return;
   const cid=$("col").value||"",v=ED.v=ED.v||{};v[cid]=v[cid]||{};const _v=v[cid];
   _v.xcols=((VOC().xcols)||[]).filter(x=>x.k!==b.closest(".col").dataset.c);const _own=v[cid].x||(v[cid].x={});delete _own[b.closest(".col").dataset.c];
-  saveED();drawX()});
+  _v.order=(_v.order||[]).filter(k=>k!==b.closest(".col").dataset.c);  // a removed layer leaves no slot behind
+  saveED();setVocab();rebuildVocabUI();gsync();drawX();if(document.body.classList.contains("graph"))graph()});
 VL.addEventListener("change",e=>{const i=e.target.closest(".xn");if(!i)return;
   const cid=$("col").value||"",k=i.closest(".col").dataset.c,v=ED.v=ED.v||{};v[cid]=v[cid]||{};
   v[cid].xcols=(VOC().xcols||[]).map(x=>x.k===k?{k,name:i.value.trim()||k}:x);saveED()});
 $("xadd").onclick=()=>{const cid=$("col").value||"";
   const v=ED.v=ED.v||{},o=v[cid]=v[cid]||{};
   o.xcols=(o.xcols||VOC().xcols||[]).map(x=>Object.assign({},x));  // start from the merged set, or the shared layers vanish for this folder
-  const k="x"+(o.xcols.length+1)+(Date.now()%1000);o.xcols.push({k,name:"Layer"+(o.xcols.length+4)});saveED();drawX();
+  const k="x"+(o.xcols.length+1)+(Date.now()%1000);o.xcols.push({k,name:"Layer"+(o.xcols.length+4)});saveED();setVocab();rebuildVocabUI();gsync();drawX();if(document.body.classList.contains("graph"))graph();  // the new layer exists for the graph at once, not only after Save
   if(!cid)window.toast("Added as the default layer for every folder. Pick a folder to give it its own list.")};
 $("vb").onclick=()=>{const _sc=$("vscope");if(_sc)_sc.textContent=$("col").value?"Editing this folder's lists. Type to rename. ✕ removes.":"Editing the default lists for all folders. Pick a folder to override them.";
   VL.querySelectorAll(".col").forEach(d=>{const c=d.dataset.c;if(c.startsWith("x")&&d.parentNode!==$("xcols"))d.remove()});  // drop last open's moved copies, or every open adds a twin
