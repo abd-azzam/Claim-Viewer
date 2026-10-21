@@ -132,6 +132,8 @@ body.gz #gx{display:none!important}  /* the Layers scroller has no meaning on th
 #zklist .zkc.kid{border-left:1px dashed var(--ctl);border-radius:0 var(--r) var(--r) 0}  /* the indent comes from data-d, so a grandchild sits further in */
 #zklist .zkc.kid b{font-size:11px;color:var(--mute)}
 #zklist .zkc.kid .zt{font-size:12.5px}
+#list .card.cdrag{opacity:.55}
+#list .card.chit{outline:2px solid var(--acc);outline-offset:1px}
 #zkpick button:disabled{opacity:.45;cursor:default}
 #zkpick button:disabled:hover{border-color:var(--ctl);color:var(--ink)}
 #zkpick select{max-width:300px}
@@ -637,7 +639,7 @@ function pump(){
   const L=$("list");let buf="",n=0,t=performance.now();
   while(st.gi<st.ents.length&&performance.now()-t<16&&(st.all||n<NSHOW)){
     const[k,v]=st.ents[st.gi++];
-    buf+=`<div class="grp" data-g="${esc(k)}">${esc(k)} (${v.length})</div>`+v.sort((a,b)=>ok_(a,k)-ok_(b,k)).map(card).join("");
+    buf+=`<div class="grp" data-g="${esc(k)}">${esc(k)} (${v.length})</div>`+v.sort((a,b)=>cRank(kc(a))-cRank(kc(b))||ok_(a,k)-ok_(b,k)).map(card).join("");
     n+=v.length;
   }
   if(buf)L.insertAdjacentHTML("beforeend",buf);
@@ -648,6 +650,31 @@ function showAll(){if(RQ){RQ.all=true;pump()}}  // used by scroll, Show in graph
 $("list").addEventListener("scroll",()=>{const e=$("list");if(e.scrollTop+e.clientHeight>e.scrollHeight-400)showAll()},{passive:true});
 window.addEventListener("scroll",()=>{if(window.innerHeight+window.scrollY>document.body.scrollHeight-500)showAll()},{passive:true});
 let rtok=0;
+// claim order: drag a card onto another card in the same box and the two swap places
+const cOrd=()=>{const cid=$("col").value||"";ED.co=ED.co||{};return ED.co[cid]||(ED.co[cid]=[])};
+const cRank=k=>{const i=cOrd().indexOf(k);return i<0?1e9:i};
+const cBox=el=>{let p=el.previousElementSibling;while(p&&!p.classList.contains("grp"))p=p.previousElementSibling;return p};
+let cdrag=null;
+$("list").addEventListener("pointerdown",e=>{if(e.button!==0)return;const c=e.target.closest(".card");
+  if(!c||e.target.closest("button,[contenteditable],a"))return;cdrag={el:c,x:e.clientX,y:e.clientY,moved:false}});
+document.addEventListener("pointermove",e=>{if(!cdrag)return;
+  if(!cdrag.moved){if(Math.abs(e.clientX-cdrag.x)+Math.abs(e.clientY-cdrag.y)<5)return;
+    cdrag.moved=true;cdrag.el.classList.add("cdrag")}
+  const t=document.elementFromPoint(e.clientX,e.clientY),c=t&&t.closest?t.closest(".card"):null,
+    okk=c&&c!==cdrag.el&&cBox(c)===cBox(cdrag.el);
+  document.querySelectorAll("#list .card.chit").forEach(x=>{if(x!==c||!okk)x.classList.remove("chit")});
+  if(okk)c.classList.add("chit")});
+document.addEventListener("pointerup",()=>{const d=cdrag;if(!d)return;cdrag=null;d.el.classList.remove("cdrag");
+  const hit=document.querySelector("#list .card.chit");document.querySelectorAll("#list .card.chit").forEach(x=>x.classList.remove("chit"));
+  if(!d.moved||!hit)return;window.__cdragAt=performance.now();cSwap(d.el,hit)});
+const cSwap=(a,b)=>{const ka=a.dataset.k,kb=b.dataset.k,o=cOrd();
+  if(!o.includes(ka)||!o.includes(kb)){const h=cBox(a);let c=h?h.nextElementSibling:null;  // start from this box only, so the saved order stays small
+    while(c&&c.classList.contains("card")){const k=c.dataset.k;if(!o.includes(k))o.push(k);c=c.nextElementSibling}}
+  const i=o.indexOf(ka),j=o.indexOf(kb);if(i<0||j<0)return;
+  [o[i],o[j]]=[o[j],o[i]];saveED();
+  const m=document.createComment("");  // swap the two cards in place, with no rebuild of the list
+  a.parentNode.insertBefore(m,a);b.parentNode.insertBefore(a,b);m.parentNode.insertBefore(b,m);m.remove()};
+
 function render(){
   const rows=all.filter(pass);
   const live=all.filter(c=>!c.del).length,fl=FL.some(i=>$(i).value);$("count").innerHTML=(fl?rows.length+" / "+live+" claims":live+(live===1?" claim":" claims"))+(fl?'<button id="cf">Clear filters</button>':"");
@@ -683,7 +710,7 @@ const ask=(msg,key,info)=>new Promise(res=>{if(key&&store.get("cv:skip:"+key)===
   d.onclose=()=>{const c=d.querySelector("input");if(ok&&c&&c.checked&&key)store.set("cv:skip:"+key,"1");d.remove();res(!!ok)};
   document.body.append(d);d.showModal()});
 
-$("list").addEventListener("click",async e=>{if(e.target.closest("[contenteditable],.dh"))return;
+$("list").addEventListener("click",async e=>{if(performance.now()-(window.__cdragAt||0)<350)return;if(e.target.closest("[contenteditable],.dh"))return;
   if(e.target.closest("[data-copy]")){e.stopPropagation();const cd=e.target.closest(".card"),[s0,i0]=String((cd&&cd.dataset.k)||"").split("\u0001"),c=all.find(x=>x.src===s0&&x.id===i0);if(c)copyText(cardCopy(c));return}if(e.detail>1&&e.target.closest(".quote"))return editQ(e.target.closest(".quote"));if(e.target.closest("button[data-g]")){if(G.m==="Z"){const b=document.querySelector('#gc2 [data-gc="mL"]');if(b)b.click()}return show("graph")}  // a claim belongs in Layers, not in the note graph
   if(e.target.closest("[data-ed]"))return editor(all.find(x=>x.src+x.id===sel));
   if(e.target.closest("[data-zknote]")){const cd=e.target.closest(".card"),[s0,i0]=String((cd&&cd.dataset.k)||"").split("\u0001"),c=all.find(x=>x.src===s0&&x.id===i0);
