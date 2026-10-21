@@ -90,6 +90,16 @@ build_exe.bat
 
 Needs Python 3 and [Inno Setup 6](https://jrsoftware.org/isinfo.php) (`winget install JRSoftware.InnoSetup`). The script refreshes `reader/index.html` from `template.html`, builds `dist/ClaimViewer.exe` (PyInstaller), stages `dist/` with the empty reader page and the pdf.js libs, then writes `release/ClaimViewer-Setup-<version>.exe`. Change the version in `ClaimViewer.iss`. Git tracks only `release/ClaimViewer-Setup-*.exe`: `dist/` and `index.html` stay out, because a built page holds somebody's claims.
 
+## Check the installer without touching your install
+
+```
+python test_installer.py
+```
+
+Builds the setup with a throwaway AppId and the name **Claim Viewer (test)**, installs it into a temp folder, checks that the packaged page carries zero readings and that `pdf.js` is there, then uninstalls and deletes the folder. The uninstaller deletes shortcuts by name, so a test built under the real name would remove your own Start-menu entry; this one cannot.
+
+Silent installs abort with exit code 5 while Claim Viewer is running: close the app first.
+
 ## Optional: fill the viewer with claims you prepared
 
 If you already have claims as quotes in JSON (written by hand, or extracted by a script or an AI assistant), `build.py` merges them with the library and builds a ready-filled `index.html`. You do not need this to use the viewer.
