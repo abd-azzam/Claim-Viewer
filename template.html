@@ -1085,8 +1085,13 @@ const zkIdsF=()=>zkIds().filter(id=>zkPass(zkNote(id)));
 const zkNo=()=>{const m=new Map();zkIdsF().filter(id=>!zkIsChild(id)).forEach((id,i)=>m.set(id,i+1));return m};  // 1..N over the top-level notes; a child keeps its path label (2a)
 const zkLabels=()=>{const no=zkNo(),m=new Map();zkIds().forEach(id=>{const p=zkParentOf(id);
   m.set(id,no.get(id)||(p&&no.get(p)?no.get(p)+id.slice(p.length):id))});return m};  // "2" for a note, "2a" for the note under it
+// tags come from the folder and reading you are in, never from another collection
+const zkScopeIds=()=>{const cc=$("col").value||"",rs=$("zsrc"),rv=rs?rs.value:"";
+  return zkIds().filter(id=>{const h=zkHome(zkNote(id));if(!h)return false;
+    if(rv&&h.src!==rv)return false;
+    return !cc||inCol(h.src?(COL[h.src]||[]):(h.col?[h.col]:[]),cc)})};
 const zkFillFilters=()=>{const tags=new Set(),subs=new Set();
-  zkIds().forEach(id=>{const n=zkNote(id);(n.tags||[]).forEach(t=>tags.add(t));zkSegs(n).forEach(t=>subs.add(t))});
+  zkScopeIds().forEach(id=>{const n=zkNote(id);(n.tags||[]).forEach(t=>tags.add(t));zkSegs(n).forEach(t=>subs.add(t))});
   const opt=(set,cur)=>'<option value="">Any</option>'+[...set].sort((a,b)=>a.localeCompare(b)).map(t=>`<option value="${esc(t)}"${t===cur?" selected":""}>${esc(t)}</option>`).join("");
   if($("zft"))$("zft").innerHTML=opt(tags,($("zft").value||""));
   if($("zfs"))$("zfs").innerHTML=opt(subs,($("zfs").value||""));
