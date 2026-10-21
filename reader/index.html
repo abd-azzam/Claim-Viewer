@@ -173,7 +173,9 @@ body.tabsr .edge{opacity:1}  /* both folds appear together, once the panel width
 #gout .node:hover rect{stroke-width:2.5}
 #gout .node .nt{font-size:10px;fill:var(--mute);font-weight:400}
 #dict{position:fixed;z-index:70;width:330px;max-height:44vh;overflow:auto;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--panel);box-shadow:var(--sh);font-size:12.5px;line-height:1.45}
-#dict h4{margin:0 0 6px;font-size:13.5px;text-transform:capitalize}
+#dict h4{margin:0 22px 6px 0;font-size:13.5px;text-transform:capitalize}
+#dict .dx{position:absolute;top:4px;right:4px;width:22px;height:22px;padding:0;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--mute);font:inherit;font-size:12px;line-height:1;cursor:pointer}
+#dict .dx:hover{border-color:var(--acc);color:var(--acc)}
 #dict .dp{margin:8px 0 2px;font-size:10.5px;color:var(--mute);text-transform:uppercase;letter-spacing:.05em}
 #dict ol{margin:0 0 6px;padding-left:17px}
 #dict li{margin:2px 0}
@@ -1139,7 +1141,7 @@ const zkSaveNote=()=>{const n=zkNote(zkSel);if(!n)return;
   n.tags=($("zkk").value||"").split(",").map(t=>t.trim()).filter(Boolean);
   n.subt=($("zksub").value||"").split(",").map(t=>t.trim()).filter(Boolean);
   n.links=[...$("zkrows").querySelectorAll(".zkrow")].map(r=>({to:r.querySelector(".zklto").value,kind:r.querySelector(".zklk").value})).filter(l=>l.to&&l.to!==zkSel);
-  n.updated=Date.now();zkSave();zkRenderList();toast("Note "+zkSel+" saved")};
+  n.updated=Date.now();zkSave();zkRenderList();toast("Note "+(zkLabels().get(zkSel)||zkSel)+" saved")};
 const zkNew=(parent,seed)=>{const id=zkNext(parent);ZK.notes[id]={id,title:"",body:"",tags:[],links:[],created:Date.now()};
   const sc=($("zsrc")&&$("zsrc").value)||(typeof cur!=="undefined"&&typeof rd!=="undefined"&&!rd.hidden?cur:"");  // the reader scope is not always thereif(!parent){if(sc)ZK.notes[id].src=sc;else if($("col").value)ZK.notes[id].col=$("col").value}  // land in the reading or the folder you are looking at
   if(seed){if(seed.src)ZK.notes[id].src=seed.src;if(seed.page)ZK.notes[id].page=seed.page;if(seed.quote)ZK.notes[id].quote=seed.quote;if(seed.tags)ZK.notes[id].tags=seed.tags;if(seed.subt)ZK.notes[id].subt=seed.subt}
@@ -1358,7 +1360,10 @@ const closeDict=()=>document.querySelectorAll("#dict").forEach(n=>n.remove());
 const defineWord=async(word,x,y)=>{
   const w=String(word||"").trim().toLowerCase().replace(/^[^a-z]+|[^a-z]+$/g,"");
   if(!w)return;closeDict();
-  const d=document.createElement("div");d.id="dict";d.innerHTML=`<h4>${esc(w)}</h4><p class="dm">Looking it up…</p>`;
+  const d=document.createElement("div");d.id="dict";
+  const fill=h=>{d.innerHTML=`<button type="button" class="dx" aria-label="Close the dictionary" title="Close">\u2715</button>`+h;  // the cross survives every redraw
+    d.querySelector(".dx").onclick=()=>d.remove()};
+  fill(`<h4>${esc(w)}</h4><p class="dm">Looking it up…</p>`);
   (document.fullscreenElement||document.body).appendChild(d);
   const place=()=>{const r=d.getBoundingClientRect();
     d.style.left=Math.max(8,Math.min(x,innerWidth-r.width-8))+"px";
@@ -1371,16 +1376,20 @@ const defineWord=async(word,x,y)=>{
       const res=await fetch("https://en.wiktionary.org/api/rest_v1/page/definition/"+encodeURIComponent(w),{signal:ctl.signal});
       if(!res.ok)throw new Error(res.status===404?"No entry for \u201c"+w+"\u201d.":"The dictionary answered "+res.status+".");
       const j=await res.json();
-      data={pos:((j.en)||[]).slice(0,4).map(b=>({p:b.partOfSpeech||"",d:((b.definitions)||[]).slice(0,3)
-        .map(k=>({t:stripTags(k.definition),e:stripTags(k.example||"")}))}))};
+      data={pos:((j.en)||[]).slice(0,4).map(function(b){
+        const ds=((b.definitions)||[]).slice(0,3)
+          .map(function(k){return {t:stripTags(k.definition),e:stripTags(k.example||"")}})
+          .filter(function(k){return k.t&&k.t.trim()});  // Wiktionary sometimes opens with an empty sense
+        return {p:b.partOfSpeech||"",d:ds};
+      })};
       if(!data.pos.length)data={err:"No entry for \u201c"+w+"\u201d."};
     }catch(err){data={err:err.name==="AbortError"?"The dictionary did not answer in time.":"Cannot reach the dictionary \u2014 is there an internet connection?"}}
     finally{clearTimeout(tm)}
     if(!data.err||/^No entry/.test(data.err)){dictCache[w]=data;dictSave()}  // network failures are not cached
   }
-  d.innerHTML=`<h4>${esc(w)}</h4>`+(data.err?`<p class="dm">${esc(data.err)}</p>`:
+  fill(`<h4>${esc(w)}</h4>`+(data.err?`<p class="dm">${esc(data.err)}</p>`:
       data.pos.map(b=>`<p class="dp">${esc(b.p)}</p><ol>`+b.d.map(k=>`<li>${esc(k.t)}${k.e?`<i>${esc(k.e)}</i>`:""}</li>`).join("")+`</ol>`).join("")+
-      `<p class="dm">Wiktionary</p>`);
+      `<p class="dm">Wiktionary</p>`));
   place();
   setTimeout(()=>document.addEventListener("pointerdown",ev=>{if(!d.contains(ev.target))d.remove()},{once:true}),0)};
 const wordAt=(x,y)=>{try{const r=document.caretRangeFromPoint&&document.caretRangeFromPoint(x,y);if(!r||r.startContainer.nodeType!==3)return "";
