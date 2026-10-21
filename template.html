@@ -668,7 +668,7 @@ const ask=(msg,key,info)=>new Promise(res=>{if(key&&store.get("cv:skip:"+key)===
   document.body.append(d);d.showModal()});
 
 $("list").addEventListener("click",async e=>{if(e.target.closest("[contenteditable],.dh"))return;
-  if(e.target.closest("[data-copy]")){e.stopPropagation();const cd=e.target.closest(".card"),[s0,i0]=String((cd&&cd.dataset.k)||"").split("\u0001"),c=all.find(x=>x.src===s0&&x.id===i0);if(c)copyText(cardCopy(c));return}if(e.detail>1&&e.target.closest(".quote"))return editQ(e.target.closest(".quote"));if(e.target.closest("button[data-g]"))return show("graph");
+  if(e.target.closest("[data-copy]")){e.stopPropagation();const cd=e.target.closest(".card"),[s0,i0]=String((cd&&cd.dataset.k)||"").split("\u0001"),c=all.find(x=>x.src===s0&&x.id===i0);if(c)copyText(cardCopy(c));return}if(e.detail>1&&e.target.closest(".quote"))return editQ(e.target.closest(".quote"));if(e.target.closest("button[data-g]")){if(G.m==="Z"){const b=document.querySelector('#gc2 [data-gc="mL"]');if(b)b.click()}return show("graph")}  // a claim belongs in Layers, not in the note graph
   if(e.target.closest("[data-ed]"))return editor(all.find(x=>x.src+x.id===sel));
   if(e.target.closest("[data-zknote]")){const cd=e.target.closest(".card"),[s0,i0]=String((cd&&cd.dataset.k)||"").split("\u0001"),c=all.find(x=>x.src===s0&&x.id===i0);
     if(c)askNote(c).then(id=>{if(!id)return;if(id==="__new__"){zkFromClaim(c);return}
@@ -1080,6 +1080,7 @@ const zkOpen=id=>{const n=zkNote(id);if(!n)return;if(zkSel&&zkSel!==id){const go
   </div>`;
   zkRenderList()};
 const zkSaveNote=()=>{const n=zkNote(zkSel);if(!n)return;
+  if(!$("zkt")||!$("zkb")||!$("zkk")||!$("zksub")||!$("zkrows"))return;  // the pane is showing the index, or nothing: the fields are not there to read
   n.title=$("zkt").value.trim();n.body=$("zkb").value;
   n.tags=($("zkk").value||"").split(",").map(t=>t.trim()).filter(Boolean);
   n.subt=($("zksub").value||"").split(",").map(t=>t.trim()).filter(Boolean);
@@ -1592,7 +1593,10 @@ function dedupeDupes(){const seen=new Set();let n=0;
     if(seen.has(k)){c.del=true;const kk=kc(c);if(!ED.d.includes(kk)){ED.d.push(kk);n++}}else seen.add(k)});
   if(n){store.set("cv:edits",JSON.stringify(ED));if(window.toast)toast(n+" duplicate claim"+(n>1?"s":"")+" removed")}return n}
 function del_(c){all.filter(x=>sameClaim(x,c)).forEach(x=>{x.del=true;const k=kc(x);if(!ED.d.includes(k))ED.d.push(k)});
-  c.del=true;const k=kc(c);if(!ED.d.includes(k))ED.d.push(k);store.set("cv:edits",JSON.stringify(ED));sel=null;refresh();}
+  c.del=true;const k=kc(c);if(!ED.d.includes(k))ED.d.push(k);store.set("cv:edits",JSON.stringify(ED));
+  let touched=false;Object.values(ZK.notes||{}).forEach(n=>{if(n.claims&&n.claims.includes(k)){n.claims=n.claims.filter(q=>q!==k);touched=true}});
+  if(touched)zkSave();  // a deleted claim must not linger inside a note
+  sel=null;refresh();}
 const VL=$("vl").querySelector("form");
 const row=(c,o,v)=>`<div class="it" data-o="${esc(o)}" draggable="true"><span class="dg" title="Drag to move or reorder">⠿</span><input value="${esc(Array.isArray(v)?v[1]:v)}" aria-label="name" draggable="false"><button type="button" class="x" title="Remove">✕</button></div>`;
 const cols={p:()=>Object.keys(VB.pathways).map(n=>[n,n]),f:()=>VB.axisA_list,o:()=>VB.axisB_list};
