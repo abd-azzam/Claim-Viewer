@@ -44,6 +44,7 @@ Zotero keeps your PDFs and highlights, but it does not draw a graph of how the c
 - **Drag to fix mistakes**: drag a note onto a tag or sub-tag to re-file it; drag a node onto another of the same kind to **swap** them (any level, tag↔tag included); drop in the strip just below a node to nest it there. The open editor's fields follow every move.
 - **Undo** (30 steps, this session only) and **Delete** (the node you clicked last: note, tag or sub-tag) sit in the graph toolbar, deliberately small and right-aligned so they never compete with the mode tabs. Undo does not survive a restart: a saved stack once rewound the notes to a days-old state.
 - **Keyword index** lists every tag with the notes filed under it, and it follows the current scope: a collection shows only the keywords of notes whose reading is in that collection, and picking a reading narrows it to that reading.
+- **A note you never fill in is discarded.** Closing an untouched note removes it, so cancelling never uses up a number. A note started while a folder is selected stays in that folder even before you attach a reading.
 - **Note numbers follow the list you are looking at.** The first note in view is 1 and they run 1..N, so a folder with two notes shows 1 and 2, never 3 and 5. The stored id never changes, so links and the graph stay correct; child notes still branch as 1a, 1aa.
 - **Merged readings**: by default every note gets its own pill; *Merge readings* joins all notes of one reading into a single pill whose click opens a menu of its notes with their branches.
 
