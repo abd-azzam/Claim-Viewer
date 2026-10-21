@@ -1121,6 +1121,7 @@ const zkAttach=(c,id)=>{const n=zkNote(id);if(!c||!n)return false;const key=kc(c
   Object.values(ZK.notes).forEach(x=>{if(x.claims)x.claims=x.claims.filter(k=>k!==key)});  // one note per claim
   n.claims=[...(n.claims||[]).filter(k=>k!==key),key];zkSave();return true};
 const askNote=c=>new Promise(res=>{  // two buttons only: file it under an existing note, or start a new one
+  document.querySelectorAll("#zkpick").forEach(x=>x.remove());  // a second press reuses the one box, never stacks two
   const cc=$("col").value||"",ids=zkIds().filter(id=>{const n=zkNote(id);if(!cc)return true;
       const cols=n.src?(COL[n.src]||[]):(n.col?[n.col]:[]);return inCol(cols,cc)}),
     num=new Map(zkIds().map((id,i)=>[id,i+1])),d=document.createElement("dialog");d.id="zkpick";
