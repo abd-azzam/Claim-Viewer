@@ -1134,8 +1134,9 @@ const askNote=c=>new Promise(res=>{  // two buttons only: file it under an exist
     else{sel.hidden=true;ex.setAttribute("aria-expanded","false")}};
   if(sel)sel.onchange=()=>finish(sel.value||"");
   d.querySelector('[data-a="new"]').onclick=()=>finish("__new__");
-  d.onclick=e=>{if(e.target===d)finish(null)};  // a click on the page behind closes it
-  d.onclose=()=>{d.remove();res(result)};
+  const outside=e=>{if(!d.contains(e.target))finish(null)};  // any press outside the box closes it
+  setTimeout(()=>document.addEventListener("pointerdown",outside,true),0);  // not the press that opened it
+  d.onclose=()=>{document.removeEventListener("pointerdown",outside,true);d.remove();res(result)};
   (document.fullscreenElement||document.body).append(d);d.show();
   (ex.disabled?d.querySelector('[data-a="new"]'):ex).focus();
 });
