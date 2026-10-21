@@ -16,10 +16,11 @@
 body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 -apple-system,"Segoe UI",Roboto,sans-serif;height:100vh;display:grid;grid-template-columns:330px minmax(340px,1fr) minmax(360px,1.1fr)}
 aside,main,section{overflow:auto;height:100vh}
 aside{background:var(--panel);border-right:1px solid var(--line);padding:12px;overflow:hidden;display:flex;flex-direction:column}
-#flt{display:grid;grid-template-columns:minmax(0,1fr);gap:13px;align-content:start;padding:2px 2px 4px}  /* one column: label above its control, never two ragged halves */
-#flt label.f{display:grid;gap:5px;margin:0}
-#flt .w{grid-column:auto}
-#flt select,#flt input{width:100%;height:32px}#flt{gap:0 8px}#flt label.f{margin:9px 0 3px;font-size:10px;line-height:1.2;color:var(--mute);text-transform:none;letter-spacing:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#flt .w{grid-column:1/-1}
+#flt{display:grid;grid-template-columns:1fr 1fr;gap:11px 10px;align-content:start;padding:2px 2px 4px}  /* two columns, so the whole filter set fits without scrolling */
+#flt label.f{display:grid;gap:4px;margin:0;min-width:0}
+#flt .w{grid-column:1/-1}
+#flt select,#flt input{width:100%;height:30px;min-width:0}
+#flt select:focus,#flt select:focus-visible,#flt input:focus,#flt input:focus-visible{outline:none;box-shadow:none;border-color:var(--ctl)}  /* no blue ring after picking */#flt{gap:0 8px}#flt label.f{margin:9px 0 3px;font-size:10px;line-height:1.2;color:var(--mute);text-transform:none;letter-spacing:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#flt .w{grid-column:1/-1}
 #flt select,#flt input{padding:4px 6px}
 #reads{flex:1;min-height:0;overflow:auto;margin-top:4px;display:grid;grid-template-columns:1fr 1fr;column-gap:8px;align-content:start}#reads .f{grid-column:1/-1}#reads .read{margin-top:2px;font-size:12.5px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 main{padding:0 14px 14px;border-right:1px solid var(--line)}
@@ -161,14 +162,14 @@ main{padding:0 16px 16px}
 /* Icon-only buttons are exact squares: padding plus the 1px border made them 34x32, which reads as stretched. */
 /* both panels can be folded away; the toggles float so they survive hiding either one */
 aside,section{position:relative}
-.edge{position:fixed;top:50%;z-index:40;width:18px;height:52px;padding:0;display:flex;align-items:center;justify-content:center;border:0;background:transparent;color:var(--mute);cursor:pointer;border-radius:4px;box-shadow:none;opacity:0;transition:opacity .16s ease,background .12s,color .12s}
+.edge{position:fixed;top:50%;z-index:40;width:22px;height:58px;padding:0;display:flex;align-items:center;justify-content:center;border:0;background:color-mix(in srgb,var(--acc) 10%,transparent);color:var(--acc);cursor:pointer;border-radius:4px;box-shadow:none;opacity:0;transition:opacity .16s ease,background .12s,color .12s}
 body.tabsr .edge{opacity:1}  /* both folds appear together, once the panel widths are measured */
 @media (prefers-reduced-motion:reduce){.edge{transition:none}}
 
-.edge svg{width:15px;height:15px;stroke-width:2.3}
-.edge:hover{color:var(--acc);background:var(--panel)}
+.edge svg{width:16px;height:16px;stroke-width:2.2}
+.edge:hover{color:var(--acc);background:color-mix(in srgb,var(--acc) 22%,transparent)}
 .edge:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
-#hl svg,#hr svg{width:15px;height:15px;flex:none}
+#hl svg,#hr svg{width:16px;height:16px;flex:none}
 #gout .node,#gout .tnode,#gout .snode{cursor:pointer}
 #gout .tnode:hover rect,#gout .snode:hover rect{stroke:var(--acc);stroke-width:2}
 #gout .node:hover circle{stroke:var(--acc);stroke-width:3}
@@ -204,8 +205,8 @@ body.gz #znav{display:flex}
 #gout .e.novia:hover{opacity:.75;filter:none}
 #gout .tnode.none rect{fill:none;stroke-dasharray:4 3;fill-opacity:0}
 #gout .tnode.none text{fill:var(--mute);font-weight:600}
-#hl{left:calc(var(--lwpx,330px) - 18px);transform:translateY(-50%)}  /* flush inside the panel edge, so it never sits on a claim card */
-#hr{right:calc(var(--rwpx,601px) - 18px);transform:translateY(-50%)}
+#hl{left:calc(var(--lwpx,330px) - 22px);transform:translateY(-50%)}  /* flush inside the panel edge, so it never sits on a claim card */
+#hr{right:calc(var(--rwpx,601px) - 22px);transform:translateY(-50%)}
 body.nol #hl svg,body.nor #hr svg{transform:rotate(180deg)}
 body.graph #hr{display:none}
 body.nol #hl{left:2px;transform:translateY(-50%)}
@@ -342,16 +343,12 @@ body.zopen .zked .zhead{position:sticky;top:0;z-index:2;background:var(--bg);pad
 #zkg .node:hover circle,#zkg .node.hit circle{fill:var(--hl);stroke:var(--acc);stroke-width:2.5}
 #zkg text{fill:var(--ink);font-size:11px;font-variant-numeric:tabular-nums;pointer-events:none}
 /* a gutter at the panel edge so the fold tab never sits on a row */
-aside{padding:14px 20px 14px 14px}
+aside{padding:14px 26px 14px 14px}  /* the right gutter holds the fold tab, clear of every control */
 #libp .lrow input{text-overflow:ellipsis}
 #libp .lrow button{font-size:11px;letter-spacing:.02em}
 #libp .lrow .pdf,#libp .lrow button[data-pdf]{color:var(--mute)}
 #libp .lrow button:first-of-type{padding:0 8px;border-color:var(--line);color:var(--mute)}  /* the PDF action reads as a chip, the two icons stay quiet */
 #libp .lrow button:first-of-type:hover{border-color:var(--acc);color:var(--acc)}
-#flt{gap:0;row-gap:0}
-#flt label.f{margin:14px 0 5px}
-#flt label.f:first-child{margin-top:0}
-#flt label.f+select,#flt label.f+input{margin:0 0 0 0}
 .bar #vb{margin-left:auto}  /* the icon tools sit at the far right, away from the Claims/Notes tabs */
 #libp .lcol{width:18px;height:18px;flex:none;padding:0;border:0;background:none;color:var(--mute);font:inherit;font-size:10px;line-height:1;cursor:pointer;border-radius:4px}
 #libp .lcol:hover{color:var(--acc);background:var(--panel)}
@@ -359,6 +356,7 @@ aside{padding:14px 20px 14px 14px}
 #libp .lrow{padding-left:2px}
 #libp .lrow button.lcol{min-width:16px;min-height:16px;width:16px;height:16px;padding:0;border:0;background:none;color:var(--mute);font-size:10px}
 #libp .lrow button.lcol:hover{background:var(--panel);color:var(--acc)}
+#flt{row-gap:11px;column-gap:10px}
 /* left panel polish: one rhythm for tabs, folder rows and buttons */
 .tabs{gap:6px;margin:0 0 14px}
 .tabs button{flex:1;height:34px;padding:0 10px;border-radius:8px;font-size:13px}
@@ -380,23 +378,22 @@ aside{padding:14px 20px 14px 14px}
 <aside>
     <div class="top"><h1>Claim Viewer</h1><button id="th" type="button" aria-pressed="false" aria-label="Dark mode" title="Dark mode"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path class="mo" d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/><g class="su"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></g></svg></button></div>
   <div class="tabs"><button id="tl" class="on">List</button><button id="tg">Graph</button><button id="lb" title="Library: folders of readings" aria-label="Library">Library</button></div>
-  <div id="flt"><label class="f w" for="q">Find words in quotes</label><input class="w" id="q" type="search" placeholder="Quote or gist" style="grid-column:1/-1">
-  <label class="f w" for="col">Collection</label><select id="col" style="grid-column:1/-1"></select>
-  <label class="f w" for="src">Reading</label><select id="src" style="grid-column:1/-1"></select>
-  <label class="f" for="role">Type of claim</label><select id="role"></select>
-  <label class="f" for="pw" id="lpw">Pathway</label><select id="pw"></select>
-  <label class="f w" for="fa" id="lfa">Axis A</label><select id="fa" style="grid-column:1/-1"></select>
-  <label class="f w" for="oc" id="loc">Axis B</label><select id="oc" style="grid-column:1/-1"></select>
-  <label class="f" for="dir" id="ldir" title="Sign of change in the named value">Change in axis B</label><select id="dir" title="Sign of change in the outcome, not good or bad"></select>
-  <label class="f" for="ev">Kind of evidence</label><select id="ev"></select>
-  <label class="f" for="own">Own or cited claim</label><select id="own"><option value="">Any author</option><option value="1">Own</option><option value="0">Cited</option></select>
-  <label class="f" for="grp">Group the list by</label><select id="grp"><option value="source">Group: source</option><option value="pathway">Group: pathway</option><option value="factor">Group: axis A</option><option value="outcome">Group: axis B</option><option value="tag">Group: tag</option><option value="section">Group: section</option></select>
-  <label class="f w" for="rl">Links to other readings</label><select id="rl" style="grid-column:1/-1"><option value="">Any links</option></select>
-  <label class="f w" for="lt" title="Set in Edit: Connected reading and Connection">Connected to reading</label><select id="lt" style="grid-column:1/-1"></select>
+  <div id="flt"><label class="f w" for="q">Find words in quotes<input class="w" id="q" type="search" placeholder="Quote or gist"></label>
+  <label class="f w" for="col">Collection<select id="col"></select></label>
+  <label class="f w" for="src">Reading<select id="src"></select></label>
+  <label class="f" for="role">Type of claim<select id="role"></select></label>
+  <label class="f" for="pw" id="lpw">Pathway<select id="pw"></select></label>
+  <label class="f w" for="fa" id="lfa">Axis A<select id="fa"></select></label>
+  <label class="f w" for="oc" id="loc">Axis B<select id="oc"></select></label>
+  <label class="f" for="dir" id="ldir" title="Sign of change in the named value">Change in axis B<select id="dir" title="Sign of change in the outcome, not good or bad"></select></label>
+  <label class="f" for="ev">Kind of evidence<select id="ev"></select></label>
+  <label class="f" for="own">Own or cited claim<select id="own"><option value="">Any author</option><option value="1">Own</option><option value="0">Cited</option></select></label>
+  <label class="f" for="grp">Group the list by<select id="grp"><option value="source">Group: source</option><option value="pathway">Group: pathway</option><option value="factor">Group: axis A</option><option value="outcome">Group: axis B</option><option value="tag">Group: tag</option><option value="section">Group: section</option></select></label>
+  <label class="f w" for="rl">Links to other readings<select id="rl"><option value="">Any links</option></select></label>
+  <label class="f w" for="lt" title="Set in Edit: Connected reading and Connection">Connected to reading<select id="lt"></select></label>
   </div>
   <div id="libp">
     <p class="lhint">Folders hold readings. A reading can sit in more than one folder. <b>+</b> adds a sub-folder, <b>✕</b> removes one.</p>
-    <div id="libsel"></div>
     <div id="libtree"></div>
     <div class="libadd"><button type="button" id="libroot" title="Add a folder at the top level">+ Folder</button><span id="libmsg"></span></div>
   </div>
@@ -566,7 +563,8 @@ function rebuildVocabUI(){
   opts($("oc"),"All "+SC.b,VB.axisB_list.concat(["(other)"],extra("axisB")));
   $("dlf").innerHTML=VB.axisA_list.map(v=>`<option value="${esc(v)}">`).join("");
   $("dlo").innerHTML=VB.axisB_list.map(v=>`<option value="${esc(v)}">`).join("");
-  [["lfa",SC.a],["loc",SC.b],["lpw",SC.p],["hfa",SC.a],["hoc",SC.b],["hpw",SC.p],["gfa",SC.a+" (Enter adds one)"],["goc",SC.b+" (Enter adds one)"],["ldir","Change in "+SC.b],["gdir","Direction of "+SC.b+" (tick all that apply)"]].forEach(([i,t])=>{const e=$(i);if(e)e.textContent=t});
+  [["lfa",SC.a],["loc",SC.b],["lpw",SC.p],["hfa",SC.a],["hoc",SC.b],["hpw",SC.p],["gfa",SC.a+" (Enter adds one)"],["goc",SC.b+" (Enter adds one)"],["ldir","Change in "+SC.b],["gdir","Direction of "+SC.b+" (tick all that apply)"]].forEach(([i,t])=>{const e=$(i);if(!e)return;  // only the label text, never the control inside it
+   const n=[...e.childNodes].find(x=>x.nodeType===3&&x.nodeValue.trim());if(n)n.nodeValue=t;else e.insertBefore(document.createTextNode(t),e.firstChild)});
   if($("gc2")){$("gc2").innerHTML=gctl();gsync()}  // direct: a click bubbling out of #gc2 hits the graph handler  // rebuild first: gctl() recreates the inputs, so filling them before this would be wiped
   const rn=(id,v)=>{const e=$(id);if(e&&document.activeElement!==e)e.value=v};rn("rna",SC.a);rn("rnp",SC.p);rn("rnb",SC.b);
   const _nc=$("col").value,_hi=$("rnh");
@@ -610,7 +608,8 @@ opts($("role"),"All roles",Object.keys(VB.roles).map(r=>({v:r,l:ROLE()[r]})));
 $("col").innerHTML='<option value="">All collections</option>'+cTree().map(([id,n,d])=>`<option value="${esc(id)}">${"\u00a0\u00a0".repeat(d)}${esc(n)} (${DATA.sources.filter(s=>inCol(s.col,id)).length})</option>`).join("");
 [["lfa",SC.a],["loc",SC.b],["lpw",SC.p],["hfa",SC.a],["hoc",SC.b],["hpw",SC.p],
  ["gfa",SC.a+" (Enter adds one)"],["goc",SC.b+" (Enter adds one)"],
- ["ldir","Change in "+SC.b],["gdir","Direction of "+SC.b+" (tick all that apply)"]].forEach(([i,t])=>{const e=$(i);if(e)e.textContent=t});
+ ["ldir","Change in "+SC.b],["gdir","Direction of "+SC.b+" (tick all that apply)"]].forEach(([i,t])=>{const e=$(i);if(!e)return;  // only the label text, never the control inside it
+   const n=[...e.childNodes].find(x=>x.nodeType===3&&x.nodeValue.trim());if(n)n.nodeValue=t;else e.insertBefore(document.createTextNode(t),e.firstChild)});
 const extra=k=>[...new Set(all.filter(c=>inCol(COL[c.src]||[],$("col").value)).flatMap(c=>c[k]).filter(v=>v.startsWith("other:")))].sort();
 opts($("fa"),"All "+SC.a,VB.axisA_list.concat(["(other)"],extra("axisA")));
 opts($("oc"),"All "+SC.b,VB.axisB_list.concat(["(other)"],extra("axisB")));
@@ -1876,11 +1875,7 @@ function drawLib(){const _p=performance.now();
       +`<button type="button" class="lpdf" title="Add PDFs to ${esc(n)}">PDF</button>`+`<button type="button" class="lsub" title="Add a sub-folder inside ${esc(n)}">+</button>`
       +`<button type="button" class="ldel" title="Delete this folder (readings and claims stay)">\u2715</button></div>`}).join("")
     ||'<div class="lrow">No folders yet. Add one below.</div>';
-  const sel=libSel(),it=sel?LIB.items[sel]:null;
-  $("libsel").innerHTML=!sel?'<p class="t">Choose a reading above to tick the folders it belongs to.</p>'
-    :`<p class="t">In folders \u2014 ${esc((DATA.sources.find(s=>s.id===sel)||{}).title||sel)}</p>`
-     +cTree().map(([id,n,d])=>{const on=it&&Array.isArray(it.collections)&&it.collections.includes(id);
-        return `<label style="padding-left:${d*12}px"><input type="checkbox" class="lmem" value="${esc(id)}"${on?" checked":""}>${esc(n)}</label>`}).join("");
+  if($("libsel"))$("libsel").innerHTML="";
   perf("drawLib",_p);
 }
 // Rebuild every view from LIB in place. A page reload here costs seconds on a 5.8 MB index and
