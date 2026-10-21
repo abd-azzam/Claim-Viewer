@@ -85,6 +85,26 @@ class Api:
             fh.write(base64.b64decode(b64))
         return f
 
+    def save_image(self, name, b64):  # PNG/JPG save dialog for a graph export; "" when cancelled
+        ext = os.path.splitext(name)[1].lower() or ".png"  # the dialog lists the three image types and nothing else
+        types = ("PNG image (*.png)", "JPG image (*.jpg)", "JPEG image (*.jpeg)")
+        try:
+            r = win.create_file_dialog(webview.FileDialog.SAVE, save_filename=name,
+                                       file_types=types, window=win)
+        except TypeError:  # pywebview without the window= argument
+            r = win.create_file_dialog(webview.FileDialog.SAVE, save_filename=name,
+                                       file_types=types)
+        except Exception:
+            return ""
+        if not r:
+            return ""
+        f = r if isinstance(r, str) else r[0]
+        if not f.lower().endswith((".png", ".jpg", ".jpeg")):
+            f += ext or ".png"
+        with open(f, "wb") as fh:
+            fh.write(base64.b64decode(b64))
+        return f
+
     def save_pages(self, text):  # reading positions live beside the library, so a wiped WebView2 profile does not lose them
         try:
             d = json.loads(text)

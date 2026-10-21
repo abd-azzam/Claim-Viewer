@@ -363,6 +363,15 @@ aside{padding:14px 26px 14px 14px}  /* the right gutter holds the fold tab, clea
 #flt label.f{display:flex;flex-direction:column;gap:3px;height:auto;overflow:visible}
 #flt select,#flt input{height:30px;min-height:30px}
 #flt label.f{font-size:10.5px}
+#gexd{border:1px solid var(--ctl);border-radius:var(--rl);padding:18px 20px;min-width:300px;max-width:min(380px,92vw);font:inherit;color:var(--ink);background:var(--panel);box-shadow:var(--sh)}
+#gexd form{display:grid;gap:14px;margin:0}
+#gexd b{font-size:1.02em;letter-spacing:.01em}
+#gexd small{color:var(--mute);line-height:1.4}
+#gexd .gx{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+#gexd .gx button{min-height:40px;border:1px solid var(--ctl);border-radius:var(--r);background:var(--bg);color:var(--ink);font:inherit;font-weight:600;letter-spacing:.04em;cursor:pointer;transition:border-color .12s,color .12s,background .12s}
+#gexd .gx button:hover,#gexd .gx button:focus-visible{border-color:var(--acc);color:var(--acc);background:color-mix(in srgb,var(--acc) 12%,var(--bg));outline:none}
+#gexd button[value=cancel]{justify-self:end;min-height:30px;padding:0 12px;border:0;background:none;color:var(--mute);font:inherit;cursor:pointer}
+#gexd button[value=cancel]:hover{color:var(--ink)}
 /* left panel polish: one rhythm for tabs, folder rows and buttons */
 .tabs{gap:6px;margin:0 0 14px}
 .tabs button{flex:1;height:34px;padding:0 10px;border-radius:8px;font-size:13px}
@@ -843,7 +852,38 @@ const DCOL={"+":"var(--dp)","-":"var(--dn)",mixed:"var(--dm)",none:"var(--mute)"
 let G={m:"L",l:{f:1,p:1,o:1},k:{w:1,p:0,f:0,o:0}};
 try{const g=JSON.parse(store.get("cv:graph"));if(g&&g.l&&g.k)G=g}catch(e){}
 const ckb=(grp,list)=>list.map(([k,t])=>`<label><input type="checkbox" data-gc="${grp}${k}"> ${t}</label>`).join("");
-function gctl(){return `<div class="tabs"><button data-gc="mL">Layers</button><button data-gc="mC">Claim network</button><button data-gc="mK">Connected claims</button><button data-gc="mR">Roles</button><button data-gc="mZ">Notes</button></div>${G.m==="Z"?"":`<div class="rnw" role="group" aria-label="Box names"><span class="rnh" id="rnh">Box names: they label the graph, the list and the edit box</span><div class="tabs rn"><label title="Left column">Left<input id="rna" aria-label="Left box name" value="${esc(SC.a)}"></label><label title="Middle column">Middle<input id="rnp" aria-label="Middle box name" value="${esc(SC.p)}"></label><label title="Right column">Right<input id="rnb" aria-label="Right box name" value="${esc(SC.b)}"></label></div></div><div class="ck ly" role="group" aria-label="Layers to show"><b>Show</b><span class="rnh">untick the middle box to draw direct lines</span>${ckb("l",[["f",SC.a],["p",SC.p],["o",SC.b],...(VB.xcols||[]).map(x=>[x.k,x.name||x.k])])}</div><div class="tabs"><button type="button" id="vbg" title="Edit the three lists for this folder">Edit lists</button></div><div class="ck lk" role="group" aria-label="Link claims that share"><b>Link by</b>${ckb("k",[["w","wording"],["p",SC.p],["f",SC.a],["o",SC.b]])}</div>`}<div class="tabs" id="znav" role="group" aria-label="Note graph"><button type="button" id="zkmerge" aria-pressed="${MERGE}" title="Join all notes of one reading into a single pill">Merge readings</button><button type="button" id="zkback" title="Back to the notes list">Notes list</button><button type="button" id="zkgundo" title="Undo the last change">Undo</button><button type="button" id="zkgdel" title="Delete the clicked node (tag, sub-tag or note)">Delete</button></div>`}
+const gImage=async kind=>{const svg=document.querySelector("#gout svg");if(!svg)return null;
+  const vb=(svg.getAttribute("viewBox")||"").trim().split(/[\s,]+/).map(Number),W=Math.max(1,vb[2]||0),H=Math.max(1,vb[3]||0);
+  const c=svg.cloneNode(true),src=[svg,...svg.querySelectorAll("*")],dst=[c,...c.querySelectorAll("*")];
+  const PROPS=["fill","fill-opacity","stroke","stroke-width","stroke-dasharray","stroke-opacity","opacity","font-family","font-size","font-weight","font-style","text-anchor","dominant-baseline","letter-spacing"];
+  src.forEach((el,i)=>{const cs=getComputedStyle(el);let st="";
+    PROPS.forEach(p=>{const v=cs.getPropertyValue(p);if(v&&v!=="none"&&v!=="auto"&&v!=="normal"&&v!=="0px")st+=p+":"+v+";"});
+    dst[i].setAttribute("style",st);
+    if(el.tagName==="text"&&el.textContent.trim()){const len=el.getComputedTextLength&&el.getComputedTextLength();
+      if(len){dst[i].setAttribute("textLength",len.toFixed(2));dst[i].setAttribute("lengthAdjust","spacingAndGlyphs")}}});  // the rasterizer may pick a wider font, so pin every label to the width it was laid out with
+  const bg=getComputedStyle(document.documentElement).getPropertyValue("--bg").trim()||"#fff";
+  c.setAttribute("xmlns","http://www.w3.org/2000/svg");c.setAttribute("width",W);c.setAttribute("height",H);
+  const r=document.createElementNS("http://www.w3.org/2000/svg","rect");
+  r.setAttribute("x",vb[0]||0);r.setAttribute("y",vb[1]||0);r.setAttribute("width",W);r.setAttribute("height",H);r.setAttribute("fill",bg);
+  c.insertBefore(r,c.firstChild);
+  const img=await new Promise((ok,no)=>{const im=new Image();im.onload=()=>ok(im);im.onerror=no;
+    im.src="data:image/svg+xml;charset=utf-8,"+encodeURIComponent(new XMLSerializer().serializeToString(c))});
+  const k=Math.min(2,8000/Math.max(W,H)),cv=document.createElement("canvas");
+  cv.width=Math.round(W*k);cv.height=Math.round(H*k);
+  const cx=cv.getContext("2d");cx.fillStyle=bg;cx.fillRect(0,0,cv.width,cv.height);cx.drawImage(img,0,0,cv.width,cv.height);
+  return kind==="png"?cv.toDataURL("image/png"):cv.toDataURL("image/jpeg",.92)};
+const gExport=async kind=>{try{const url=await gImage(kind);if(!url)return toast("Open a graph first");
+  const name="claim-viewer-"+String(G.m).toLowerCase()+"-"+new Date().toISOString().slice(0,10)+"."+kind;
+  if(window.pywebview&&pywebview.api&&pywebview.api.save_image){const f=await pywebview.api.save_image(name,url.split(",")[1]);toast(f?"Saved "+f:"Export cancelled")}
+  else{const a=document.createElement("a");a.href=url;a.download=name;a.click();toast("Saved "+name)}
+}catch(e){toast("Could not export: "+(e&&e.message||e))}};
+const gExportMenu=()=>{document.querySelectorAll("#gexd").forEach(x=>x.remove());
+  const d=document.createElement("dialog");d.id="gexd";
+  d.innerHTML='<form method="dialog"><b>Export the graph</b><small>PNG keeps the labels crisp. JPG makes a smaller file.</small><div class="gx"><button type="button" value="png">PNG</button><button type="button" value="jpg">JPG</button><button type="button" value="jpeg">JPEG</button></div><button value="cancel">Cancel</button></form>';
+  document.body.appendChild(d);
+  d.addEventListener("click",async e=>{const b=e.target.closest("button[value]");if(!b)return;const k=b.value;d.close();d.remove();if(k!=="cancel")await gExport(k)});
+  d.showModal()};
+function gctl(){return `<div class="tabs"><button data-gc="mL">Layers</button><button data-gc="mC">Claim network</button><button data-gc="mK">Connected claims</button><button data-gc="mR">Roles</button><button data-gc="mZ">Notes</button></div>${G.m==="Z"?"":`<div class="rnw" role="group" aria-label="Box names"><span class="rnh" id="rnh">Box names: they label the graph, the list and the edit box</span><div class="tabs rn"><label title="Left column">Left<input id="rna" aria-label="Left box name" value="${esc(SC.a)}"></label><label title="Middle column">Middle<input id="rnp" aria-label="Middle box name" value="${esc(SC.p)}"></label><label title="Right column">Right<input id="rnb" aria-label="Right box name" value="${esc(SC.b)}"></label></div></div><div class="ck ly" role="group" aria-label="Layers to show"><b>Show</b><span class="rnh">untick the middle box to draw direct lines</span>${ckb("l",[["f",SC.a],["p",SC.p],["o",SC.b],...(VB.xcols||[]).map(x=>[x.k,x.name||x.k])])}</div><div class="tabs"><button type="button" id="vbg" title="Edit the three lists for this folder">Edit lists</button></div><div class="ck lk" role="group" aria-label="Link claims that share"><b>Link by</b>${ckb("k",[["w","wording"],["p",SC.p],["f",SC.a],["o",SC.b]])}</div>`}<div class="tabs" id="znav" role="group" aria-label="Graph"><button type="button" id="gexp" title="Save this graph as an image">Export</button><button type="button" id="zkmerge" aria-pressed="${MERGE}" title="Join all notes of one reading into a single pill">Merge readings</button><button type="button" id="zkback" title="Back to the notes list">Notes list</button><button type="button" id="zkgundo" title="Undo the last change">Undo</button><button type="button" id="zkgdel" title="Delete the clicked node (tag, sub-tag or note)">Delete</button></div>`}
 function gsync(){
   document.body.classList.toggle("gnet",G.m==="C");document.body.classList.toggle("gcon",G.m==="K");document.body.classList.toggle("gz",G.m==="Z");document.body.classList.toggle("groles",G.m==="R");
   document.querySelectorAll("[data-gc]").forEach(el=>{const k=el.dataset.gc;
@@ -860,6 +900,7 @@ document.addEventListener("pointerdown",e=>{
   else if(b.id==="zkgundo")doUndo();
   else if(b.id==="zkgdel")doDelete();});
 document.addEventListener("click",e=>{if(e.target.closest("#vbg")){$("vb").click();return}
+  if(e.target.closest("#gexp"))return gExportMenu();
   const b=e.target.closest("button[data-gc]");if(!b)return;G.m=b.dataset.gc[1];gset();});
 document.addEventListener("change",e=>{const i=e.target.closest("#rna,#rnp,#rnb");if(!i)return;
   const k=i.id==="rna"?"A":i.id==="rnb"?"B":"P",cid=$("col").value||"";
@@ -1140,12 +1181,26 @@ const zkCite=n=>{const t=((DATA.sources||[]).find(s=>s.id===n.src)||{}).title||"
   a=a.replace(/\((?:eds?\.?|editors?)\)/gi,"").replace(/\s*\([^)]*\)\s*$/,"").trim();
   if(a&&y)return a+", "+y;
   return a||t.slice(0,26)};
+// one tag, one name: case, spacing, separator glyphs and stray punctuation never make a second tag
+const zkKey=t=>String(t||"").toLowerCase().replace(/[\u203a>\u2192|\/]+/g," ").replace(/[^\p{L}\p{N} ]+/gu," ").replace(/\s+/g," ").trim();
+let ZKCM=null;
+const zkCap=t=>{let n=0;for(const ch of t)if(ch!==ch.toLowerCase())n++;return n};
+const zkBuildCanon=()=>{const m=new Map();
+  const put=v=>{const raw=String(v||"").trim().replace(/\s+/g," "),k=zkKey(raw);if(!k)return;
+    const cur=m.get(k);if(!cur||zkCap(raw)>zkCap(cur))m.set(k,raw)};
+  Object.values((typeof ZK!=="undefined"&&ZK.notes)||{}).forEach(n=>{  // the spelling with the most capitals wins, so a lowercase slip cannot rename a tag
+    (n.tags||[]).forEach(put);
+    (n.subt||[]).forEach(s=>String(s).split(/,|\s*(?:\u203a|>)\s*/).forEach(put))});
+  ZKCM=m};
+const zkCanon=t=>{const raw=String(t||"").trim().replace(/\s+/g," "),k=zkKey(raw);if(!k)return "";
+  if(!ZKCM)zkBuildCanon();
+  return ZKCM.get(k)||raw};
 const zkPaths=n=>{
   // The field is read as levels: "A, B \u203a C, D" pairs A->C and B->D, so a comma group before the arrow
   // holds the parents and the group after it holds their children, matched by position. Any depth works.
   const raw=(n.subt||[]).join(", ").trim();
   if(!raw)return [];
-  const lv=raw.split(/\s*(?:\u203a|>)\s*/).map(g=>g.split(",").map(x=>x.trim()).filter(Boolean)).filter(a=>a.length);
+  const lv=raw.split(/\s*(?:\u203a|>)\s*/).map(g=>g.split(",").map(x=>x.trim()).filter(Boolean).map(zkCanon)).filter(a=>a.length);
   if(!lv.length)return [];
   let chains=lv[0].map(x=>[x]);
   for(let i=1;i<lv.length;i++){const nx=lv[i];
@@ -1167,7 +1222,7 @@ const zkHome=n=>{let id=n&&n.id,k=0;while(id&&k++<9){const m=ZK.notes[id];if(!m)
   const p=zkParentOf(id);if(!p)break;id=p}return n};  // a child note lives in the folder and reading of the note above it
 const zkInherit=(n,pick)=>{let id=n&&n.id,k=0;while(id&&k++<9){const m=ZK.notes[id];if(!m)break;
   const v=pick(m);if(v&&v.length)return v;const p=zkParentOf(id);if(!p)break;id=p}return []};
-const zkTags=n=>zkInherit(n,m=>m.tags||[]);   // a child sits in the tag of the note above it
+const zkTags=n=>zkInherit(n,m=>m.tags||[]).map(zkCanon).filter(Boolean);   // a child sits in the tag of the note above it
 const zkNest=n=>zkInherit(n,m=>m.subt||[]);   // and under that note's sub-tag
 const zkSegsOf=n=>zkPaths({subt:zkNest(n)}).flat();
 const zkIdsF=()=>zkIds().filter(id=>zkPass(zkNote(id)));
@@ -1196,7 +1251,7 @@ const zkFillFilters=()=>{const tags=new Set(),subs=new Set(),paths=new Set();
   if(rv&&!$("zsrc").value)$("zsrc").value=""};
 let ZEXP=new Set();  // notes whose children are shown with the arrow
 try{ZEXP=new Set(JSON.parse(store.get("cv:zexp")||"[]"))}catch(e){}
-const zkRenderList=()=>{zkFillFilters();
+const zkRenderList=()=>{ZKCM=null;zkFillFilters();
   const ids=zkIdsF(),no=zkNo(),kidMap=new Map();
   ids.forEach(id=>{const p=zkParentOf(id);if(p){if(!kidMap.has(p))kidMap.set(p,[]);kidMap.get(p).push(id)}});  // one pass, so a long list stays quick
   const kidsOf=id=>kidMap.get(id)||[];
@@ -1292,6 +1347,7 @@ const zkIndex=()=>{document.body.classList.add("zopen");const m=new Map(),no=zkN
 let MERGE=(localStorage.getItem("cv:zkmerge")==="1");  // one pill per reading is opt-in: it joins chains that are separate
 const zkToggleMerge=()=>{MERGE=!MERGE;localStorage.setItem("cv:zkmerge",MERGE?"1":"0");graph()};
 const zkGraphSVG=()=>{
+  ZKCM=null;  // a tag may have been renamed or added since the last draw
   const ids=zkIdsF();
   if(!ids.length)return `<p class="empty">${ZK&&Object.keys(ZK.notes).length?"No note matches this filter.":"No notes yet. Start one in List, Notes."}</p>`;
   // tag -> nested sub-tags (depth from "a › b › c") -> notes
@@ -1302,11 +1358,12 @@ const zkGraphSVG=()=>{
   const put=(g,paths,id)=>{const h=zkHome(zkNote(id))||{};
     KEYOF[id]=MERGE?("m:"+g.tag+"\u0001"+paths.map(p=>p.join("\u203a")).join("|")+"\u0001"+(h.src||"i:"+id)):("i:"+id);
     if(!paths.length){g.direct.push(keyOf(id));return}  // no sub-tag either: hang straight off the parent
-    paths.forEach(p=>{let key="";
-      p.forEach((seg,di)=>{const k=key+"\u0001"+seg;
-        if(!g.nodes.has(k))g.nodes.set(k,{seg,depth:di+1,parent:key,key:k,notes:[]});
-        key=k});
-      g.nodes.get(key).notes.push(id)})};
+    paths.forEach(p=>{const chain=[];let leaf=null;
+      p.forEach((seg,di)=>{const k="L"+(di+1)+"\u0001"+seg;  // one pill per name at one depth: the same sub-tag under two parents is one node
+        if(!g.nodes.has(k))g.nodes.set(k,{seg,depth:di+1,key:k,path:p.slice(0,di+1).join(" \u203a "),parents:new Set(),notes:[]});
+        const nd=g.nodes.get(k);if(chain.length)nd.parents.add(chain[chain.length-1]);
+        chain.push(k);leaf=nd});
+      if(leaf)leaf.notes.push(id)})};
   ids.forEach(id=>{const n=zkNote(id),tags=zkTags(n),paths=zkPaths({subt:zkNest(n)});
     if(!tags.length){if(!groups.has(NO))groups.set(NO,{nodes:new Map(),direct:[],none:1,tag:NO});
       put(groups.get(NO),paths,id);return}  // a note with sub-tags but no parent tag still shows its chain
@@ -1349,9 +1406,9 @@ const zkGraphSVG=()=>{
   let e="";const pend=[];  // note edges are drawn after the ports are known
   [...groups.entries()].forEach(([t,g])=>{
     const[tx,ty]=tagP[t];
-    g.nodes.forEach(nd=>{const[nx,ny]=NP[t+"\u0001"+nd.key];
-      const[px,py]=nd.parent?NP[t+"\u0001"+nd.parent]:[tx,ty];
-      e+=`<path class="edge ${nd.parent?"branch":"taglink"}" d="${curve(px+58,py,nx-58,ny)}"/>`});
+    g.nodes.forEach(nd=>{const[nx,ny]=NP[t+"\u0001"+nd.key];const ps=[...(nd.parents||[])];
+      if(!ps.length)e+=`<path class="edge taglink" d="${curve(tx+58,ty,nx-58,ny)}"/>`;
+      else ps.forEach(pk=>{const[px,py]=NP[t+"\u0001"+pk];e+=`<path class="edge branch" d="${curve(px+58,py,nx-58,ny)}"/>`})});
     g.nodes.forEach(nd=>{const[sx,sy]=NP[t+"\u0001"+nd.key];
       nd.notes.forEach(id=>{const k=keyOf(id);pend.push({key:k,sx,sy})})});
     g.direct.forEach(k=>pend.push({key:k,sx:tx,sy:ty}))});
@@ -1366,10 +1423,10 @@ const zkGraphSVG=()=>{
     e+=`<path class="edge ${l.kind||"link"}" d="M${a[0]} ${a[1]} L${b[0]} ${b[1]}"/>`}));
   let nodes="";
   [...groups.entries()].forEach(([t,g])=>{const[tx,ty]=tagP[t];
-    nodes+=`<g class="tnode${g.none?" none":""}" data-tag="${g.none?"":esc(t)}"><title>${g.none?"no parent tag yet":"tag \u00b7 "+esc(t)+" (click to filter)"}</title><rect x="${tx-58}" y="${ty-15}" width="116" height="30" rx="8"/><text x="${tx}" y="${ty+4}" text-anchor="middle">${esc(clip(t))}</text></g>`;
+    nodes+=`<g class="tnode${g.none?" none":""}" data-tag="${g.none?"":esc(t)}"><title>${g.none?"no parent tag yet":"tag \u00b7 "+esc(t)+" (click to filter)"}</title><rect x="${tx-58}" y="${ty-15}" width="116" height="30" rx="8"/><text x="${tx}" y="${ty+4}" text-anchor="middle">${esc(clip(t,16))}</text></g>`;
     g.nodes.forEach(nd=>{const[sx,sy]=NP[t+"\u0001"+nd.key];
       const label=nd.depth>1?"depth "+nd.depth+" \u00b7 "+nd.seg:"sub-tag \u00b7 "+nd.seg;
-      nodes+=`<g class="snode" data-sub="${esc(nd.seg)}" data-tag="${esc(t)}" data-path="${esc(nd.key.split("\u0001").filter(Boolean).join(" \u203a "))}"><title>${esc(label)} (click to filter)</title><rect x="${sx-58}" y="${sy-14}" width="116" height="28" rx="7"/><text x="${sx}" y="${sy+4}" text-anchor="middle">${esc(clip(nd.seg))}</text></g>`})});
+      nodes+=`<g class="snode" data-sub="${esc(nd.seg)}" data-tag="${esc(t)}" data-path="${esc(nd.path||"")}"><title>${esc(label)} (click to filter)</title><rect x="${sx-58}" y="${sy-14}" width="116" height="28" rx="7"/><text x="${sx}" y="${sy+4}" text-anchor="middle">${esc(clip(nd.seg,16))}</text></g>`})});
   nodes+=keys.map(k=>{const p=pos[k],w=widK(k),n=byKey.get(k).length,id=first(k),tt=subK(k),src=zkNote(id).src||"",kid=n===1&&zkIsChild(id),
     tt2=byKey.get(k).map(x=>{const t=String(zkNote(x).title||"untitled");return zkIsChild(x)?"\u21b3 "+t:t}).join(" \u00b7 ");  // a merged pill lists what it holds
     return `<g class="node${kid?" kid":""}" data-zk="${esc(id)}" data-src="${esc(src)}" data-n="${n}"><title>${esc(zkCite(zkNote(id)))}${n>1?" \u00b7 "+n+" notes\n"+esc(tt2):" \u00b7 "+esc(String(zkNote(id).title||"untitled"))}</title><rect x="${p[0]-w/2}" y="${p[1]-19}" width="${w}" height="38" rx="12"/><text x="${p[0]}" y="${p[1]-2}" text-anchor="middle">${esc(clip((kid?"\u21b3 ":"")+labK(k),28))}</text>${tt?`<text class="nt" x="${p[0]}" y="${p[1]+13}" text-anchor="middle">${esc(clip(tt,26))}</text>`:""}</g>`}).join("");
