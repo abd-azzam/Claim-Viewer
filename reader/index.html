@@ -16,7 +16,10 @@
 body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 -apple-system,"Segoe UI",Roboto,sans-serif;height:100vh;display:grid;grid-template-columns:330px minmax(340px,1fr) minmax(360px,1.1fr)}
 aside,main,section{overflow:auto;height:100vh}
 aside{background:var(--panel);border-right:1px solid var(--line);padding:12px;overflow:hidden;display:flex;flex-direction:column}
-#flt{display:grid;grid-template-columns:1fr 1fr;gap:0 8px}#flt{gap:0 8px}#flt label.f{margin:9px 0 3px;font-size:10px;line-height:1.2;color:var(--mute);text-transform:none;letter-spacing:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#flt .w{grid-column:1/-1}
+#flt{display:grid;grid-template-columns:minmax(0,1fr);gap:13px;align-content:start;padding:2px 2px 4px}  /* one column: label above its control, never two ragged halves */
+#flt label.f{display:grid;gap:5px;margin:0}
+#flt .w{grid-column:auto}
+#flt select,#flt input{width:100%;height:32px}#flt{gap:0 8px}#flt label.f{margin:9px 0 3px;font-size:10px;line-height:1.2;color:var(--mute);text-transform:none;letter-spacing:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#flt .w{grid-column:1/-1}
 #flt select,#flt input{padding:4px 6px}
 #reads{flex:1;min-height:0;overflow:auto;margin-top:4px;display:grid;grid-template-columns:1fr 1fr;column-gap:8px;align-content:start}#reads .f{grid-column:1/-1}#reads .read{margin-top:2px;font-size:12.5px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 main{padding:0 14px 14px;border-right:1px solid var(--line)}
@@ -158,14 +161,14 @@ main{padding:0 16px 16px}
 /* Icon-only buttons are exact squares: padding plus the 1px border made them 34x32, which reads as stretched. */
 /* both panels can be folded away; the toggles float so they survive hiding either one */
 aside,section{position:relative}
-.edge{position:fixed;top:50%;z-index:40;width:14px;height:44px;padding:0;display:flex;align-items:center;justify-content:center;border:0;background:transparent;color:var(--mute);cursor:pointer;border-radius:4px;box-shadow:none;opacity:0;transition:opacity .16s ease,background .12s,color .12s}
+.edge{position:fixed;top:50%;z-index:40;width:18px;height:52px;padding:0;display:flex;align-items:center;justify-content:center;border:0;background:transparent;color:var(--mute);cursor:pointer;border-radius:4px;box-shadow:none;opacity:0;transition:opacity .16s ease,background .12s,color .12s}
 body.tabsr .edge{opacity:1}  /* both folds appear together, once the panel widths are measured */
 @media (prefers-reduced-motion:reduce){.edge{transition:none}}
 
-.edge svg{width:13px;height:13px;stroke-width:2.4}
+.edge svg{width:15px;height:15px;stroke-width:2.3}
 .edge:hover{color:var(--acc);background:var(--panel)}
 .edge:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
-#hl svg,#hr svg{width:13px;height:13px;flex:none}
+#hl svg,#hr svg{width:15px;height:15px;flex:none}
 #gout .node,#gout .tnode,#gout .snode{cursor:pointer}
 #gout .tnode:hover rect,#gout .snode:hover rect{stroke:var(--acc);stroke-width:2}
 #gout .node:hover circle{stroke:var(--acc);stroke-width:3}
@@ -201,8 +204,8 @@ body.gz #znav{display:flex}
 #gout .e.novia:hover{opacity:.75;filter:none}
 #gout .tnode.none rect{fill:none;stroke-dasharray:4 3;fill-opacity:0}
 #gout .tnode.none text{fill:var(--mute);font-weight:600}
-#hl{left:calc(var(--lwpx,330px) - 14px);transform:translateY(-50%)}  /* flush inside the panel edge, so it never sits on a claim card */
-#hr{right:calc(var(--rwpx,601px) - 14px);transform:translateY(-50%)}
+#hl{left:calc(var(--lwpx,330px) - 18px);transform:translateY(-50%)}  /* flush inside the panel edge, so it never sits on a claim card */
+#hr{right:calc(var(--rwpx,601px) - 18px);transform:translateY(-50%)}
 body.nol #hl svg,body.nor #hr svg{transform:rotate(180deg)}
 body.graph #hr{display:none}
 body.nol #hl{left:2px;transform:translateY(-50%)}
@@ -338,6 +341,28 @@ body.zopen .zked .zhead{position:sticky;top:0;z-index:2;background:var(--bg);pad
 #zkg .node circle{fill:var(--panel);stroke:var(--ctl);stroke-width:1.5;cursor:pointer}
 #zkg .node:hover circle,#zkg .node.hit circle{fill:var(--hl);stroke:var(--acc);stroke-width:2.5}
 #zkg text{fill:var(--ink);font-size:11px;font-variant-numeric:tabular-nums;pointer-events:none}
+/* a gutter at the panel edge so the fold tab never sits on a row */
+aside{padding:14px 20px 14px 14px}
+#libp .lrow input{text-overflow:ellipsis}
+#libp .lrow button{font-size:11px;letter-spacing:.02em}
+#libp .lrow .pdf,#libp .lrow button[data-pdf]{color:var(--mute)}
+#libp .lrow button:first-of-type{padding:0 8px;border-color:var(--line);color:var(--mute)}  /* the PDF action reads as a chip, the two icons stay quiet */
+#libp .lrow button:first-of-type:hover{border-color:var(--acc);color:var(--acc)}
+/* left panel polish: one rhythm for tabs, folder rows and buttons */
+.tabs{gap:6px;margin:0 0 14px}
+.tabs button{flex:1;height:34px;padding:0 10px;border-radius:8px;font-size:13px}
+.tabs button.on{background:color-mix(in srgb,var(--acc) 18%,transparent);color:var(--acc);border-color:var(--acc);font-weight:600}
+#libp .lhint{font-size:11.5px;line-height:1.45}
+#libp #libtree{border-radius:10px;overflow:hidden;background:var(--bg)}
+#libp .lrow{min-height:40px;padding:5px 8px;gap:6px}
+#libp .lrow:hover{background:color-mix(in srgb,var(--panel) 70%,transparent)}
+#libp .lrow .cnt{min-width:22px;font-variant-numeric:tabular-nums}
+#libp .lrow input{font-size:12.5px;padding:4px 6px;border-radius:6px}
+#libp .lrow button{min-width:26px;min-height:26px;border-radius:6px;border-color:transparent;color:var(--mute)}
+#libp .lrow button:hover{border-color:var(--ctl);background:var(--panel);color:var(--ink)}
+#libp .libadd{margin:10px 0 0}
+#libp .libadd button{height:32px;padding:0 12px;border:1px dashed var(--ctl);border-radius:8px;background:transparent;color:var(--ink);cursor:pointer}
+#libp .libadd button:hover{border-color:var(--acc);color:var(--acc)}
 </style>
 </head>
 <body>
