@@ -359,6 +359,10 @@ aside{padding:14px 26px 14px 14px}  /* the right gutter holds the fold tab, clea
 #flt{row-gap:11px;column-gap:10px}
 #flt label.f{overflow:visible;white-space:normal;text-overflow:clip;height:auto;min-height:0;align-content:start}
 #flt label.f select,#flt label.f input{min-height:30px}
+#flt{grid-auto-rows:max-content;row-gap:9px}  /* each row as tall as its label plus control, never squeezed */
+#flt label.f{display:flex;flex-direction:column;gap:3px;height:auto;overflow:visible}
+#flt select,#flt input{height:30px;min-height:30px}
+#flt label.f{font-size:10.5px}
 /* left panel polish: one rhythm for tabs, folder rows and buttons */
 .tabs{gap:6px;margin:0 0 14px}
 .tabs button{flex:1;height:34px;padding:0 10px;border-radius:8px;font-size:13px}
