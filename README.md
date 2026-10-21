@@ -76,7 +76,7 @@ When you open it by double-click, the browser cannot read the `pdf` folder by it
 1. Download [`ClaimViewer-Setup-2.1.0.exe`](release/ClaimViewer-Setup-2.1.0.exe) and run it.
 2. Pick the folder (default: `C:\Apps\ClaimViewer`) and, if you want, a Desktop shortcut. It always adds a Start menu shortcut.
 3. Put your PDFs in the `pdf` folder inside it and list them in `sources.js`.
-4. Open **Claim Viewer** from the Start menu. It opens its own window (no browser) and stops when you close it.
+4. Open **Claim Viewer** from the Start menu. It opens its own window (no browser), centred on the screen and shrunk to fit if the screen is small, and stops when you close it.
 
 The install folder is also the viewer folder: the app serves the `index.html` that sits next to `ClaimViewer.exe`. To use a viewer you built with `build.py`, replace `index.html` there. Setup never overwrites `index.html` or `sources.js`, and never deletes them, `pdf`, or your saved claims when you upgrade or uninstall.
 
