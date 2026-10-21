@@ -257,6 +257,8 @@ body.notes #libp{display:none}
 #zkclose:hover{border-color:var(--ctl);color:var(--ink)}
 #zkclose svg{width:16px;height:16px}
 #zklist{display:flex;flex-direction:column;gap:6px;max-height:calc(100vh - 120px);overflow:auto;padding-right:2px}
+#zklist{overflow-x:hidden}
+.zkc .zs .tag{max-width:100%;overflow:hidden;text-overflow:ellipsis}  /* a long sub-tag path must not widen the whole list */
 .zkc{border:1px solid var(--line);border-radius:var(--rl);padding:8px 10px;cursor:pointer;background:var(--bg)}
 .zkc:hover,.zkc.sel{border-color:var(--acc)}
 .zkc b{font-variant-numeric:tabular-nums;color:var(--acc);margin-right:6px}

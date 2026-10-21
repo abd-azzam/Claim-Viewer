@@ -39,11 +39,14 @@ Zotero keeps your PDFs and highlights, but it does not draw a graph of how the c
 
 ### Notes (Zettelkasten)
 
+![Notes: a numbered list on the left, the open note with its tags on the right](docs/screenshot-notes.png)
+
 - The **Notes** tab sits beside Claims in the list. Each note quotes a passage, names its reading and page, and carries **tags and nested sub-tags** (`Mainstream Parties › Core Supporters` — depth is free).
 - The **note graph** (Graph → Notes) draws tag → sub-tag → note trees; untagged notes stay visible under "(no tag)".
 - **Drag to fix mistakes**: drag a note onto a tag or sub-tag to re-file it; drag a node onto another of the same kind to **swap** them (any level, tag↔tag included); drop in the strip just below a node to nest it there. The open editor's fields follow every move.
 - **Undo** (30 steps, this session only) and **Delete** (the node you clicked last: note, tag or sub-tag) sit in the graph toolbar, deliberately small and right-aligned so they never compete with the mode tabs. Undo does not survive a restart: a saved stack once rewound the notes to a days-old state.
-- **Keyword index** lists every tag with the notes filed under it, and it follows the current scope: a collection shows only the keywords of notes whose reading is in that collection, and picking a reading narrows it to that reading.
+- **Keyword index** lists every tag with the notes filed under it, and it answers to the same filters as the list beside it: the collection, the reading, the tag, the sub-tag and the text box. Pick a collection and it shows only that collection's keywords; type in *Find a note* and it narrows to those notes.
+- **Closing keeps what you typed**, title and body included, without pressing Save.
 - **A note you never fill in is discarded.** Closing an untouched note removes it, so cancelling never uses up a number. A note started while a folder is selected stays in that folder even before you attach a reading.
 - **Note numbers follow the list you are looking at.** The first note in view is 1 and they run 1..N, so a folder with two notes shows 1 and 2, never 3 and 5. The stored id never changes, so links and the graph stay correct; child notes still branch as 1a, 1aa.
 - **Merged readings**: by default every note gets its own pill; *Merge readings* joins all notes of one reading into a single pill whose click opens a menu of its notes with their branches.
@@ -71,6 +74,8 @@ The same views in the light theme; the toggle sits next to the title.
 ![Claim list in the light theme](docs/screenshot-list-light.png)
 
 ![Graph in the light theme](docs/screenshot-graph-light.png)
+
+![Notes in the light theme](docs/screenshot-notes-light.png)
 
 </details>
 
@@ -153,7 +158,7 @@ Run these from the project folder (the one that holds `template.html`). `build.p
 | `test_installer.py` | Builds a throwaway installer, installs it to a temp folder, checks the packaged page and libs, then removes it (see above). |
 | `ClaimViewer.iss`, `build_exe.bat` | Inno Setup script and build script for the Windows installer. |
 | `vocab.thesis.json` | An example vocabulary. |
-| `docs/` | Screenshots used in this README. |
+| `docs/` | Screenshots used in this README: claim list, graph and notes, each in the dark and light theme. |
 
 ## Known limits
 
@@ -164,7 +169,8 @@ Run these from the project folder (the one that holds `template.html`). `build.p
 - Undo in the note graph holds 30 steps **for the current session only**: it is deliberately not saved, because a stored stack once rewound the notes to a days-old state.
 - Save PDF writes a copy of the PDF with your highlights as real highlight annotations. The app opens a PDF-only save dialog.
 - A graceful close never loses your page. A force kill or a power cut can still lose the last instant, because nothing runs at that moment.
-- If `lib/` is ever removed from the install, reading still works: the page says the reader files are missing and opens the PDF in a plain frame instead of failing silently.
+- If a reader file goes missing the page says which one and still shows the PDF in a plain frame: `lib/pdf.min.js` missing is caught before parsing starts, and a missing `lib/pdf.worker.min.js` is caught when the reader fails to start. A damaged PDF reports that instead. No case leaves a blank pane.
+- In the Notes tab the list sits beside the note when the PDF pane is closed. With the PDF pane open on a narrow window the list drops below the note; close the PDF pane to get the two-column view.
 - The window opens centred on the **primary** screen, not on whichever monitor holds the cursor.
 - The exe and the installer are unsigned, so Windows SmartScreen may warn.
 - Do not commit copyrighted PDFs. `.gitignore` already skips `reader/pdf/*.pdf` and the pipeline's `pdf/`, `papers/` and `claims/` folders.
