@@ -1404,7 +1404,7 @@ $("tl").onclick=()=>show("list");$("tg").onclick=()=>show("graph");$("lb").oncli
       const ps=zkPaths(note),tags=note.tags||[];
       if(!tags.includes(a.tag)||(A.length&&!ps.some(p=>starts(p,A))))return;
       const nm=A.length?[A[A.length-1]]:[];
-      const out=ps.map(p=>starts(p,A)?B.concat(nm,p.slice(A.length)):p);
+      const out=!A.length?(B.length?[B]:ps):ps.map(p=>starts(p,A)?B.concat(nm,p.slice(A.length)):p);  // a whole tag dropped on a branch: its notes join that branch, not just the tag
       const before=JSON.stringify([note.tags,note.subt]);
       note.tags=[...new Set(tags.map(t=>t===a.tag?b.tag:t))];
       note.subt=[...new Set(out.map(p=>p.join(" \u203a ")).filter(Boolean))];
@@ -1422,6 +1422,8 @@ $("tl").onclick=()=>show("list");$("tg").onclick=()=>show("graph");$("lb").oncli
     if(!DR.moved&&Math.hypot(e.clientX-DR.x,e.clientY-DR.y)>4){DR.moved=true;DR.el.classList.add("drag")}
     if(!DR.moved)return;e.preventDefault();
     DR.el.setAttribute("transform",`translate(${e.clientX-DR.x},${e.clientY-DR.y})`);
+    {const r=GZ.getBoundingClientRect();  // drag to a node that is off-screen: nudge the pane while the pointer sits at its edge
+     if(e.clientY<r.top+44)GZ.scrollTop-=14;else if(e.clientY>r.bottom-44)GZ.scrollTop+=14}
     clearT();const t=targetAt(e.clientX,e.clientY);
     if(t){const sel=t.kind==="sub"
         ?`.snode[data-tag="${CSS.escape(t.tag)}"][data-path="${CSS.escape(t.path)}"]`
