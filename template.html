@@ -1077,7 +1077,7 @@ const zkSaveNote=()=>{const n=zkNote(zkSel);if(!n)return;
   n.links=[...$("zkrows").querySelectorAll(".zkrow")].map(r=>({to:r.querySelector(".zklto").value,kind:r.querySelector(".zklk").value})).filter(l=>l.to&&l.to!==zkSel);
   n.updated=Date.now();zkSave();zkRenderList();toast("Note "+zkSel+" saved")};
 const zkNew=(parent,seed)=>{const id=zkNext(parent);ZK.notes[id]={id,title:"",body:"",tags:[],links:[],created:Date.now()};
-  const sc=($("zsrc")&&$("zsrc").value)||((!rd.hidden&&cur)||"");if(!parent){if(sc)ZK.notes[id].src=sc;else if($("col").value)ZK.notes[id].col=$("col").value}  // land in the reading or the folder you are looking at
+  const sc=($("zsrc")&&$("zsrc").value)||(typeof cur!=="undefined"&&typeof rd!=="undefined"&&!rd.hidden?cur:"");  // the reader scope is not always thereif(!parent){if(sc)ZK.notes[id].src=sc;else if($("col").value)ZK.notes[id].col=$("col").value}  // land in the reading or the folder you are looking at
   if(seed){if(seed.src)ZK.notes[id].src=seed.src;if(seed.page)ZK.notes[id].page=seed.page;if(seed.quote)ZK.notes[id].quote=seed.quote;if(seed.tags)ZK.notes[id].tags=seed.tags;if(seed.subt)ZK.notes[id].subt=seed.subt}
   zkSave();zkOpen(id);setTimeout(()=>{const t=$("zkt");if(t)t.focus()},0);return id};
 // the reading is the source: a note can carry the passage and the page it came from
