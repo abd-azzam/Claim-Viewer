@@ -85,6 +85,36 @@ class Api:
             fh.write(base64.b64decode(b64))
         return f
 
+    def save_pages(self, text):  # reading positions live beside the library, so a wiped WebView2 profile does not lose them
+        try:
+            d = json.loads(text)
+            if not isinstance(d, dict):
+                return {"ok": False, "error": "not a page map"}
+            clean = {}
+            for k, v in d.items():
+                try:
+                    n = int(v)
+                except Exception:
+                    continue
+                if n > 0:
+                    clean[str(k)] = n
+            p = os.path.join(ROOT, "last-pages.json")
+            tmp = p + ".tmp"
+            with open(tmp, "w", encoding="utf-8") as fh:
+                json.dump(clean, fh, ensure_ascii=False)
+            os.replace(tmp, p)
+            return {"ok": True, "count": len(clean)}
+        except Exception as e:
+            return {"ok": False, "error": str(e)}
+
+    def load_pages(self):
+        try:
+            with open(os.path.join(ROOT, "last-pages.json"), encoding="utf-8") as fh:
+                d = json.load(fh)
+            return d if isinstance(d, dict) else {}
+        except Exception:
+            return {}
+
     def save_library(self, text):
         try:
             lib = json.loads(text)
