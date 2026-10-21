@@ -662,7 +662,7 @@ const ask=(msg,key,info)=>new Promise(res=>{if(key&&store.get("cv:skip:"+key)===
   document.body.append(d);d.showModal()});
 
 $("list").addEventListener("click",async e=>{if(e.target.closest("[contenteditable],.dh"))return;
-  if(e.target.closest("[data-copy]")){e.stopPropagation();const c=all.find(x=>x.src+x.id===sel);if(c){copyText(cardCopy(c))}return}if(e.detail>1&&e.target.closest(".quote"))return editQ(e.target.closest(".quote"));if(e.target.closest("button[data-g]"))return show("graph");
+  if(e.target.closest("[data-copy]")){e.stopPropagation();const cd=e.target.closest(".card"),[s0,i0]=String((cd&&cd.dataset.k)||"").split("\u0001"),c=all.find(x=>x.src===s0&&x.id===i0);if(c)copyText(cardCopy(c));return}if(e.detail>1&&e.target.closest(".quote"))return editQ(e.target.closest(".quote"));if(e.target.closest("button[data-g]"))return show("graph");
   if(e.target.closest("[data-ed]"))return editor(all.find(x=>x.src+x.id===sel));
   if(e.target.closest("[data-zknote]")){const c=all.find(x=>x.src+x.id===sel);if(c)zkFromClaim(c);return}
   if(e.target.closest("[data-del]")){const c=all.find(x=>x.src+x.id===sel);
