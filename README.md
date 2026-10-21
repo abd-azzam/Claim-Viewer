@@ -161,6 +161,7 @@ Run these from the project folder (the one that holds `template.html`). `build.p
 - Undo in the note graph holds 30 steps **for the current session only**: it is deliberately not saved, because a stored stack once rewound the notes to a days-old state.
 - Save PDF writes a copy of the PDF with your highlights as real highlight annotations. The app opens a PDF-only save dialog.
 - A graceful close never loses your page. A force kill or a power cut can still lose the last instant, because nothing runs at that moment.
+- If `lib/` is ever removed from the install, reading still works: the page says the reader files are missing and opens the PDF in a plain frame instead of failing silently.
 - The window opens centred on the **primary** screen, not on whichever monitor holds the cursor.
 - The exe and the installer are unsigned, so Windows SmartScreen may warn.
 - Do not commit copyrighted PDFs. `.gitignore` already skips `reader/pdf/*.pdf` and the pipeline's `pdf/`, `papers/` and `claims/` folders.
