@@ -59,6 +59,18 @@ Zotero keeps your PDFs and highlights, but it does not draw a graph of how the c
 - **Clear filters** and **Clear all** are separate: Clear all deletes only the open reading's claims and highlights, after a confirmation in the app's own dialog (never a browser popup).
 - **Export and import** your edits as `claim-edits.json` (download and upload buttons).
 
+### Light theme
+
+The same views in the light theme; the toggle sits next to the title.
+
+<details><summary>Show the light-theme screenshots</summary>
+
+![Claim list in the light theme](docs/screenshot-list-light.png)
+
+![Graph in the light theme](docs/screenshot-graph-light.png)
+
+</details>
+
 ## Use it without installing anything
 
 1. Copy the [`reader/`](reader) folder anywhere.
