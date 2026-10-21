@@ -672,7 +672,7 @@ $("list").addEventListener("click",async e=>{if(e.target.closest("[contenteditab
   if(e.target.closest("[data-ed]"))return editor(all.find(x=>x.src+x.id===sel));
   if(e.target.closest("[data-zknote]")){const cd=e.target.closest(".card"),[s0,i0]=String((cd&&cd.dataset.k)||"").split("\u0001"),c=all.find(x=>x.src===s0&&x.id===i0);
     if(c)askNote(c).then(id=>{if(!id)return;if(id==="__new__"){zkFromClaim(c);return}
-      if(zkAttach(c,id)){show("notes");zkOpen(id);toast("Added to note "+(zkNo().get(id)||id))}});
+      if(zkAttach(c,id)){show("notes");zkOpen(id);toast("Added to note \u201c"+(zkNote(id).title||"untitled").slice(0,32)+"\u201d")}else toast("Pick a note first")});
     return}
   if(e.target.closest("[data-del]")){const c=all.find(x=>x.src+x.id===sel);
     if(c&&await ask("Delete this claim from your view? Export edits to keep this.","delclaim"))del_(c);return;}
@@ -1099,12 +1099,19 @@ const zkFromPassage=(q,pg,src)=>{src=src||(window.curSrc?window.curSrc():"");con
 const zkAttach=(c,id)=>{const n=zkNote(id);if(!c||!n)return false;const key=kc(c);
   Object.values(ZK.notes).forEach(x=>{if(x.claims)x.claims=x.claims.filter(k=>k!==key)});  // one note per claim
   n.claims=[...(n.claims||[]).filter(k=>k!==key),key];zkSave();return true};
-const askNote=c=>new Promise(res=>{const ids=zkIds(),num=new Map(ids.map((id,i)=>[id,i+1])),d=document.createElement("dialog");d.id="zkpick";  // pick the note, or start a new one
-  d.innerHTML=`<p>Add this claim to a note</p><select size="9" aria-label="Note">`+`<option value="">+ New note from this claim</option>`
-    +ids.map(id=>`<option value="${esc(id)}">${num.get(id)} \u00b7 ${esc((zkNote(id).title||"(untitled)").slice(0,40))}</option>`).join("")
-    +`</select><div><button value="0">Cancel</button><button value="1">Add</button></div>`;
-  let ok=0;d.querySelectorAll("button").forEach(b=>b.onclick=()=>{ok=+b.value;d.close()});
-  d.onclose=()=>{const v=d.querySelector("select").value;d.remove();res(ok?(v||"__new__"):null)};
+const askNote=c=>new Promise(res=>{  // two ways in: a new note, or a note already in the collection you picked
+  const cc=$("col").value||"",ids=zkIds().filter(id=>{const n=zkNote(id);if(!cc)return true;
+      const cols=n.src?(COL[n.src]||[]):(n.col?[n.col]:[]);return inCol(cols,cc)}),
+    num=new Map(zkIds().map((id,i)=>[id,i+1])),d=document.createElement("dialog");d.id="zkpick";
+  d.innerHTML=`<p>Add this claim to a note</p><label>Note in this collection <select aria-label="Existing note">`
+    +(ids.length?ids.map(id=>`<option value="${esc(id)}">${num.get(id)} \u00b7 ${esc((zkNote(id).title||"(untitled)").slice(0,40))}</option>`).join("")
+      :`<option value="">No note in this collection yet</option>`)
+    +`</select></label><div><button value="new">New note</button><button value="add">Add to note</button><button value="0">Cancel</button></div>`;
+  let ok="";d.querySelectorAll("button").forEach(b=>b.onclick=()=>{ok=b.value;d.close()});
+  d.onclose=()=>{const v=d.querySelector("select").value;d.remove();
+    if(ok==="new")return res("__new__");
+    if(ok==="add")return res(v||"");
+    res(null)};
   (document.fullscreenElement||document.body).append(d);d.showModal()});
 const zkFromClaim=c=>{if(!c)return;const id=zkNew(null,{src:c.src,page:(c.pdf_page||[])[0]||null,quote:c.quote,tags:(c.pathway||[]).slice(0,1),subt:(c.status==="user"?c.axisA||[]:[]).slice(0,1)});show("notes");toast("Note started from a claim, filed under its pathway")};  // the note graph is where a claim becomes a tag branch
 const zkHealNote=async id=>{const n=zkNote(id);if(!n||!n.src||!n.page)return;
