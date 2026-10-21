@@ -372,6 +372,10 @@ aside{padding:14px 26px 14px 14px}  /* the right gutter holds the fold tab, clea
 #gexd .gx button:hover,#gexd .gx button:focus-visible{border-color:var(--acc);color:var(--acc);background:color-mix(in srgb,var(--acc) 12%,var(--bg));outline:none}
 #gexd button[value=cancel]{justify-self:end;min-height:30px;padding:0 12px;border:0;background:none;color:var(--mute);font:inherit;cursor:pointer}
 #gexd button[value=cancel]:hover{color:var(--ink)}
+.sugg{margin-top:4px;max-height:220px;overflow:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--panel);box-shadow:var(--sh)}
+.sugg[hidden]{display:none}
+.sugg button{display:block;width:100%;text-align:left;padding:6px 9px;border:0;background:none;color:var(--ink);font:inherit;line-height:1.4;white-space:normal;overflow-wrap:anywhere;cursor:pointer}
+.sugg button:hover,.sugg button:focus-visible{background:color-mix(in srgb,var(--acc) 12%,var(--panel));color:var(--acc);outline:none}
 /* left panel polish: one rhythm for tabs, folder rows and buttons */
 .tabs{gap:6px;margin:0 0 14px}
 .tabs button{flex:1;height:34px;padding:0 10px;border-radius:8px;font-size:13px}
@@ -1235,10 +1239,10 @@ const zkScopeIds=()=>{const cc=$("col").value||"",rs=$("zsrc"),rv=rs?rs.value:""
     if(rv&&h.src!==rv)return false;
     return !cc||inCol(h.src?(COL[h.src]||[]):(h.col?[h.col]:[]),cc)})};
 const zkFillFilters=()=>{const tags=new Set(),subs=new Set(),paths=new Set();
-  zkScopeIds().forEach(id=>{const n=zkNote(id);zkTags(n).forEach(t=>tags.add(t));zkSegsOf(n).forEach(t=>subs.add(t));
-    zkPaths({subt:zkNest(n)}).forEach(p=>paths.add(p.join(" \u203a ")))});
+  zkScopeIds().forEach(id=>{const n=zkNote(id);zkTags(n).forEach(t=>tags.add(t));
+    zkPaths({subt:zkNest(n)}).forEach(p=>{for(let i=1;i<=p.length;i++)paths.add(p.slice(0,i).join(" \u203a "))})});  // every branch and every step into it, so typing "A \u203a " offers the children of A
   const dl=(el,vals)=>{if(el)el.innerHTML=[...vals].sort((a,b)=>a.localeCompare(b)).map(v=>`<option value="${esc(v)}"></option>`).join("")};
-  dl($("zdlk"),tags);dl($("zdls"),paths.size?paths:subs);  // typing a tag or a sub-tag offers what is already in this folder
+  dl($("zdlk"),tags);dl($("zdls"),paths);  // typing a tag or a sub-tag offers what is already in this folder
   const opt=(set,cur)=>'<option value="">Any</option>'+[...set].sort((a,b)=>a.localeCompare(b)).map(t=>`<option value="${esc(t)}"${t===cur?" selected":""}>${esc(t)}</option>`).join("");
   if($("zft"))$("zft").innerHTML=opt(tags,($("zft").value||""));
   if($("zfs"))$("zfs").innerHTML=opt(subs,($("zfs").value||""));
@@ -1287,7 +1291,21 @@ const zkOpen=id=>{const n=zkNote(id);if(!n)return;document.body.classList.add("z
     <div class="zback">Linked from: ${back.length?back.map(b=>`<a data-zk="${esc(b)}">${esc(b)}</a>`).join(" "):"nothing yet"}</div>
     <div class="zkacts"><button value="ok" id="zksave">Save</button><button id="zkchild">New child note</button><button id="zkdel">Delete</button></div>
   </div>`;
-  zkRenderList()};
+  zkRenderList();zkSugg($("zkk"),"zdlk");zkSugg($("zksub"),"zdls")};
+const zkSugg=(inp,listId)=>{if(!inp||inp.dataset.sugg)return;inp.dataset.sugg="1";
+  const box=document.createElement("div");box.className="sugg";box.hidden=true;
+  inp.parentElement.insertBefore(box,inp.nextSibling);
+  const cut=()=>{const v=inp.value,i=v.lastIndexOf(",")+1;return{i,t:v.slice(i).trim()}};
+  const show=()=>{const t=cut().t.toLowerCase();
+    if(!t){box.hidden=true;return}
+    const v=[...document.querySelectorAll("#"+listId+" option")].map(o=>o.value).filter(x=>x.toLowerCase().includes(t)).slice(0,80);
+    if(!v.length){box.hidden=true;return}
+    box.innerHTML=v.map(x=>`<button type="button">${esc(x)}</button>`).join("");box.hidden=false};  // the full branch, wrapped, never clipped by the field width
+  inp.addEventListener("input",show);inp.addEventListener("focus",show);
+  inp.addEventListener("blur",()=>setTimeout(()=>{box.hidden=true},140));
+  box.addEventListener("mousedown",e=>{const b=e.target.closest("button");if(!b)return;e.preventDefault();
+    const{i}=cut();inp.value=inp.value.slice(0,i)+(i?", ":"")+b.textContent;
+    box.hidden=true;inp.focus();inp.dispatchEvent(new Event("input",{bubbles:true}))})};
 const zkSaveNote=(back)=>{const n=zkNote(zkSel);if(!n)return;
   if(!$("zkt")||!$("zkb")||!$("zkk")||!$("zksub")||!$("zkrows"))return;  // the pane is showing the index, or nothing: the fields are not there to read
   n.title=$("zkt").value.trim();n.body=$("zkb").value;
