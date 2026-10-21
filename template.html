@@ -1192,13 +1192,17 @@ const zkOpen=id=>{const n=zkNote(id);if(!n)return;document.body.classList.add("z
     <div class="zkacts"><button value="ok" id="zksave">Save</button><button id="zkchild">New child note</button><button id="zkdel">Delete</button></div>
   </div>`;
   zkRenderList()};
-const zkSaveNote=()=>{const n=zkNote(zkSel);if(!n)return;
+const zkSaveNote=(back)=>{const n=zkNote(zkSel);if(!n)return;
   if(!$("zkt")||!$("zkb")||!$("zkk")||!$("zksub")||!$("zkrows"))return;  // the pane is showing the index, or nothing: the fields are not there to read
   n.title=$("zkt").value.trim();n.body=$("zkb").value;
   n.tags=($("zkk").value||"").split(",").map(t=>t.trim()).filter(Boolean);
   n.subt=($("zksub").value||"").split(",").map(t=>t.trim()).filter(Boolean);
   n.links=[...$("zkrows").querySelectorAll(".zkrow")].map(r=>({to:r.querySelector(".zklto").value,kind:r.querySelector(".zklk").value})).filter(l=>l.to&&l.to!==zkSel);
-  n.updated=Date.now();zkSave();zkRenderList();toast("Note "+(zkLabels().get(zkSel)||zkSel)+" saved")};
+  n.updated=Date.now();zkSave();const lb=zkLabels().get(zkSel)||zkSel;
+  if(back){const gone=zkSel;zkSel=null;document.body.classList.remove("zopen");
+    $("zkpane").innerHTML=`<div class="empty">Pick a note on the left, or start a new one.</div>`;zkRenderList();zkDrop(gone)}  // Save returns to the list
+  else zkRenderList();
+  toast("Note "+lb+" saved")};
 const zkNew=(parent,seed)=>{const id=zkNext(parent);ZK.notes[id]={id,title:"",body:"",tags:[],links:[],created:Date.now()};
   const sc=($("zsrc")&&$("zsrc").value)||(typeof cur!=="undefined"&&typeof rd!=="undefined"&&!rd.hidden?cur:"");  // the reader scope is not always thereif(!parent){if(sc)ZK.notes[id].src=sc;else if($("col").value)ZK.notes[id].col=$("col").value}  // land in the reading or the folder you are looking at
   if(seed){if(seed.src)ZK.notes[id].src=seed.src;if(seed.page)ZK.notes[id].page=seed.page;if(seed.quote)ZK.notes[id].quote=seed.quote;if(seed.tags)ZK.notes[id].tags=seed.tags;if(seed.subt)ZK.notes[id].subt=seed.subt}
@@ -1404,7 +1408,7 @@ $("zkv").addEventListener("click",e=>{
     const done=()=>{const n=zkNote(zkSel);if(!n)return;n.quote=(ta.value||"").trim();zkSave();zkOpen(zkSel)};
     ta.onblur=done;ta.onkeydown=ev=>{ev.stopPropagation();if(ev.key==="Enter"&&!ev.shiftKey){ev.preventDefault();ta.blur()}if(ev.key==="Escape"){ta.onblur=null;zkOpen(zkSel)}};
     return}
-  if(e.target.id==="zksave")return zkSaveNote();
+  if(e.target.id==="zksave")return zkSaveNote(true);
   if(e.target.id==="zkchild")return zkNew(zkSel);
   if(e.target.id==="zkdel"){if(!zkSel)return;const id=zkSel;
     ask("Delete note "+id+"? Its links from other notes are removed too.","zkdelnote").then(ok=>{if(!ok)return;
