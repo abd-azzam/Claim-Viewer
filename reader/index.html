@@ -1758,6 +1758,7 @@ $("sv").onclick=async()=>{if(!curBuf)return;const hl=HL()[cur]||[],nm=cur+(hl.le
  catch(e){toast(e.message==="tmo"?"The save dialog did not answer. Try again.":"Save failed: "+e.message)}};
 $("hc").onclick=async()=>{if(!await ask("Remove all highlights in this PDF?","clearhl"))return;const o=HL();delete o[cur];saveHL(o);rd.querySelectorAll(".hl").forEach(e=>e.remove())};
 window.showPdf=async(id,pg)=>{if(!id)return;  // the dropdown starts on "(pick a reading)"; loading pdf/.pdf only 404s
+ if(!window.pdfjsLib){lpn.className="warn";lpn.textContent="The reader files are missing: lib/pdf.min.js is not next to the page. The PDF opens in a plain frame until it is restored.";fallback(id,pg);return}  // no CDN to fall back on
  if(pg==null){try{pg=(JSON.parse(localStorage.getItem("cv:lastpg")||"{}"))[id]||null}catch(e){}}  // resume where the user left off
 $("phint")&&($("phint").hidden=true);const my=++tok;let buf=null;try{if(await ready())buf=await bytes(id)}catch(e){}
  if(my!==tok)return;if(!buf){lpn.className="warn";lpn.textContent="PDF not found in the pdf folder. Use Library > PDF on a folder to add it.";return fallback(id,pg)}
