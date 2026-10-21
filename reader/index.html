@@ -923,7 +923,8 @@ function show(m){const g=m==="graph",l=m==="lib",n=m==="notes";
 // Notes: one idea per note, in your own words. Ids branch like 1, 1a, 1aa (a..z then aa, ab); links are note to note.
 const ZKKEY="cv:zk";let ZK={seq:0,notes:{}};
 try{ZK=Object.assign(ZK,JSON.parse(localStorage.getItem(ZKKEY)||"{}"))}catch(e){}
-try{let _fix=false;Object.values(ZK.notes||{}).forEach(n=>{if(!n)return;  // "" is not a tag: such notes are untagged and keep their sub-tags
+try{let _fix=false;Object.entries(ZK.notes||{}).forEach(([k,n])=>{if(!n)return;
+   if(!((n.title||"").trim()||(n.body||"").trim()||(n.quote||"").trim()||(n.tags||[]).length||(n.links||[]).length)){delete ZK.notes[k];ZK.order=(ZK.order||[]).filter(x=>x!==k);_fix=true;return}  // "" is not a tag: such notes are untagged and keep their sub-tags
    if((n.tags||[]).some(t=>!String(t||"").trim())){n.tags=[...new Set((n.tags||[]).map(t=>String(t||"").trim()).filter(Boolean))];_fix=true}});
  if(_fix)localStorage.setItem("cv:zk",JSON.stringify(ZK))}catch(e){}
 const zkSave=()=>store.set(ZKKEY,JSON.stringify(ZK));
@@ -951,6 +952,8 @@ const doDelete=()=>{if(!zkPick)return toast("Click a node in the graph first");
 
 const zkIds=()=>Object.keys(ZK.notes).sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
 const zkNote=id=>ZK.notes[id]||null;
+const zkEmpty=n=>!n||!((n.title||"").trim()||(n.body||"").trim()||(n.quote||"").trim()||(n.tags||[]).length||(n.links||[]).length);
+const zkDrop=id=>{const n=zkNote(id);if(!n||!zkEmpty(n))return false;delete ZK.notes[id];ZK.order=(ZK.order||[]).filter(x=>x!==id);zkSave();return true};  // a cancelled note leaves no trace
 const zkLetters=i=>{let s="";i++;while(i>0){const r=(i-1)%26;s=String.fromCharCode(97+r)+s;i=Math.floor((i-1)/26)}return s};  // a..z, then aa, ab: never punctuation
 const zkNext=p=>{if(!p){let n=1;while(ZK.notes[String(n)])n++;return String(n)}let i=0;while(ZK.notes[p+zkLetters(i)])i++;return p+zkLetters(i)};
 const zkBack=id=>zkIds().filter(k=>k!==id&&((zkNote(k).links||[]).some(l=>l.to===id)));
@@ -981,7 +984,7 @@ const zkPass=n=>{const{q,t,s}=zkFilter();if(!n)return false;
   if(t&&!(n.tags||[]).includes(t))return false;
   if(s&&!zkSegs(n).includes(s))return false;
   const rs=$("zsrc"),rv=rs?rs.value:"";if(rv&&n.src!==rv)return false;
-  const cc=$("col").value||"";if(cc&&!inCol(COL[n.src]||[],cc))return false;
+  const cc=$("col").value||"";if(cc&&!inCol(n.src?(COL[n.src]||[]):(n.col?[n.col]:[]),cc))return false;  // a note started in a folder with no reading yet still belongs to it
   if(q&&!((n.title||"")+" "+(n.body||"")+" "+(n.tags||[]).join(" ")+" "+(n.subt||[]).join(" ")+" "+n.id).toLowerCase().includes(q))return false;
   return true};
 const zkIdsAll=()=>zkIds();
@@ -1007,13 +1010,13 @@ const zkRenderList=()=>{zkFillFilters();
     :`<div class="empty">No notes yet. Start one with "New note": one idea, in your own words.</div>`};
 const zkOpts=sel=>{const no=zkNo();return zkIds().map(id=>`<option value="${esc(id)}"${id===sel?" selected":""}>${no.get(id)||esc(id)} · ${esc((zkNote(id).title||"").slice(0,48))}</option>`).join("")};
 const zkRow=(to,kind)=>`<div class="zkrow"><select class="zklto" aria-label="Linked note">${zkOpts(to)}</select><select class="zklk" aria-label="Kind of link">${Object.entries(zkKinds).map(([k,v])=>`<option value="${k}"${kind===k?" selected":""}>${v}</option>`).join("")}</select><button type="button" class="zkx" aria-label="Remove link">✕</button></div>`;
-const zkOpen=id=>{const n=zkNote(id);if(!n)return;zkSel=id;
+const zkOpen=id=>{const n=zkNote(id);if(!n)return;if(zkSel&&zkSel!==id){const gone=zkSel;if(zkNote(gone))zkSaveNote();zkDrop(gone)}zkSel=id;
   document.querySelectorAll("#zklist .zkc").forEach(r=>r.classList.toggle("sel",r.dataset.zk===id));
   const rows=(n.links||[]).filter(l=>zkNote(l.to)).map(l=>zkRow(l.to,l.kind)).join("");
   const back=zkBack(id);
   const srcLine=n.src?`<div class="zsrc"><div><b>${esc((DATA.sources.find(s=>s.id===n.src)||{}).title||n.src)}</b>${n.page?" · page "+esc(n.page):""} <button type="button" id="zkgo">Open in reader</button>${n.quote?" <button type=\"button\" id=\"zkqe\">Edit passage</button><button type=\"button\" id=\"zkqh\">Fix passage</button>":""}</div>${n.quote?`<blockquote>${esc(n.quote)}</blockquote>`:""}</div>`:"";
   $("zkpane").innerHTML=`<div class="zked">
-    <div class="zhead"><span>Note <span class="zid">${esc((zkNo().get(id)||id))}</span></span><button type="button" id="zkclose" title="Close this note and go back to the list" aria-label="Close this note"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>${srcLine}
+    <div class="zhead"><span>Note <span class="zid">${esc(zkNo().get(id)||(zkIdsF().length+1))}</span></span><button type="button" id="zkclose" title="Close this note and go back to the list" aria-label="Close this note"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>${srcLine}
     <label>Title<input id="zkt" value="${esc(n.title||"")}" placeholder="The idea in one line"></label>
     <label>Note<textarea id="zkb" placeholder="Say it in your own words, then say what it connects to">${esc(n.body||"")}</textarea></label>
     <label>Tags, comma separated<input id="zkk" value="${esc((n.tags||[]).join(", "))}" placeholder="state capacity, industrial policy"></label>
@@ -1033,6 +1036,7 @@ const zkSaveNote=()=>{const n=zkNote(zkSel);if(!n)return;
   n.links=[...$("zkrows").querySelectorAll(".zkrow")].map(r=>({to:r.querySelector(".zklto").value,kind:r.querySelector(".zklk").value})).filter(l=>l.to&&l.to!==zkSel);
   n.updated=Date.now();zkSave();zkRenderList();toast("Note "+zkSel+" saved")};
 const zkNew=(parent,seed)=>{const id=zkNext(parent);ZK.notes[id]={id,title:"",body:"",tags:[],links:[],created:Date.now()};
+  const sc=($("zsrc")&&$("zsrc").value)||((!rd.hidden&&cur)||"");if(!parent){if(sc)ZK.notes[id].src=sc;else if($("col").value)ZK.notes[id].col=$("col").value}  // land in the reading or the folder you are looking at
   if(seed){if(seed.src)ZK.notes[id].src=seed.src;if(seed.page)ZK.notes[id].page=seed.page;if(seed.quote)ZK.notes[id].quote=seed.quote;if(seed.tags)ZK.notes[id].tags=seed.tags;if(seed.subt)ZK.notes[id].subt=seed.subt}
   zkSave();zkOpen(id);setTimeout(()=>{const t=$("zkt");if(t)t.focus()},0);return id};
 // the reading is the source: a note can carry the passage and the page it came from
@@ -1133,7 +1137,7 @@ const zkGraphSVG=()=>{
     return `<g class="node" data-zk="${esc(id)}" data-src="${esc(src)}" data-n="${n}"><title>${esc(zkCite(zkNote(id)))}${n>1?" \u00b7 "+n+" notes":" \u00b7 "+esc(String(zkNote(id).title||"untitled"))}</title><rect x="${p[0]-w/2}" y="${p[1]-19}" width="${w}" height="38" rx="12"/><text x="${p[0]}" y="${p[1]-2}" text-anchor="middle">${esc(clip(labK(k),28))}</text>${tt?`<text class="nt" x="${p[0]}" y="${p[1]+13}" text-anchor="middle">${esc(clip(tt,26))}</text>`:""}</g>`}).join("");
   return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Note graph: ${ids.length} notes in ${groups.size} tags">${e}${nodes}</svg>`};
 $("zq").addEventListener("input",zkRenderList);
-document.addEventListener("click",e=>{if(e.target.closest("#zkclose")){zkSel=null;
+document.addEventListener("click",e=>{if(e.target.closest("#zkclose")){const gone=zkSel;if(gone&&zkNote(gone))zkSaveNote();zkSel=null;zkDrop(gone);zkRenderList();
   document.querySelectorAll("#zklist .zkc.sel").forEach(r=>r.classList.remove("sel"));
   $("zkpane").innerHTML=`<div class="empty">Pick a note on the left, or start a new one.</div>`;return}
   if(e.target.id!=="zkdeep")return;const i=$("zksub");if(!i)return;
