@@ -28,6 +28,33 @@ for need in ("dist/ClaimViewer.exe", "dist/index.html", "dist/sources.js", "dist
     if not (HERE / need).exists():
         sys.exit("missing %s: run build_exe.bat first" % need)
 
+def app_running():
+    r = subprocess.run(["tasklist", "/FI", "IMAGENAME eq ClaimViewer.exe", "/NH"],
+                       capture_output=True, text=True, errors="replace")
+    return "ClaimViewer.exe" in (r.stdout or "")
+
+def find_app():
+    for d in (Path(r"C:\Apps\ClaimViewer"),
+              Path(os.environ.get("USERPROFILE", "")) / "Documents" / "Claim Viewer"):
+        exe = d / "ClaimViewer.exe"
+        if exe.exists():
+            return exe
+    return None
+
+# a silent install aborts with code 5 while the app holds its files, so park it and put it back
+was_running = app_running()
+app_exe = find_app() if was_running else None
+if was_running:
+    subprocess.run(["taskkill", "/IM", "ClaimViewer.exe"], capture_output=True)
+    for _ in range(20):
+        if not app_running():
+            break
+        time.sleep(0.5)
+    if app_running():
+        subprocess.run(["taskkill", "/F", "/IM", "ClaimViewer.exe"], capture_output=True)
+        time.sleep(1)
+    print("closed the running app for the test")
+
 work = Path(tempfile.mkdtemp(prefix="cvtest-"))
 iss = HERE / "_test_installer.iss"
 src = (HERE / "ClaimViewer.iss").read_text(encoding="utf-8")
@@ -79,8 +106,12 @@ try:
     if had_live and not live.exists():
         problems.append("the test install removed the real Start-menu shortcut")
     print("PASS" if not problems else "FAIL: " + "; ".join(problems))
-    sys.exit(0 if not problems else 1)
+    code = 0 if not problems else 1
+    sys.exit(code)
 finally:
+    if was_running and app_exe and app_exe.exists():
+        subprocess.Popen([str(app_exe)], cwd=str(app_exe.parent))
+        print("restarted the app")
     iss.unlink(missing_ok=True)
     for _ in range(10):  # the uninstaller keeps user files and can hold the folder briefly
         shutil.rmtree(work, ignore_errors=True)
