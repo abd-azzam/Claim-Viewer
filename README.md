@@ -43,6 +43,8 @@ Zotero keeps your PDFs and highlights, but it does not draw a graph of how the c
 - The **note graph** (Graph → Notes) draws tag → sub-tag → note trees; untagged notes stay visible under "(no tag)".
 - **Drag to fix mistakes**: drag a note onto a tag or sub-tag to re-file it; drag a node onto another of the same kind to **swap** them (any level, tag↔tag included); drop in the strip just below a node to nest it there. The open editor's fields follow every move.
 - **Undo** (30 steps, this session only) and **Delete** (the node you clicked last: note, tag or sub-tag) sit in the graph toolbar, deliberately small and right-aligned so they never compete with the mode tabs. Undo does not survive a restart: a saved stack once rewound the notes to a days-old state.
+- **Keyword index** lists every tag with the notes filed under it, and it follows the current scope: a collection shows only the keywords of notes whose reading is in that collection, and picking a reading narrows it to that reading.
+- **Note numbers reuse the first free number.** Delete note 1 and the next new note is 1 again, not the highest number plus one; child notes still branch as 1a, 1aa.
 - **Merged readings**: by default every note gets its own pill; *Merge readings* joins all notes of one reading into a single pill whose click opens a menu of its notes with their branches.
 
 ![Graph of determinants, pathways and effects](docs/screenshot-graph.png)

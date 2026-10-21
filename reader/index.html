@@ -1047,7 +1047,9 @@ const zkHealNote=async id=>{const n=zkNote(id);if(!n||!n.src||!n.page)return;
   if(!P){toast("Open that reading if you want the passage repaired");return}
   const q=window.restoreQ?window.restoreQ(P,n.quote,true):"";  // notes want the whole sentence, not only a repair of a split word
   if(q&&q.length>=20&&q!==n.quote){n.quote=q;zkSave();zkOpen(id);toast("Passage restored to the full sentence")}};
-const zkIndex=()=>{const m=new Map();zkIds().forEach(id=>(zkNote(id).tags||[]).forEach(t=>{if(!m.has(t))m.set(t,[]);m.get(t).push(id)}));
+const zkScope=n=>{const rs=$("zsrc"),rv=rs?rs.value:"";if(rv&&n.src!==rv)return false;
+  const cc=$("col").value||"";return !cc||inCol(COL[n.src]||[],cc)};  // index follows the collection and reading filter
+const zkIndex=()=>{const m=new Map();zkIds().filter(id=>zkScope(zkNote(id))).forEach(id=>(zkNote(id).tags||[]).forEach(t=>{if(!m.has(t))m.set(t,[]);m.get(t).push(id)}));
   const rows=[...m.entries()].sort((a,b)=>a[0].localeCompare(b[0]));
   $("zkpane").innerHTML=`<h2 style="margin:0 0 10px">Keyword index</h2>`+(rows.length?`<div class="zidx">`+rows.map(([t,ids])=>`<div class="ztag"><b>${esc(t)}</b><div>${ids.map(i=>`<a data-zk="${esc(i)}">${esc(i)} ${esc((zkNote(i).title||"").slice(0,44))}</a>`).join("")}</div></div>`).join("")+`</div>`
     :`<div class="empty">No keywords yet. A keyword is an entry point into the slip-box: give each note one or two.</div>`)};
