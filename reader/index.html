@@ -655,18 +655,25 @@ const cOrd=()=>{const cid=$("col").value||"";ED.co=ED.co||{};return ED.co[cid]||
 const cRank=k=>{const i=cOrd().indexOf(k);return i<0?1e9:i};
 const cBox=el=>{let p=el.previousElementSibling;while(p&&!p.classList.contains("grp"))p=p.previousElementSibling;return p};
 let cdrag=null;
+const cdEnd=()=>{if(!cdrag)return;cdrag.el.classList.remove("cdrag");
+  document.querySelectorAll("#list .card.chit").forEach(x=>x.classList.remove("chit"));cdrag=null};
 $("list").addEventListener("pointerdown",e=>{if(e.button!==0)return;const c=e.target.closest(".card");
-  if(!c||e.target.closest("button,[contenteditable],a"))return;cdrag={el:c,x:e.clientX,y:e.clientY,moved:false}});
+  if(!c||e.target.closest("button,[contenteditable],a"))return;cdEnd();cdrag={el:c,x:e.clientX,y:e.clientY,moved:false}});
 document.addEventListener("pointermove",e=>{if(!cdrag)return;
   if(!cdrag.moved){if(Math.abs(e.clientX-cdrag.x)+Math.abs(e.clientY-cdrag.y)<5)return;
-    cdrag.moved=true;cdrag.el.classList.add("cdrag")}
+    cdrag.moved=true;cdrag.el.classList.add("cdrag");try{getSelection().removeAllRanges()}catch(_){}
+    if(e.cancelable)e.preventDefault()}
   const t=document.elementFromPoint(e.clientX,e.clientY),c=t&&t.closest?t.closest(".card"):null,
     okk=c&&c!==cdrag.el&&cBox(c)===cBox(cdrag.el);
   document.querySelectorAll("#list .card.chit").forEach(x=>{if(x!==c||!okk)x.classList.remove("chit")});
   if(okk)c.classList.add("chit")});
-document.addEventListener("pointerup",()=>{const d=cdrag;if(!d)return;cdrag=null;d.el.classList.remove("cdrag");
-  const hit=document.querySelector("#list .card.chit");document.querySelectorAll("#list .card.chit").forEach(x=>x.classList.remove("chit"));
-  if(!d.moved||!hit)return;window.__cdragAt=performance.now();cSwap(d.el,hit)});
+// the drop is read from the pointerup point itself, so a fast drag with no last move still lands
+document.addEventListener("pointerup",e=>{const d=cdrag;if(!d)return;
+  const moved=d.moved||Math.abs(e.clientX-d.x)+Math.abs(e.clientY-d.y)>=5,
+    t=moved?document.elementFromPoint(e.clientX,e.clientY):null,c=t&&t.closest?t.closest(".card"):null;
+  cdEnd();if(!moved||!c||c===d.el||cBox(c)!==cBox(d.el))return;
+  window.__cdragAt=performance.now();cSwap(d.el,c)},true);
+document.addEventListener("pointercancel",cdEnd,true);
 const cSwap=(a,b)=>{const ka=a.dataset.k,kb=b.dataset.k,o=cOrd();
   if(!o.includes(ka)||!o.includes(kb)){const h=cBox(a);let c=h?h.nextElementSibling:null;  // start from this box only, so the saved order stays small
     while(c&&c.classList.contains("card")){const k=c.dataset.k;if(!o.includes(k))o.push(k);c=c.nextElementSibling}}
