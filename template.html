@@ -130,6 +130,8 @@ body.gz #gx{display:none!important}  /* the Layers scroller has no meaning on th
 #zkpick button{height:30px;padding:0 12px;white-space:nowrap;justify-self:stretch;border:1px solid var(--ctl);border-radius:var(--r);background:var(--bg);color:var(--ink);font:inherit;font-size:13px;cursor:pointer}
 #zkpick button:hover{border-color:var(--acc);color:var(--acc)}
 #zklist .zkc.kid{border-left:1px dashed var(--ctl);border-radius:0 var(--r) var(--r) 0}  /* the indent comes from data-d, so a grandchild sits further in */
+#zklist .zexp{width:16px;height:16px;margin-right:4px;padding:0;border:0;border-radius:3px;background:none;color:var(--mute);font:inherit;font-size:11px;line-height:1;cursor:pointer;vertical-align:1px}
+#zklist .zexp:hover{background:var(--panel);color:var(--acc)}
 #zklist .zkc.kid b{font-size:11px;color:var(--mute)}
 #zklist .zkc.kid .zt{font-size:12.5px}
 #list .card.cdrag{opacity:.55}
@@ -1135,14 +1137,21 @@ const zkFillFilters=()=>{const tags=new Set(),subs=new Set();
     .map(k=>`<optgroup label="${esc(colPath(k)||"Unfiled")}">`+g.get(k).sort((a,b)=>(a.title||a.id).localeCompare(b.title||b.id))
       .map(x=>`<option value="${esc(x.id)}"${x.id===rv?" selected":""}>${esc(x.title||x.id)}</option>`).join("")+"</optgroup>").join("");
   if(rv&&!$("zsrc").value)$("zsrc").value=""};
+let ZEXP=new Set();  // notes whose children are shown with the arrow
+try{ZEXP=new Set(JSON.parse(store.get("cv:zexp")||"[]"))}catch(e){}
 const zkRenderList=()=>{zkFillFilters();
-  const ids=zkIdsF(),no=zkNo();
+  const ids=zkIdsF(),no=zkNo(),kidMap=new Map();
+  ids.forEach(id=>{const p=zkParentOf(id);if(p){if(!kidMap.has(p))kidMap.set(p,[]);kidMap.get(p).push(id)}});  // one pass, so a long list stays quick
+  const kidsOf=id=>kidMap.get(id)||[];
   const numOf=id=>{const p=zkParentOf(id);return no.get(id)||(p&&no.get(p)?no.get(p)+id.slice(p.length):id)};
-  const line=(id,d)=>{const n=zkNote(id),lb=(n.links||[]).length,bc=zkBack(id).length,kid=d>0;
-    return `<div class="zkc${id===zkSel?" sel":""}${kid?" kid":""}" data-zk="${esc(id)}" data-d="${d}" tabindex="0"${kid?` style="margin-left:${26*d}px"`:""}><div><b>${esc(numOf(id))}</b><span class="zt">${esc(n.title||"(untitled)")}</span></div>
+  const line=(id,d)=>{const n=zkNote(id),lb=(n.links||[]).length,bc=zkBack(id).length,kid=d>0,nk=kidsOf(id).length,
+    open=ZEXP.has(id);
+    return `<div class="zkc${id===zkSel?" sel":""}${kid?" kid":""}" data-zk="${esc(id)}" data-d="${d}" tabindex="0"${kid?` style="margin-left:${26*d}px"`:""}><div>${nk?`<button type="button" class="zexp" data-exp="${esc(id)}" aria-expanded="${open}" title="${open?"Hide":"Show"} ${nk} child note${nk===1?"":"s"}">${open?"\u25be":"\u25b8"}</button>`:""}<b>${esc(numOf(id))}</b><span class="zt">${esc(n.title||"(untitled)")}</span></div>
       <div class="zs"><span>${lb} link${lb===1?"":"s"}</span><span>${bc} backlink${bc===1?"":"s"}</span>${n.page?`<span class="tag">p.${esc(n.page)}</span>`:""}${zkTags(n).map(t=>`<span class="tag">#${esc(t)}</span>`).join("")}${zkNest(n).map(t=>`<span class="tag">›${esc(t)}</span>`).join("")}</div></div>`};
-  const draw=(id,d)=>{let h=line(id,d);if(d<9&&(zkSel===id||(zkSel!==null&&String(zkSel).startsWith(id))))
-      zkKids(id).filter(k=>ids.includes(k)).forEach(k=>{h+=draw(k,d+1)});return h};
+  const draw=(id,d)=>{let h=line(id,d);
+    if(d<9&&(ZEXP.has(id)||(zkSel!==null&&zkSel!==id&&String(zkSel).startsWith(id))))  // the arrow rules; an open child keeps its parent branch visible
+      kidsOf(id).forEach(k=>{h+=draw(k,d+1)});
+    return h};
   $("zklist").innerHTML=ids.length?ids.filter(id=>!zkIsChild(id)).map(id=>draw(id,0)).join("")
     :`<div class="empty">No notes yet. Start one with "New note": one idea, in your own words.</div>`};
 const zkOpts=sel=>{const no=zkLabels();return zkIds().map(id=>`<option value="${esc(id)}"${id===sel?" selected":""}>${no.get(id)||esc(id)} · ${esc((zkNote(id).title||"").slice(0,48))}</option>`).join("")};
@@ -1361,6 +1370,11 @@ requestAnimationFrame(()=>document.body.classList.add("tabsr"));setTimeout(()=>d
 $("zks").onclick=()=>{const x=window.selQ&&window.selQ();if(!x){toast("Select a sentence in the reading first");return}zkFromPassage(x.q,x.pg)};
 $("zknew").onclick=()=>zkNew(null);
 $("zkidx").onclick=zkIndex;
+$("zklist").addEventListener("click",e=>{const b=e.target.closest&&e.target.closest(".zexp");if(!b)return;
+  e.preventDefault();e.stopPropagation();const id=b.dataset.exp;
+  if(ZEXP.has(id))ZEXP.delete(id);else ZEXP.add(id);
+  try{store.set("cv:zexp",JSON.stringify([...ZEXP]))}catch(_){}
+  zkRenderList()},true);
 $("zkv").addEventListener("click",e=>{
   const card=e.target.closest("[data-zk]");if(card){zkOpen(card.dataset.zk);return}
   if(e.target.id==="zkadd"){$("zkrows").insertAdjacentHTML("beforeend",zkRow("","link"));return}
