@@ -627,7 +627,7 @@ function card(c){  // `now` keeps extractor-only fields (gist, factor, outcome, 
   if(c.own_claim.includes(false))tags.push(`<span class="tag warn">reported</span>`);
   if(now&&now.in_abstract)tags.push(`<span class="tag warn">abstract</span>`);
   return `<article class="card${sel===c.src+c.id?" sel":""}" tabindex="0" data-k="${esc(c.src+"\u0001"+c.id)}">
-   <span class="dh" draggable="true" title="Drag to reorder (Alt+Up / Alt+Down on the keyboard)" aria-hidden="true"><svg class="i" viewBox="0 0 24 24"><path d="M9 6h.01M15 6h.01M9 12h.01M15 12h.01M9 18h.01M15 18h.01"/></svg></span>
+   <span class="dh" title="Drag the card to reorder (Alt+Up / Alt+Down on the keyboard)" aria-hidden="true"><svg class="i" viewBox="0 0 24 24"><path d="M9 6h.01M15 6h.01M9 12h.01M15 12h.01M9 18h.01M15 18h.01"/></svg></span>
    <div><span class="quote" title="Double-click to edit">${esc(c.quote)}</span></div>${now&&c.gist?`<div class="gist">${esc(c.gist)} <em>(paraphrase)</em></div>`:""}
    <div class="meta">${pg}${c.status==="failed"||c.status==="ambiguous"?`<span class="tag ${stCls[c.status]}">${esc(c.status)}</span>`:""}${tags.join("")}</div>${sel===c.src+c.id?`<button class="gbtn" data-g="1">Show in graph</button><button class="gbtn" data-ed="1">Edit</button><button class="gbtn" data-zknote="1">To note</button><button class="gbtn" data-del="1">Delete</button>`:""}</article>`;
 }
@@ -639,7 +639,7 @@ function pump(){
   const L=$("list");let buf="",n=0,t=performance.now();
   while(st.gi<st.ents.length&&performance.now()-t<16&&(st.all||n<NSHOW)){
     const[k,v]=st.ents[st.gi++];
-    buf+=`<div class="grp" data-g="${esc(k)}">${esc(k)} (${v.length})</div>`+v.sort((a,b)=>cRank(kc(a))-cRank(kc(b))||ok_(a,k)-ok_(b,k)).map(card).join("");
+    buf+=`<div class="grp" data-g="${esc(k)}">${esc(k)} (${v.length})</div>`+v.sort((a,b)=>ok_(a,k)-ok_(b,k)).map(card).join("");
     n+=v.length;
   }
   if(buf)L.insertAdjacentHTML("beforeend",buf);
@@ -650,38 +650,6 @@ function showAll(){if(RQ){RQ.all=true;pump()}}  // used by scroll, Show in graph
 $("list").addEventListener("scroll",()=>{const e=$("list");if(e.scrollTop+e.clientHeight>e.scrollHeight-400)showAll()},{passive:true});
 window.addEventListener("scroll",()=>{if(window.innerHeight+window.scrollY>document.body.scrollHeight-500)showAll()},{passive:true});
 let rtok=0;
-// claim order: drag a card onto another card in the same box and the two swap places
-const cOrd=()=>{const cid=$("col").value||"";ED.co=ED.co||{};return ED.co[cid]||(ED.co[cid]=[])};
-const cRank=k=>{const i=cOrd().indexOf(k);return i<0?1e9:i};
-const cBox=el=>{let p=el.previousElementSibling;while(p&&!p.classList.contains("grp"))p=p.previousElementSibling;return p};
-let cdrag=null;
-const cdEnd=()=>{if(!cdrag)return;cdrag.el.classList.remove("cdrag");
-  document.querySelectorAll("#list .card.chit").forEach(x=>x.classList.remove("chit"));cdrag=null};
-$("list").addEventListener("pointerdown",e=>{if(e.button!==0)return;const c=e.target.closest(".card");
-  if(!c||e.target.closest("button,[contenteditable],a"))return;cdEnd();cdrag={el:c,x:e.clientX,y:e.clientY,moved:false}});
-document.addEventListener("pointermove",e=>{if(!cdrag)return;
-  if(!cdrag.moved){if(Math.abs(e.clientX-cdrag.x)+Math.abs(e.clientY-cdrag.y)<5)return;
-    cdrag.moved=true;cdrag.el.classList.add("cdrag");try{getSelection().removeAllRanges()}catch(_){}
-    if(e.cancelable)e.preventDefault()}
-  const t=document.elementFromPoint(e.clientX,e.clientY),c=t&&t.closest?t.closest(".card"):null,
-    okk=c&&c!==cdrag.el&&cBox(c)===cBox(cdrag.el);
-  document.querySelectorAll("#list .card.chit").forEach(x=>{if(x!==c||!okk)x.classList.remove("chit")});
-  if(okk)c.classList.add("chit")});
-// the drop is read from the pointerup point itself, so a fast drag with no last move still lands
-document.addEventListener("pointerup",e=>{const d=cdrag;if(!d)return;
-  const moved=d.moved||Math.abs(e.clientX-d.x)+Math.abs(e.clientY-d.y)>=5,
-    t=moved?document.elementFromPoint(e.clientX,e.clientY):null,c=t&&t.closest?t.closest(".card"):null;
-  cdEnd();if(!moved||!c||c===d.el||cBox(c)!==cBox(d.el))return;
-  window.__cdragAt=performance.now();cSwap(d.el,c)},true);
-document.addEventListener("pointercancel",cdEnd,true);
-const cSwap=(a,b)=>{const ka=a.dataset.k,kb=b.dataset.k,o=cOrd();
-  if(!o.includes(ka)||!o.includes(kb)){const h=cBox(a);let c=h?h.nextElementSibling:null;  // start from this box only, so the saved order stays small
-    while(c&&c.classList.contains("card")){const k=c.dataset.k;if(!o.includes(k))o.push(k);c=c.nextElementSibling}}
-  const i=o.indexOf(ka),j=o.indexOf(kb);if(i<0||j<0)return;
-  [o[i],o[j]]=[o[j],o[i]];saveED();
-  const m=document.createComment("");  // swap the two cards in place, with no rebuild of the list
-  a.parentNode.insertBefore(m,a);b.parentNode.insertBefore(a,b);m.parentNode.insertBefore(b,m);m.remove()};
-
 function render(){
   const rows=all.filter(pass);
   const live=all.filter(c=>!c.del).length,fl=FL.some(i=>$(i).value);$("count").innerHTML=(fl?rows.length+" / "+live+" claims":live+(live===1?" claim":" claims"))+(fl?'<button id="cf">Clear filters</button>':"");
@@ -749,18 +717,28 @@ function moveTo(k,t,after){
   const a=lo&&ok_(byK(lo.dataset.k),g),b=hi&&ok_(byK(hi.dataset.k),g);
   (ED.o||(ED.o={}))[ogk(g,k)]=lo&&hi?(a+b)/2:lo?a+1:b-1;saveED();render();
 }
-let dg=null;
-const clr=()=>{$("list").querySelectorAll(".drag,.db,.da").forEach(x=>x.classList.remove("drag","db","da"));dg=null};
-$("list").addEventListener("dragstart",e=>{const h=e.target.closest&&e.target.closest(".dh");if(!h)return;
-  const c=h.closest(".card");dg={k:c.dataset.k,set:new Set(cardsOf(c))};c.classList.add("drag");
-  e.dataTransfer.effectAllowed="move";e.dataTransfer.setData("text/plain","");e.dataTransfer.setDragImage(c,16,16)});
-$("list").addEventListener("dragover",e=>{if(!dg)return;const t=e.target.closest(".card");if(!t||!dg.set.has(t)||t.dataset.k===dg.k)return;
-  e.preventDefault();const r=t.getBoundingClientRect();
-  $("list").querySelectorAll(".db,.da").forEach(x=>x.classList.remove("db","da"));t.classList.add(e.clientY>r.top+r.height/2?"da":"db")});
-$("list").addEventListener("drop",e=>{if(!dg)return;const t=e.target.closest(".card");
-  if(!t||!dg.set.has(t)||t.dataset.k===dg.k)return clr();
-  e.preventDefault();const k=dg.k,r=t.getBoundingClientRect();clr();moveTo(k,t,e.clientY>r.top+r.height/2)});
-$("list").addEventListener("dragend",clr);
+let cdrag=null;
+const cdEnd=()=>{if(cdrag){cdrag.el.classList.remove("drag");cdrag=null}
+  $("list").querySelectorAll(".db,.da").forEach(x=>x.classList.remove("db","da"))};
+$("list").addEventListener("pointerdown",e=>{if(e.button!==0)return;const c=e.target.closest(".card");
+  if(!c||e.target.closest("button,[contenteditable],a"))return;cdEnd();cdrag={el:c,k:c.dataset.k,x:e.clientX,y:e.clientY,moved:false}});
+document.addEventListener("pointermove",e=>{if(!cdrag)return;
+  if(!cdrag.moved){if(Math.abs(e.clientX-cdrag.x)+Math.abs(e.clientY-cdrag.y)<5)return;
+    cdrag.moved=true;cdrag.el.classList.add("drag");try{getSelection().removeAllRanges()}catch(_){}
+    if(e.cancelable)e.preventDefault()}
+  const el=document.elementFromPoint(e.clientX,e.clientY),t=el&&el.closest?el.closest(".card"):null,
+    okk=t&&t!==cdrag.el&&grpOf(t)===grpOf(cdrag.el);
+  $("list").querySelectorAll(".db,.da").forEach(x=>{if(x!==t||!okk)x.classList.remove("db","da")});
+  if(okk){const r=t.getBoundingClientRect();t.classList.add(e.clientY>r.top+r.height/2?"da":"db")}},true);
+document.addEventListener("pointerup",e=>{const d=cdrag;if(!d)return;
+  const moved=d.moved||Math.abs(e.clientX-d.x)+Math.abs(e.clientY-d.y)>=5,
+    el=moved?document.elementFromPoint(e.clientX,e.clientY):null,
+    t=el&&el.closest?el.closest(".card"):null,
+    okk=t&&t!==d.el&&grpOf(t)===grpOf(d.el);
+  cdEnd();if(!okk)return;window.__cdragAt=performance.now();
+  const r=t.getBoundingClientRect();moveTo(d.k,t,e.clientY>r.top+r.height/2)},true);
+document.addEventListener("pointercancel",cdEnd,true);
+$("list").addEventListener("dragstart",e=>{if(e.target.closest&&e.target.closest(".card"))e.preventDefault()});  // a text drag would eat the pointerup
 $("list").addEventListener("keydown",e=>{if(!e.altKey||(e.key!=="ArrowUp"&&e.key!=="ArrowDown"))return;const a=e.target.closest&&e.target.closest(".card");if(!a)return;
   const cs=cardsOf(a),dn=e.key==="ArrowDown",t=cs[cs.indexOf(a)+(dn?1:-1)];if(!t)return;
   e.preventDefault();const k=a.dataset.k,g=grpOf(a);moveTo(k,t,dn);
