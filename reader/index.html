@@ -634,6 +634,30 @@ function card(c){  // `now` keeps extractor-only fields (gist, factor, outcome, 
    <div class="meta">${pg}${c.status==="failed"||c.status==="ambiguous"?`<span class="tag ${stCls[c.status]}">${esc(c.status)}</span>`:""}${tags.join("")}</div>${sel===c.src+c.id?`<button class="gbtn" data-g="1">Show in graph</button><button class="gbtn" data-ed="1">Edit</button><button class="gbtn" data-zknote="1">To note</button><button class="gbtn" data-del="1">Delete</button>`:""}</article>`;
 }
 let RQ=null;  // pending list fill
+// remember where you were in the claim list, per collection
+let lstT=null;
+const lstMap=()=>{try{return JSON.parse(store.get("cv:lists")||"{}")}catch(e){return {}}};
+const LPROBE=150;  // the line just under the list toolbar where the place is measured
+let lstCol="";  // the collection the list on screen was built for
+const lstSave=()=>{lstT=null;const L=$("list");if(!L||!L.querySelector(".card"))return;
+  const b=L.getBoundingClientRect(),el=document.elementFromPoint(b.left+10,LPROBE),
+    card=el&&el.closest?el.closest(".card"):null;if(!card)return;
+  const m=lstMap();m[lstCol]={k:card.dataset.k,off:Math.round(card.getBoundingClientRect().top-LPROBE)};
+  try{store.set("cv:lists",JSON.stringify(m))}catch(e){}};
+document.addEventListener("scroll",()=>{if(!lstT)lstT=setTimeout(lstSave,400)},{capture:true,passive:true});  // catches the window and the list box
+const lstScrollTo=el=>{for(let e=el.parentElement;e&&e!==document.body;e=e.parentElement){
+    const cs=getComputedStyle(e);if(/(auto|scroll)/.test(cs.overflowY)&&e.scrollHeight>e.clientHeight+4)return e}
+  return document.scrollingElement||document.documentElement};
+let lstBusy=false;
+const lstRestore=()=>{if(lstBusy)return;const e=lstMap()[lstCol];if(!e||!e.k||!$("list"))return;
+  lstBusy=true;let tries=0;
+  const step=()=>{const el=[...document.querySelectorAll("#list .card")].find(x=>x.dataset.k===e.k);
+    if(el){const shift=el.getBoundingClientRect().top-(LPROBE+(e.off||0));
+      lstScrollTo(el).scrollTop+=shift;  // whichever box actually scrolls here
+      lstBusy=false;return}
+    if(RQ&&tries++<300){RQ.all=true;pump();setTimeout(step,90);return}  // the saved card sits deep: paint on
+    lstBusy=false};
+  setTimeout(step,0)};
 const NSHOW=260;  // cards painted before waiting for a scroll
 function pump(){
   const st=RQ;if(!st)return;
@@ -653,7 +677,9 @@ $("list").addEventListener("scroll",()=>{const e=$("list");if(e.scrollTop+e.clie
 window.addEventListener("scroll",()=>{if(window.innerHeight+window.scrollY>document.body.scrollHeight-500)showAll()},{passive:true});
 let rtok=0;
 function render(){
+  if(!RQ)lstSave();  // save under the collection that is still on screen
   const rows=all.filter(pass);
+  lstCol=$("col").value||"";
   const live=all.filter(c=>!c.del).length,fl=FL.some(i=>$(i).value);$("count").innerHTML=(fl?rows.length+" / "+live+" claims":live+(live===1?" claim":" claims"))+(fl?'<button id="cf">Clear filters</button>':"");
   const groups=new Map();
   rows.forEach(c=>keys(c).forEach(k=>{if(!groups.has(k))groups.set(k,[]);groups.get(k).push(c)}));
@@ -663,7 +689,7 @@ function render(){
   L.innerHTML="";RQ=null;
   if(!ents.length){L.innerHTML=`<div class="empty">${fl?"No matches.":"No claims yet. Select text in the PDF, then right-click."}</div>`;return}
   RQ={ents,gi:0,my,all:false,t0:performance.now()};
-  pump();
+  pump();lstRestore();
 }
 // legend of the "Connected claims" graph: one chip per connection type, still a filter (same field as "Links to other readings")
 function lkLegend(){
