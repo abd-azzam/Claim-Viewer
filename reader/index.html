@@ -162,7 +162,7 @@ main{padding:0 16px 16px}
 /* Icon-only buttons are exact squares: padding plus the 1px border made them 34x32, which reads as stretched. */
 /* both panels can be folded away; the toggles float so they survive hiding either one */
 aside,section{position:relative}
-.edge{position:fixed;top:50%;z-index:40;width:22px;height:58px;padding:0;display:flex;align-items:center;justify-content:center;border:0;background:color-mix(in srgb,var(--acc) 10%,transparent);color:var(--acc);cursor:pointer;border-radius:4px;box-shadow:none;opacity:0;transition:opacity .16s ease,background .12s,color .12s}
+.edge{position:fixed;top:50%;z-index:40;width:20px;height:52px;padding:0;display:flex;align-items:center;justify-content:center;border:0;background:color-mix(in srgb,var(--acc) 10%,transparent);color:var(--acc);cursor:pointer;border-radius:4px;box-shadow:none;opacity:0;transition:opacity .16s ease,background .12s,color .12s}
 body.tabsr .edge{opacity:1}  /* both folds appear together, once the panel widths are measured */
 @media (prefers-reduced-motion:reduce){.edge{transition:none}}
 
@@ -205,8 +205,8 @@ body.gz #znav{display:flex}
 #gout .e.novia:hover{opacity:.75;filter:none}
 #gout .tnode.none rect{fill:none;stroke-dasharray:4 3;fill-opacity:0}
 #gout .tnode.none text{fill:var(--mute);font-weight:600}
-#hl{left:calc(var(--lwpx,330px) - 22px);transform:translateY(-50%)}  /* flush inside the panel edge, so it never sits on a claim card */
-#hr{right:calc(var(--rwpx,601px) - 22px);transform:translateY(-50%)}
+#hl{left:calc(var(--lwpx,330px) - 20px);transform:translateY(-50%)}  /* flush inside the panel edge, so it never sits on a claim card */
+#hr{right:calc(var(--rwpx,601px) - 20px);transform:translateY(-50%)}
 body.nol #hl svg,body.nor #hr svg{transform:rotate(180deg)}
 body.graph #hr{display:none}
 body.nol #hl{left:2px;transform:translateY(-50%)}
@@ -357,6 +357,8 @@ aside{padding:14px 26px 14px 14px}  /* the right gutter holds the fold tab, clea
 #libp .lrow button.lcol{min-width:16px;min-height:16px;width:16px;height:16px;padding:0;border:0;background:none;color:var(--mute);font-size:10px}
 #libp .lrow button.lcol:hover{background:var(--panel);color:var(--acc)}
 #flt{row-gap:11px;column-gap:10px}
+#flt label.f{overflow:visible;white-space:normal;text-overflow:clip;height:auto;min-height:0;align-content:start}
+#flt label.f select,#flt label.f input{min-height:30px}
 /* left panel polish: one rhythm for tabs, folder rows and buttons */
 .tabs{gap:6px;margin:0 0 14px}
 .tabs button{flex:1;height:34px;padding:0 10px;border-radius:8px;font-size:13px}
