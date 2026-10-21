@@ -752,15 +752,23 @@ function moveTo(k,t,after){
   const a=lo&&ok_(byK(lo.dataset.k),g),b=hi&&ok_(byK(hi.dataset.k),g);
   (ED.o||(ED.o={}))[ogk(g,k)]=lo&&hi?(a+b)/2:lo?a+1:b-1;saveED();render();
 }
-let cdrag=null;
-const cdEnd=()=>{if(cdrag){cdrag.el.classList.remove("drag");cdrag=null}
+let cdrag=null,cauto=null;
+const cAutoStop=()=>{if(cauto){cancelAnimationFrame(cauto);cauto=null}};
+const cAuto=()=>{if(!cdrag)return cAutoStop();
+  const sc=lstScrollTo(cdrag.el),r=(sc===document.scrollingElement)?{top:0,bottom:innerHeight}:sc.getBoundingClientRect(),
+    y=cdrag.ly||0,edge=90;
+  if(y<r.top+edge)sc.scrollTop-=Math.min(26,(r.top+edge-y)/3+6);
+  else if(y>r.bottom-edge)sc.scrollTop+=Math.min(26,(y-(r.bottom-edge))/3+6);
+  cauto=requestAnimationFrame(cAuto)};
+const cdEnd=()=>{cAutoStop();if(cdrag){cdrag.el.classList.remove("drag");cdrag=null}
   $("list").querySelectorAll(".db,.da").forEach(x=>x.classList.remove("db","da"))};
 $("list").addEventListener("pointerdown",e=>{if(e.button!==0)return;const c=e.target.closest(".card");
   if(!c||e.target.closest("button,[contenteditable],a"))return;cdEnd();cdrag={el:c,k:c.dataset.k,x:e.clientX,y:e.clientY,moved:false}});
 document.addEventListener("pointermove",e=>{if(!cdrag)return;
   if(!cdrag.moved){if(Math.abs(e.clientX-cdrag.x)+Math.abs(e.clientY-cdrag.y)<5)return;
     cdrag.moved=true;cdrag.el.classList.add("drag");try{getSelection().removeAllRanges()}catch(_){}
-    if(e.cancelable)e.preventDefault()}
+    if(e.cancelable)e.preventDefault();if(!cauto)cAuto()}
+  cdrag.ly=e.clientY;
   const el=document.elementFromPoint(e.clientX,e.clientY),t=el&&el.closest?el.closest(".card"):null,
     okk=t&&t!==cdrag.el&&grpOf(t)===grpOf(cdrag.el);
   $("list").querySelectorAll(".db,.da").forEach(x=>{if(x!==t||!okk)x.classList.remove("db","da")});
