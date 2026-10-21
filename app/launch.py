@@ -159,8 +159,26 @@ if "--selftest" in sys.argv:  # round-trip check used by the build: python launc
 if not INDEX.exists():
     stop("index.html is missing from %s.\n\nCopy it next to ClaimViewer.exe." % ROOT)
 
+def _place(w, h):  # the window opened off to the right, and on a small screen it did not fit at all
+    try:
+        import ctypes
+
+        class RECT(ctypes.Structure):
+            _fields_ = [("left", ctypes.c_long), ("top", ctypes.c_long),
+                        ("right", ctypes.c_long), ("bottom", ctypes.c_long)]
+        r = RECT()
+        ctypes.windll.user32.SystemParametersInfoW(0x0030, 0, ctypes.byref(r), 0)  # SPI_GETWORKAREA
+        aw, ah = r.right - r.left, r.bottom - r.top
+        w, h = min(w, max(900, aw - 40)), min(h, max(600, ah - 80))
+        return w, h, r.left + max(0, (aw - w) // 2), r.top + max(0, (ah - h) // 2)
+    except Exception:
+        return w, h, None, None
+
+
+_ww, _wh, _cx, _cy = _place(1500, 920)
 win = webview.create_window("Claim Viewer", INDEX.as_uri(), js_api=Api(),
-                            width=1500, height=920, min_size=(900, 600), text_select=True)
+                            width=_ww, height=_wh, min_size=(900, 600), text_select=True,
+                            x=_cx, y=_cy)
 webview.settings["ALLOW_DOWNLOADS"] = True
 webview.start(storage_path=store, private_mode=False)
 os._exit(0)
