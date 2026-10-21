@@ -361,7 +361,6 @@ body.notes #libp{display:none}
   <label>Source <select name="src"></select></label>
   <label>Quote <textarea name="quote" rows="5" required></textarea></label>
   <label>Gist <textarea name="gist" rows="2"></textarea></label>
-  <label>Attach to note <select name="noteOf" aria-label="Attach this claim to a note"></select></label>
   <fieldset data-n="role"><legend id="grole">Role (tick all that apply, click a name to rename it)</legend><div class="cbs"></div><div class="rnew"><input id="rnew" placeholder="New role name" aria-label="New role name"><button type="button" id="rnewb">Add role</button></div></fieldset>
   <div id="xed"></div>
   <fieldset><legend id="gpath">Pathways</legend><div class="chips" data-n="pathway"><input list="dlp" aria-label="Add a pathway"></div></fieldset><datalist id="dlp"></datalist>
@@ -671,7 +670,10 @@ const ask=(msg,key,info)=>new Promise(res=>{if(key&&store.get("cv:skip:"+key)===
 $("list").addEventListener("click",async e=>{if(e.target.closest("[contenteditable],.dh"))return;
   if(e.target.closest("[data-copy]")){e.stopPropagation();const cd=e.target.closest(".card"),[s0,i0]=String((cd&&cd.dataset.k)||"").split("\u0001"),c=all.find(x=>x.src===s0&&x.id===i0);if(c)copyText(cardCopy(c));return}if(e.detail>1&&e.target.closest(".quote"))return editQ(e.target.closest(".quote"));if(e.target.closest("button[data-g]"))return show("graph");
   if(e.target.closest("[data-ed]"))return editor(all.find(x=>x.src+x.id===sel));
-  if(e.target.closest("[data-zknote]")){const c=all.find(x=>x.src+x.id===sel);if(c)zkFromClaim(c);return}
+  if(e.target.closest("[data-zknote]")){const cd=e.target.closest(".card"),[s0,i0]=String((cd&&cd.dataset.k)||"").split("\u0001"),c=all.find(x=>x.src===s0&&x.id===i0);
+    if(c)askNote(c).then(id=>{if(!id)return;if(id==="__new__"){zkFromClaim(c);return}
+      if(zkAttach(c,id)){show("notes");zkOpen(id);toast("Added to note "+(zkNo().get(id)||id))}});
+    return}
   if(e.target.closest("[data-del]")){const c=all.find(x=>x.src+x.id===sel);
     if(c&&await ask("Delete this claim from your view? Export edits to keep this.","delclaim"))del_(c);return;}
 const a=e.target.closest("button[data-k]")||e.target.closest(".card");if(a){const[s,i]=a.dataset.k.split("\u0001");open_(s,i)}});
@@ -1094,6 +1096,16 @@ const zkFromPassage=(q,pg,src)=>{src=src||(window.curSrc?window.curSrc():"");con
   zkHealNote(id);  // the same sentence restore the claim editor uses; the reading is open right now
   toast("Note started from page "+(pg||"?"))};
 // a claim is already a verified sentence: carry it into a note as the source passage
+const zkAttach=(c,id)=>{const n=zkNote(id);if(!c||!n)return false;const key=kc(c);
+  Object.values(ZK.notes).forEach(x=>{if(x.claims)x.claims=x.claims.filter(k=>k!==key)});  // one note per claim
+  n.claims=[...(n.claims||[]).filter(k=>k!==key),key];zkSave();return true};
+const askNote=c=>new Promise(res=>{const ids=zkIds(),num=new Map(ids.map((id,i)=>[id,i+1])),d=document.createElement("dialog");d.id="zkpick";  // pick the note, or start a new one
+  d.innerHTML=`<p>Add this claim to a note</p><select size="9" aria-label="Note">`+`<option value="">+ New note from this claim</option>`
+    +ids.map(id=>`<option value="${esc(id)}">${num.get(id)} \u00b7 ${esc((zkNote(id).title||"(untitled)").slice(0,40))}</option>`).join("")
+    +`</select><div><button value="0">Cancel</button><button value="1">Add</button></div>`;
+  let ok=0;d.querySelectorAll("button").forEach(b=>b.onclick=()=>{ok=+b.value;d.close()});
+  d.onclose=()=>{const v=d.querySelector("select").value;d.remove();res(ok?(v||"__new__"):null)};
+  (document.fullscreenElement||document.body).append(d);d.showModal()});
 const zkFromClaim=c=>{if(!c)return;const id=zkNew(null,{src:c.src,page:(c.pdf_page||[])[0]||null,quote:c.quote,tags:(c.pathway||[]).slice(0,1),subt:(c.status==="user"?c.axisA||[]:[]).slice(0,1)});show("notes");toast("Note started from a claim, filed under its pathway")};  // the note graph is where a claim becomes a tag branch
 const zkHealNote=async id=>{const n=zkNote(id);if(!n||!n.src||!n.page)return;
   const P=window.pageText?await window.pageText(n.src,n.page):"";
@@ -1545,8 +1557,6 @@ async function editor(c){
   F.elements.pdf_page.value=v.pdf_page.join(", ");
   {const known=[...new Set(Object.values(VOC().p||{}))].filter(Boolean).sort((a,b)=>a.localeCompare(b));  // exactly this folder's pathway list
    $("dlp").innerHTML=known.map(n=>`<option value="${esc(n)}">`).join("")}
-  {const no=zkNo(),mine=c?(Object.values(ZK.notes).find(x=>(x.claims||[]).includes(kc(c)))||{}).id:"";
-   F.elements.noteOf.innerHTML='<option value="">No note</option>'+zkIdsF().map(id=>`<option value="${esc(id)}"${id===mine?" selected":""}>${no.get(id)||id} \u00b7 ${esc((zkNote(id).title||"(untitled)").slice(0,38))}</option>`).join("");}  // a claim can belong to one note  // the list of this folder, not every folder's
   $("xed").innerHTML=(VB.xcols||[]).map(x=>`<label>${esc(x.name||x.k)} <input name="xe:${esc(x.k)}" value="${esc(((v.x&&v.x[x.k])||[]).join(", "))}" placeholder="comma separated"></label>`).join("");
   $("lkrows").innerHTML="";v.links.forEach(addLink);
   F.elements.src.disabled=!!c||!!$("pdfsel").value;D.show();F.elements.quote.focus();
@@ -1567,10 +1577,6 @@ F.addEventListener("submit",e=>{
     Object.assign(c,f);if(!ED.a.includes(c))ED.m[k]={...ED.m[k],...f};theClaim=c;}
   else{const s=g("src"),c={...f,id:"u"+Date.now(),src:s,srcTitle:DATA.sources.find(x=>x.id===s).title,status:"user",cite_page:f.pdf_page.join(", ")};
     all.push(c);ED.a.push(c);sel=s+c.id;theClaim=c;}
-  {const key=kc(theClaim),nid=String((F.elements.noteOf&&F.elements.noteOf.value)||"");
-   Object.values(ZK.notes).forEach(x=>{if(x.claims&&x.claims.includes(key))x.claims=x.claims.filter(q=>q!==key)});
-   if(nid&&zkNote(nid)){const n=zkNote(nid);n.claims=[...(n.claims||[]),key]}
-   zkSave()}
   saveED();refresh();
   {const _t=$("toast");if(_t)_t.hidden=true}  // a refusal about an earlier attempt must not sit over a successful save
 });
