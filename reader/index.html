@@ -352,6 +352,13 @@ aside{padding:14px 20px 14px 14px}
 #flt label.f{margin:14px 0 5px}
 #flt label.f:first-child{margin-top:0}
 #flt label.f+select,#flt label.f+input{margin:0 0 0 0}
+.bar #vb{margin-left:auto}  /* the icon tools sit at the far right, away from the Claims/Notes tabs */
+#libp .lcol{width:18px;height:18px;flex:none;padding:0;border:0;background:none;color:var(--mute);font:inherit;font-size:10px;line-height:1;cursor:pointer;border-radius:4px}
+#libp .lcol:hover{color:var(--acc);background:var(--panel)}
+#libp .lcol.sp{visibility:hidden}
+#libp .lrow{padding-left:2px}
+#libp .lrow button.lcol{min-width:16px;min-height:16px;width:16px;height:16px;padding:0;border:0;background:none;color:var(--mute);font-size:10px}
+#libp .lrow button.lcol:hover{background:var(--panel);color:var(--acc)}
 /* left panel polish: one rhythm for tabs, folder rows and buttons */
 .tabs{gap:6px;margin:0 0 14px}
 .tabs button{flex:1;height:34px;padding:0 10px;border-radius:8px;font-size:13px}
@@ -1854,10 +1861,17 @@ render();
 // ---- Library panel (left column, tab "Library"): folders inside the app. launch.py writes library.json. ----
 const libId=()=>"c"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 const libSel=()=>$("pdfsel").value||$("src").value||"";
+let LCOLL=new Set();try{LCOLL=new Set(JSON.parse(store.get("cv:libcol")||"[]"))}catch(e){}
 function drawLib(){const _p=performance.now();
-  $("libtree").innerHTML=cTree().map(([id,n,d])=>{
+  const tree=cTree(),kids={},stack=[];
+  tree.forEach(([id,,d])=>{stack.length=d+1;stack[d]=id;const p=d?stack[d-1]:null;if(p)(kids[p]=kids[p]||[]).push(id)});
+  const rows=[];let closed=-1;
+  tree.forEach(r=>{if(closed>=0&&r[2]>closed)return;closed=-1;rows.push(r);
+    if(LCOLL.has(r[0])&&kids[r[0]])closed=r[2]});  // a closed folder hides everything under it
+  $("libtree").innerHTML=rows.map(([id,n,d])=>{
     const cnt=DATA.sources.filter(s=>inCol(s.col,id)).length;  // same rule as the filter: a parent counts its children
     return `<div class="lrow" data-c="${esc(id)}" data-d="${d}" style="padding-left:${4+d*14}px">`
+      +`<button type="button" class="lcol${kids[id]?"":" sp"}" data-col="${esc(id)}" aria-expanded="${LCOLL.has(id)?"false":"true"}" title="${kids[id]?(LCOLL.has(id)?"Show":"Hide")+" what is inside":""}">${kids[id]?(LCOLL.has(id)?"\u25b8":"\u25be"):""}</button>`
       +`<input value="${esc(n)}" aria-label="Folder name"><span class="cnt">${cnt}</span>`
       +`<button type="button" class="lpdf" title="Add PDFs to ${esc(n)}">PDF</button>`+`<button type="button" class="lsub" title="Add a sub-folder inside ${esc(n)}">+</button>`
       +`<button type="button" class="ldel" title="Delete this folder (readings and claims stay)">\u2715</button></div>`}).join("")
@@ -1911,6 +1925,10 @@ $("libtree").addEventListener("change",e=>{if(e.target.tagName!=="INPUT")return;
   const c=e.target.closest(".lrow").dataset.c,n=e.target.value.trim();
   if(!n||!CMAP[c])return;CMAP[c].name=n;saveLib()});
 $("libtree").addEventListener("click",async e=>{
+  const tw=e.target.closest(".lcol");if(tw&&tw.dataset.col){const id=tw.dataset.col;
+    if(LCOLL.has(id))LCOLL.delete(id);else LCOLL.add(id);
+    try{store.set("cv:libcol",JSON.stringify([...LCOLL]))}catch(_){}
+    drawLib();return}
   const row=e.target.closest(".lrow");if(!row)return;const id=row.dataset.c,d=+row.dataset.d||0;
   if(e.target.classList.contains("ldel")){
     if(!await nask("Delete the folder "+cPath(id)+"?\n\nThe readings and their claims stay.","Claim Viewer"))return;
