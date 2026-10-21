@@ -158,14 +158,14 @@ main{padding:0 16px 16px}
 /* Icon-only buttons are exact squares: padding plus the 1px border made them 34x32, which reads as stretched. */
 /* both panels can be folded away; the toggles float so they survive hiding either one */
 aside,section{position:relative}
-.edge{position:fixed;top:44%;z-index:40;width:26px;height:60px;padding:0;display:flex;align-items:center;justify-content:center;border:1px solid var(--acc);background:color-mix(in srgb,var(--acc) 16%,var(--panel));color:var(--acc);cursor:pointer;border-radius:var(--r);box-shadow:var(--sh);opacity:0;transition:opacity .16s ease}
+.edge{position:fixed;top:50%;z-index:40;width:14px;height:44px;padding:0;display:flex;align-items:center;justify-content:center;border:0;background:transparent;color:var(--mute);cursor:pointer;border-radius:4px;box-shadow:none;opacity:0;transition:opacity .16s ease,background .12s,color .12s}
 body.tabsr .edge{opacity:1}  /* both folds appear together, once the panel widths are measured */
 @media (prefers-reduced-motion:reduce){.edge{transition:none}}
-@supports not (background:color-mix(in srgb,red 10%,blue)){.edge{background:var(--panel)}}
-.edge svg{width:16px;height:16px;stroke-width:2.2}
-.edge:hover{color:var(--bg);background:var(--acc);border-color:var(--acc)}
+
+.edge svg{width:13px;height:13px;stroke-width:2.4}
+.edge:hover{color:var(--acc);background:var(--panel)}
 .edge:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
-#hl svg,#hr svg{width:18px;height:18px;flex:none}
+#hl svg,#hr svg{width:13px;height:13px;flex:none}
 #gout .node,#gout .tnode,#gout .snode{cursor:pointer}
 #gout .tnode:hover rect,#gout .snode:hover rect{stroke:var(--acc);stroke-width:2}
 #gout .node:hover circle{stroke:var(--acc);stroke-width:3}
@@ -201,12 +201,12 @@ body.gz #znav{display:flex}
 #gout .e.novia:hover{opacity:.75;filter:none}
 #gout .tnode.none rect{fill:none;stroke-dasharray:4 3;fill-opacity:0}
 #gout .tnode.none text{fill:var(--mute);font-weight:600}
-#hl{left:var(--lwpx,330px);transform:translateX(-50%)}
-#hr{right:var(--rwpx,601px);transform:translateX(50%)}
+#hl{left:calc(var(--lwpx,330px) - 14px);transform:translateY(-50%)}  /* flush inside the panel edge, so it never sits on a claim card */
+#hr{right:calc(var(--rwpx,601px) - 14px);transform:translateY(-50%)}
 body.nol #hl svg,body.nor #hr svg{transform:rotate(180deg)}
 body.graph #hr{display:none}
-body.nol #hl{left:2px;transform:none}
-body.nor #hr{right:2px;transform:none}
+body.nol #hl{left:2px;transform:translateY(-50%)}
+body.nor #hr{right:2px;transform:translateY(-50%)}
 body.nol{grid-template-columns:0 minmax(340px,1fr) minmax(360px,1.1fr)}
 body.nol aside>*:not(#hl){display:none}
 body.nol aside{overflow:visible;padding:0;border-right:0}
