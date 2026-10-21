@@ -114,7 +114,8 @@ body.gnet #vbg,body.gcon #vbg,body.gz #vbg,body.groles #vbg{display:none}
 #gv .le{fill:none;opacity:.85;cursor:pointer}#gv .le:hover,#gv .le.hit{opacity:1}#gv .le.dim{opacity:.12}#gv .ln{cursor:pointer}#gv .ln circle{fill:var(--panel);stroke:var(--ctl);stroke-width:2.5}#gv .ln:hover circle{stroke:var(--acc)}#gv .ln.hit circle{fill:var(--hl);stroke:var(--acc)}#gv .ln.dim{opacity:.35}#gv .lcnt{font-weight:700;paint-order:stroke;stroke:var(--bg);stroke-width:4px;pointer-events:none}#gv .lcnt.dim{opacity:.3}/* note graph: tag parents, sub-tag branches, note leaves */
 #gout .edge.taglink{stroke:var(--acc);opacity:.55;stroke-width:1.6}
 #gout .edge.branch{stroke:var(--mute);opacity:.45;stroke-width:1.2}
-#gout svg.rg .edge.branch{stroke:var(--ctl);opacity:.55;stroke-width:1}  /* many lines from one pill: keep them faint, not a black wedge */
+#gout svg.rg .edge.branch{stroke:var(--ctl);opacity:.6;stroke-width:1.2}
+#gout svg.rg .wedge{fill:var(--ctl);fill-opacity:.10;stroke:none}  /* one shape, never 78 strokes piling into black */  /* many lines from one pill: keep them faint, not a black wedge */
 #gx{display:none;overflow-x:auto;overflow-y:hidden;height:14px;margin:4px 0 8px}
 body.gz #gx{display:none!important}  /* the Layers scroller has no meaning on the note graph */
 #gx.on{display:block}
@@ -256,6 +257,12 @@ body.notes #libp{display:none}
 .zhead{display:flex;align-items:center;justify-content:space-between;gap:8px}
 #zkclose{width:28px;height:28px;display:inline-flex;align-items:center;justify-content:center;border:1px solid transparent;border-radius:var(--r);background:transparent;color:var(--mute);cursor:pointer}
 #zkclose:hover{border-color:var(--ctl);color:var(--ink)}
+#ed .rlab{cursor:text;padding:0 2px;border-bottom:1px dashed transparent;border-radius:3px}
+#ed .rlab:hover{border-bottom-color:var(--ctl)}
+#ed .rlab:focus{outline:none;border-bottom-color:var(--acc);background:var(--panel)}
+#ed .rnew{display:flex;gap:6px;margin-top:8px}
+#ed .rnew input{flex:1 1 auto;min-width:0;height:30px}
+#ed .rnew button{height:30px;padding:0 10px}
 #zkclose svg{width:16px;height:16px}
 #zklist{display:flex;flex-direction:column;gap:6px;max-height:calc(100vh - 120px);overflow:auto;padding-right:2px}
 #zklist{overflow-x:hidden}
@@ -345,7 +352,7 @@ body.notes #libp{display:none}
   <label>Source <select name="src"></select></label>
   <label>Quote <textarea name="quote" rows="5" required></textarea></label>
   <label>Gist <textarea name="gist" rows="2"></textarea></label>
-  <fieldset data-n="role"><legend id="grole">Role (tick all that apply)</legend><div class="cbs"></div></fieldset>
+  <fieldset data-n="role"><legend id="grole">Role (tick all that apply, click a name to rename it)</legend><div class="cbs"></div><div class="rnew"><input id="rnew" placeholder="New role name" aria-label="New role name"><button type="button" id="rnewb">Add role</button></div></fieldset>
   <div id="xed"></div>
   <fieldset><legend id="gpath">Pathways</legend><div class="chips" data-n="pathway"><input list="dlp" aria-label="Add a pathway"></div></fieldset><datalist id="dlp"></datalist>
   <fieldset><legend id="gfa">Axis A (Enter adds one)</legend><div class="chips" data-n="axisA"><input list="dlf" aria-label="Add axis A value"></div></fieldset>
@@ -755,25 +762,27 @@ function graph(){
   lkLegend();
   $("gout").innerHTML=(G.m==="C"?netGraph:G.m==="K"?linkGraph:G.m==="R"?roleGraph:layerGraph)(rows,sc);wireColDrag();
 }
-function roleGraph(rows){  // one band per role: the role on top, a spine down, one arm to each reading that carries it
+function roleGraph(rows){  // one band per role: the role on top, a translucent wedge down to each side's readings
   if(!rows.length)return `<p class="count">No claims in this collection. Pick another Collection on the left, or add a claim from a PDF.</p>`;
   const RN=ROLE(),tOf=src=>{const t=((DATA.sources||[]).find(x=>x.id===src)||{}).title||src;return t.replace(/\s*[\u2013\u2014-]\s*.*$/,"")||t};
-  const keys=[...Object.keys(VB.roles),...[...new Set(rows.flatMap(c=>c.role||[]))].filter(r=>!(r in VB.roles))];
+  const keys=[...new Set([...Object.keys(RN),...rows.flatMap(c=>c.role||[])])];  // a parent folder shows the roles its children use
   const bands=keys.map(k=>({k,label:RN[k]||k,srcs:new Map()}));
   rows.forEach(c=>(c.role||[]).forEach(r=>{const b=bands.find(x=>x.k===r);if(b)b.srcs.set(c.src,(b.srcs.get(c.src)||0)+1)}));
-  const live=bands.filter(b=>b.srcs.size);
-  if(!live.length)return `<p class="count">No claim carries a role yet. Tick a role in the claim editor and it appears here.</p>`;
   const clipT=(t,n=32)=>t.length>n?t.slice(0,n-1)+"\u2026":t;
-  const PAD=46,TOP=62,ROW=34,RW=250,RP=190,W=1080,cx=W/2;let y=PAD,e="",n="";
-  live.forEach(b=>{
+  const PAD=48,TOP=70,ROW=34,RW=250,RP=210,W=1080,cx=W/2;let y=PAD,e="",n="";
+  bands.forEach(b=>{
     const list=[...b.srcs.entries()].sort((a,c)=>tOf(a[0]).localeCompare(tOf(c[0])));
-    const half=Math.ceil(list.length/2),L=list.slice(0,half),R=list.slice(half);
-    const py=y+17,rowsN=Math.max(L.length,R.length);
-    n+=`<g class="tnode" data-role="${esc(b.k)}"><title>role \u00b7 ${esc(b.label)} \u00b7 ${list.length} reading${list.length===1?"":"s"}</title><rect x="${cx-RP/2}" y="${py-17}" width="${RP}" height="34" rx="9"/><text x="${cx}" y="${py+5}" text-anchor="middle">${esc(clipT(b.label,24))} \u00b7 ${list.length}</text></g>`;
-    if(rowsN){e+=`<path class="edge branch" d="M${cx} ${py+17} L${cx} ${y+TOP+(rowsN-1)*ROW}"/>`}  // one spine, so 78 arms do not pile into a black wedge
+    const half=Math.ceil(list.length/2),L=list.slice(0,half),R=list.slice(half),py=y+17,rowsN=Math.max(L.length,R.length,0);
+    n+=`<g class="tnode${list.length?"":" none"}" data-role="${esc(b.k)}"><title>${esc(b.label)} \u00b7 ${list.length?list.length+" reading"+(list.length===1?"":"s")+" carry it":"no reading yet"}</title><rect x="${cx-RP/2}" y="${py-17}" width="${RP}" height="34" rx="9"/><text x="${cx}" y="${py+5}" text-anchor="middle">${esc(clipT(b.label,26))}</text></g>`;
+    // one filled wedge per side: 78 separate strokes turned the middle of the picture into a black bar
+    const wedge=(arr,side)=>{if(!arr.length)return;
+      const xIn=side<0?cx-RP/2:cx+RP/2,xOut=side<0?cx-330+RW/2:cx+330-RW/2;
+      const y0=py+17,y1=y+TOP,yN=y+TOP+(arr.length-1)*ROW;
+      e+=`<path class="wedge" d="M${xIn} ${y0} L${xOut} ${y1} L${xOut} ${yN} L${xIn} ${y0} Z"/>`;
+      e+=`<path class="edge branch" d="M${xIn} ${y0} L${xOut} ${y1}"/><path class="edge branch" d="M${xIn} ${y0} L${xOut} ${yN}"/>`};
+    wedge(L,-1);wedge(R,1);
     const draw=(arr,side)=>arr.forEach(([src,ct],i)=>{
       const yy=y+TOP+i*ROW,px=side<0?cx-330:cx+330,t=tOf(src);
-      e+=`<path class="edge branch" d="M${cx} ${yy} L${side<0?px+RW/2:px-RW/2} ${yy}"/>`;
       n+=`<g class="snode" data-src="${esc(src)}"><title>${esc(t)} \u00b7 ${ct} claim${ct===1?"":"s"} with this role</title><rect x="${px-RW/2}" y="${yy-12}" width="${RW}" height="24" rx="6"/><text x="${px}" y="${yy+4}" text-anchor="middle">${esc(clipT(t,30))}</text></g>`});
     draw(L,-1);draw(R,1);y+=rowsN*ROW+TOP+PAD});
   const H=Math.round(y);
@@ -1174,6 +1183,14 @@ document.addEventListener("keydown",e=>{const sp=e.target.closest&&e.target.clos
   if(e.key==="Enter"){e.preventDefault();sp.blur()}
   if(e.key==="Escape"){e.preventDefault();sp.textContent=ROLE()[sp.dataset.r];sp.blur()}});
 document.addEventListener("pointerdown",e=>{const sp=e.target.closest&&e.target.closest(".rlab");if(sp){e.stopPropagation()}},true);
+const addRole=()=>{const i=$("rnew");if(!i)return;const nm=(i.value||"").replace(/\s+/g," ").trim();if(!nm)return;
+  const cid=$("col").value||"";ED.v=ED.v||{};const v=ED.v[cid]=ED.v[cid]||{};
+  if(Object.keys(ROLE()).some(k=>k.toLowerCase()===nm.toLowerCase()))return toast("That role already exists");
+  v.roleExtra=[...(v.roleExtra||[]),nm];saveED();i.value="";setCb("role",cb("role"));refresh();
+  if(document.body.classList.contains("graph")&&G.m==="R")graph();
+  toast("Role added: "+nm+" \u00b7 tick it to use it")};
+document.addEventListener("click",e=>{if(e.target.id==="rnewb"){e.preventDefault();addRole()}});
+document.addEventListener("keydown",e=>{if(e.target.id==="rnew"&&e.key==="Enter"){e.preventDefault();addRole()}});
 document.addEventListener("click",e=>{if(e.target.closest&&e.target.closest(".rlab")){e.preventDefault();e.stopPropagation()}},true);
 document.addEventListener("click",e=>{if(e.target.closest("#zkclose")){const gone=zkSel;if(gone&&zkNote(gone))zkSaveNote();zkSel=null;zkDrop(gone);zkRenderList();
   document.querySelectorAll("#zklist .zkc.sel").forEach(r=>r.classList.remove("sel"));
@@ -1459,10 +1476,10 @@ const fillReads=()=>{$("lt").innerHTML='<option value="">Any reading</option>'+s
 fillReads();
 $("dlf").innerHTML=VB.axisA_list.map(v=>`<option value="${esc(v)}">`).join("");
 $("dlo").innerHTML=VB.axisB_list.map(v=>`<option value="${esc(v)}">`).join("");
-function ROLE(){const cid=$("col").value||"",o=(ED.v&&ED.v[cid]&&ED.v[cid].role)||{},out={};  // a name per role, per collection
-  Object.keys(VB.roles).forEach(k=>out[k]=String(o[k]||k));return out}
+function ROLE(){const cid=$("col").value||"",v=(ED.v&&ED.v[cid])||{},o=v.role||{},out={};  // a name per role, per collection
+  Object.keys(VB.roles).concat(v.roleExtra||[]).forEach(k=>out[k]=String(o[k]||k));return out}
 // many-valued fields: tick boxes for fixed lists, chips for open lists, one row per connection
-const CB={role:()=>Object.keys(VB.roles).map(r=>[r,ROLE()[r]]),direction:()=>["+","-","mixed","none"].map(d=>[d,d]),evidence:()=>VB.evidence.map(e=>[e,e]),own_claim:()=>[["1","Own"],["0","Cited"]]};
+const CB={role:()=>Object.keys(ROLE()).map(r=>[r,ROLE()[r]]),direction:()=>["+","-","mixed","none"].map(d=>[d,d]),evidence:()=>VB.evidence.map(e=>[e,e]),own_claim:()=>[["1","Own"],["0","Cited"]]};
 const setCb=(n,vals)=>{const base=CB[n](),ex=vals.filter(v=>!base.some(b=>b[0]===v)).map(v=>[v,v]);  // a value outside the list stays ticked, so old data is not lost
   F.querySelector(`fieldset[data-n=${n}] .cbs`).innerHTML=base.concat(ex).map(([v,t])=>`<label class="cb"><input type="checkbox" name="${n}" value="${esc(v)}"${vals.includes(v)?" checked":""}>${n==="role"?`<span class="rlab" contenteditable="true" spellcheck="false" data-r="${esc(v)}" title="Type a new name for this role">${esc(t)}</span>`:esc(t)}</label>`).join("")};
 const cb=n=>[...F.querySelectorAll(`input[name=${n}]:checked`)].map(i=>i.value);
