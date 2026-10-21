@@ -10,7 +10,7 @@ It runs on your own computer. Your PDFs, claims and notes are never uploaded. Th
 
 ## Why this exists
 
-Zotero keeps your PDFs and highlights, but it does not draw a graph of how the claims across your readings fit together, and it has no place for your own reading notes. This is a small viewer that does the reading, the tagging, the notes and the graph in one place. It was built with Claude Code, under my supervision.
+Zotero keeps your PDFs and highlights, but it does not draw a graph of how the claims across your readings fit together, and it has no place for your own reading notes. This is a small viewer that does the reading, the tagging, the notes and the graph in one place. It was built with Claude Code and with Hermes (connected to DeepSeek Flash), under my supervision.
 
 ## Get started
 
