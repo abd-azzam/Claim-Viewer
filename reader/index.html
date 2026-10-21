@@ -1962,7 +1962,7 @@ $("libroot").onclick=()=>{const box=$("libtree");const last=box.lastElementChild
   if(last&&last.classList.contains("lnew")){last.querySelector("input").focus();return}
   box.insertAdjacentHTML("beforeend",`<div class="lrow lnew" data-p="" style="padding-left:4px"><input placeholder="New folder name, then Enter" aria-label="New folder name"></div>`);
   box.lastElementChild.querySelector("input").focus()};
-$("libsel").addEventListener("change",e=>{
+if($("libsel"))$("libsel").addEventListener("change",e=>{
   if(!e.target.classList.contains("lmem"))return;const sel=libSel();if(!sel)return;
   const id=e.target.value,it=LIB.items[sel]||(LIB.items[sel]={title:(DATA.sources.find(s=>s.id===sel)||{}).title||sel,collections:[]});
   it.collections=it.collections||[];
