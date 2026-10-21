@@ -1281,8 +1281,8 @@ const zkOpen=id=>{const n=zkNote(id);if(!n)return;document.body.classList.add("z
     <div class="zhead"><span>Note <span class="zid">${esc(zkLabels().get(id)||id)}</span></span><button type="button" id="zkclose" title="Close this note and go back to the list" aria-label="Close this note"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>${srcLine}
     <label>Title<input id="zkt" value="${esc(n.title||"")}" placeholder="The idea in one line"></label>
     <label>Note<textarea id="zkb" placeholder="Say it in your own words, then say what it connects to">${esc(n.body||"")}</textarea></label>
-    <label>Tags, comma separated<input id="zkk" list="zdlk" autocomplete="off" value="${esc((n.tags||[]).join(", "))}" placeholder="state capacity, industrial policy"></label>
-    <label>Sub-tags<input id="zksub" list="zdls" autocomplete="off" value="${esc((n.subt||[]).join(", "))}" placeholder="implementation, embedded autonomy"></label>
+    <label>Tags, comma separated<input id="zkk" autocomplete="off" value="${esc((n.tags||[]).join(", "))}" placeholder="state capacity, industrial policy"></label>
+    <label>Sub-tags<input id="zksub" autocomplete="off" value="${esc((n.subt||[]).join(", "))}" placeholder="implementation, embedded autonomy"></label>
     <datalist id="zdlk"></datalist><datalist id="zdls"></datalist>
     <div class="zhint"><button type="button" id="zkdeep">+ One level deeper</button> <small>Nests the tag: implementation \u203a bureaucracy \u203a street level.</small></div>
     <fieldset style="border:1px solid var(--line);border-radius:var(--r);padding:8px 10px"><legend>Links to other notes</legend>
