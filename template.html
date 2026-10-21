@@ -344,7 +344,7 @@ body.notes #libp{display:none}
   <label>Gist <textarea name="gist" rows="2"></textarea></label>
   <fieldset data-n="role"><legend id="grole">Role (tick all that apply)</legend><div class="cbs"></div></fieldset>
   <div id="xed"></div>
-  <label id="lpath">Pathways <input name="pathway" placeholder="Type a pathway, or several separated by commas"><select name="pathwaySel" multiple size="4" hidden aria-label="Pick pathways"></select></label>
+  <fieldset><legend id="gpath">Pathways</legend><div class="chips" data-n="pathway"><input list="dlp" aria-label="Add a pathway"></div></fieldset><datalist id="dlp"></datalist>
   <fieldset><legend id="gfa">Axis A (Enter adds one)</legend><div class="chips" data-n="axisA"><input list="dlf" aria-label="Add axis A value"></div></fieldset>
   <fieldset><legend id="goc">Axis B (Enter adds one)</legend><div class="chips" data-n="axisB"><input list="dlo" aria-label="Add axis B value"></div></fieldset>
   <fieldset data-n="direction"><legend id="gdir">Direction (tick all that apply)</legend><div class="cbs"></div></fieldset>
@@ -490,7 +490,6 @@ function rebuildVocabUI(){
   const _nc=$("col").value,_hi=$("rnh");
   if(_hi)_hi.textContent=_nc?"Box names: they label the graph, the list and the edit box":"Box names: default names for all folders. Pick a folder to override";
   ["rna","rnp","rnb"].forEach(id=>{const e=$(id);if(e)e.disabled=false});
-  const lp=$("lpath");if(lp)lp.childNodes[0].nodeValue=SC.p+" numbers (e.g. 1,3) ";
   ["fa","oc","pw","role"].forEach(i=>{const e=$(i);if(e&&![...e.options].some(o=>o.value===e.value))e.value=""});
 }
   // an empty tag name is not a tag: such notes are untagged
@@ -1464,15 +1463,11 @@ async function editor(c){
     F.elements.src.title=openId?"Locked to the PDF you have open":"Only readings in this category are listed"}
   F.elements.src.value=v.src;F.elements.quote.value=v.quote??"";F.elements.gist.value=v.gist??"";
   setCb("role",v.role);setCb("direction",v.direction);setCb("evidence",v.evidence);setCb("own_claim",v.own_claim.map(b=>b?"1":"0"));
-  ["axisA","axisB","section","tags"].forEach(n=>setChips(n,v[n]));
-  F.elements.pdf_page.value=v.pdf_page.join(", ");F.elements.pathway.value=(v.pathway||[]).join(",");
+  ["pathway","axisA","axisB","section","tags"].forEach(n=>setChips(n,v[n]));
+  F.elements.pdf_page.value=v.pdf_page.join(", ");
   {const known=[...new Set([...Object.values(VB.pathways||{}),...all.flatMap(x=>x.pathway||[]),...(c?(c.pathway||[]):[])])]
      .filter(Boolean).sort((a,b)=>a.localeCompare(b));
-   const sel=F.elements.pathwaySel,inp=F.elements.pathway;
-   sel.innerHTML=known.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join("");
-   [...sel.options].forEach(o=>o.selected=!!c&&(c.pathway||[]).includes(o.value));
-   sel.hidden=!c;sel.disabled=!c;inp.hidden=!!c;inp.disabled=!!c;   // Add types freely; Edit picks from what exists
-   $("lpath").firstChild.textContent=c?"Pathways (pick)":"Pathways";}
+   $("dlp").innerHTML=known.map(n=>`<option value="${esc(n)}">`).join("");}  // suggestions only; typing anything is allowed
   $("xed").innerHTML=(VB.xcols||[]).map(x=>`<label>${esc(x.name||x.k)} <input name="xe:${esc(x.k)}" value="${esc(((v.x&&v.x[x.k])||[]).join(", "))}" placeholder="comma separated"></label>`).join("");
   $("lkrows").innerHTML="";v.links.forEach(addLink);
   F.elements.src.disabled=!!c||!!$("pdfsel").value;D.show();F.elements.quote.focus();
@@ -1486,9 +1481,7 @@ F.addEventListener("submit",e=>{
   const _x={};(VB.xcols||[]).forEach(x=>{const i=F.elements["xe:"+x.k];if(i)_x[x.k]=i.value.split(",").map(t=>t.trim()).filter(Boolean)});
   const f=norm({quote:g("quote"),gist:g("gist"),role:rl.length?rl:["OTHER"],section:ch("section"),axisA:ch("axisA"),axisB:ch("axisB"),tags:ch("tags"),direction:cb("direction"),
     evidence:cb("evidence"),own_claim:cb("own_claim").map(v=>v==="1"),links:lks(),
-    pdf_page:g("pdf_page").split(/[,\s]+/).map(Number).filter(n=>n>0).sort((a,b)=>a-b),pathway:(()=>{const sel=F.elements.pathwaySel,inp=F.elements.pathway;
-     return (sel&&!sel.hidden)?[...sel.selectedOptions].map(o=>o.value).filter(Boolean)
-       :String(inp&&inp.value||"").split(",").map(x=>x.trim()).filter(Boolean)})()});  // free text: whatever the user typed is kept as the pathway name
+    pdf_page:g("pdf_page").split(/[,\s]+/).map(Number).filter(n=>n>0).sort((a,b)=>a-b),pathway:ch("pathway")});  // free text: whatever the user typed is kept as the pathway name
   if(Object.keys(_x).length)f.x=_x;
   if(k){const c=all.find(x=>kc(x)===k);if(f.quote!==c.quote)f.rs=1;
     Object.assign(c,f);if(!ED.a.includes(c))ED.m[k]={...ED.m[k],...f};}
