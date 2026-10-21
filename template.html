@@ -153,6 +153,7 @@ main{padding:0 16px 16px}
 aside,section{position:relative}
 .edge{position:fixed;top:44%;z-index:40;width:26px;height:60px;padding:0;display:flex;align-items:center;justify-content:center;border:1px solid var(--acc);background:color-mix(in srgb,var(--acc) 16%,var(--panel));color:var(--acc);cursor:pointer;border-radius:var(--r);box-shadow:var(--sh);opacity:0;transition:opacity .16s ease}
 body.tabsr .edge{opacity:1}  /* both folds appear together, once the panel widths are measured */
+@media (prefers-reduced-motion:reduce){.edge{transition:none}}
 @supports not (background:color-mix(in srgb,red 10%,blue)){.edge{background:var(--panel)}}
 .edge svg{width:16px;height:16px;stroke-width:2.2}
 .edge:hover{color:var(--bg);background:var(--acc);border-color:var(--acc)}
@@ -1279,6 +1280,7 @@ const syncTabs=()=>{const a=document.querySelector("aside").getBoundingClientRec
   st.setProperty("--lwpx",(document.body.classList.contains("nol")?0:a)+"px");
   st.setProperty("--rwpx",(document.body.classList.contains("nor")?0:b)+"px")};
 addEventListener("resize",syncTabs);
+if(window.ResizeObserver)new ResizeObserver(syncTabs).observe(document.querySelector("aside")),new ResizeObserver(syncTabs).observe(document.querySelector("section"));  // a panel that changes width moves its fold with it
 const sides=()=>{document.body.classList.toggle("nol",!!SIDES.l);document.body.classList.toggle("nor",!!SIDES.r);
   $("hl").classList.toggle("off",!!SIDES.l);$("hr").classList.toggle("off",!!SIDES.r);
   $("hl").setAttribute("aria-pressed",!!SIDES.l);$("hr").setAttribute("aria-pressed",!!SIDES.r);store.set("cv:sides",JSON.stringify(SIDES))};
