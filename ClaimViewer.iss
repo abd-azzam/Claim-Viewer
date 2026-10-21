@@ -1,5 +1,6 @@
 ; Inno Setup 6 script. Builds release\ClaimViewer-Setup-<version>.exe.
-; Needs release\ClaimViewer.exe first (build_exe.bat makes it, then runs this script).
+; Needs dist\ClaimViewer.exe, dist\index.html (the empty reader page) and dist\lib first.
+; build_exe.bat stages all three; a bare ISCC run packs whatever sits in dist\.
 ; Installs like a normal per-user app in C:\Apps\ClaimViewer, with a Start menu entry.
 #define AppName "Claim Viewer"
 #define AppVersion "2.1.0"

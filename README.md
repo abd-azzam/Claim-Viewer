@@ -16,7 +16,7 @@ Zotero keeps your PDFs and highlights, but it does not draw a graph of how the c
 - **Read** PDFs in the app with zoom, fit width, and per-page rendering. Switching collection or PDF never reloads the app.
 - **Turn pages**: the left and right arrow keys (or PageUp / PageDown) move one page; they are ignored while you type in a field or use the list.
 - **Jump to a page**: the page box above the PDF is editable. It shows `8 / 50`; type a page number and press Enter to go there.
-- **Resume where you left off.** The app remembers the last page of every PDF (saved every few seconds) and opens it there next time, even after closing the app.
+- **Resume where you left off.** The page is saved as soon as scrolling stops, and again when the window closes, so reopening a reading lands where you left it, even after a restart.
 - **Full-screen reading**: one button in the zoom row hides everything but the PDF; Esc or the same button brings the panes back.
 - **Dictionary**: right-click any word in the claim or note lists (or pick a single word in the PDF and choose *Define*) for its English definition from Wiktionary. Results are cached, so repeat lookups work offline.
 - **Four highlight colors**, and *Save PDF* writes your highlights into the PDF as real highlight annotations.
@@ -61,7 +61,7 @@ Zotero keeps your PDFs and highlights, but it does not draw a graph of how the c
 
 1. Copy the [`reader/`](reader) folder anywhere.
 2. Put your PDFs in `reader/pdf/`.
-3. List each PDF in `reader/sources.js` (`id` = the file name without `.pdf`); **name every PDF with author, year and title** — the citation copy parses them from the title, for example `Alami (2023) - Ten theses on the new state capitalism`. Replace the placeholder `example-paper` line:
+3. List each PDF in `reader/sources.js` (`id` = the file name without `.pdf`); **name every PDF with author, year and title** — the citation copy parses them from the title, for example `Alami (2023) - Ten theses on the new state capitalism`. Replace the placeholder `smith-2020` line:
    ```js
    window.SOURCES=[
      {id:"smith-2020", title:"Smith (2020) - Why States Build Capacity"},
@@ -74,7 +74,7 @@ When you open it by double-click, the browser cannot read the `pdf` folder by it
 ## Use it as a Windows app
 
 1. Download [`ClaimViewer-Setup-2.1.0.exe`](release/ClaimViewer-Setup-2.1.0.exe) and run it.
-2. Pick the folder (default: `C:\Apps\ClaimViewer`) and, if you want, a Desktop shortcut. It always adds a Start menu shortcut.
+2. Pick the folder (default: `C:\Apps\ClaimViewer`). A Desktop shortcut is offered but not ticked; the Start menu shortcut is always added.
 3. Put your PDFs in the `pdf` folder inside it and list them in `sources.js`.
 4. Open **Claim Viewer** from the Start menu. It opens its own window (no browser), centred on the screen and shrunk to fit if the screen is small, and stops when you close it.
 
@@ -88,7 +88,7 @@ Needs the Microsoft WebView2 runtime (already on Windows 11 and current Windows 
 build_exe.bat
 ```
 
-Needs Python 3 and [Inno Setup 6](https://jrsoftware.org/isinfo.php) (`winget install JRSoftware.InnoSetup`). The script refreshes `reader/index.html` from `template.html`, builds `dist/ClaimViewer.exe` (PyInstaller), stages `dist/` with the empty reader page and the pdf.js libs, then writes `release/ClaimViewer-Setup-<version>.exe`. Change the version in `ClaimViewer.iss`. Git tracks only `release/ClaimViewer-Setup-*.exe`: `dist/` and `index.html` stay out, because a built page holds somebody's claims.
+Needs Python 3 and [Inno Setup 6](https://jrsoftware.org/isinfo.php) (`winget install JRSoftware.InnoSetup`). The script refreshes `reader/index.html` from `template.html`, **wipes `dist/`**, builds `dist/ClaimViewer.exe` (PyInstaller), stages `dist/` with the empty reader page and the pdf.js libs, then writes `release/ClaimViewer-Setup-<version>.exe`. The Inno script refuses to package a `dist/index.html` larger than 1 MB, because a page that big is somebody's claims. Change the version in `ClaimViewer.iss`. Git tracks only `release/ClaimViewer-Setup-*.exe`: `dist/` and `index.html` stay out, because a built page holds somebody's claims.
 
 ## Check the installer without touching your install
 
@@ -116,9 +116,9 @@ Run these from the project folder (the one that holds `template.html`). `build.p
 |---|---|
 | `library.json` | The Zotero-style library: `{items, collections}`, nested collections with `parent`, each item listed under `collections[]`. PDFs are copied into `pdf/`. |
 | `data/claims/<id>.verified.json` | `{"claims": [{"id", "quote", "role", "pathway", ...}]}`. Pathways are stored **by name**; `build.py` converts any legacy numeric ids with the vocabulary map. Other fields: `gist`, `axisA`, `axisB`, `evidence`, `own_claim`, `direction`, `section`, `links`. |
-| `vocab.json` | The pathway, axis and role lists. Pathway keys are names. |
+| `data/vocab.json` | The pathway, axis and role lists. Pathway keys are names. |
 
-`verify.py` marks each quote `exact`, `anchored`, `ambiguous` or `failed`, writes `claims/<id>.verified.json`, and a copy of the PDF with the quotes highlighted to `pdf/<id>.pdf`. `build.py` also fills `DATA.schema` (the axis names) and `DATA.models` (the four connection models).
+`verify.py` marks each quote `exact`, `anchored`, `ambiguous` or `failed`, writes `data/claims/<id>.verified.json`, and a copy of the PDF with the quotes highlighted to `pdf/<id>.pdf`. `build.py` also fills `DATA.schema` (the axis names) and `DATA.models` (the four connection models).
 
 ## Files
 
@@ -132,7 +132,8 @@ Run these from the project folder (the one that holds `template.html`). `build.p
 | `app/launch.py` | The Windows app: a native window (WebView2) around a small local server, with the library import/copy API. |
 | `app/make_reader.py` | Rebuilds `reader/index.html` from `template.html`. |
 | `app/setup_shortcuts.py` | Small shortcut-only setup helper (the installer covers this). |
-| `release/` | The prebuilt, unsigned Windows installer. A build also writes `ClaimViewer.exe` here. |
+| `release/` | The prebuilt, unsigned Windows installer. The exe it packs is built into `dist/`. |
+| `test_installer.py` | Builds a throwaway installer, installs it to a temp folder, checks the packaged page and libs, then removes it (see above). |
 | `ClaimViewer.iss`, `build_exe.bat` | Inno Setup script and build script for the Windows installer. |
 | `vocab.thesis.json` | An example vocabulary. |
 | `docs/` | Screenshots used in this README. |
@@ -143,8 +144,10 @@ Run these from the project folder (the one that holds `template.html`). `build.p
 - Your edits live in the browser or app storage for that folder. The Windows app keys storage to the folder path, so moving the folder loses them: use Export first, then Import.
 - Claim citations are parsed from the PDF title; if a title has no year the citation shows `(Author, p. N)`.
 - The merged-reading pill in the note graph joins a reading's notes into one node; chains that share a reading but sit on different branches all point at that node. Turn *Merge readings* off to keep every note separate.
-- Undo history in the note graph survives reloads (30 steps) but is local to the machine's storage, not synced.
+- Undo in the note graph holds 30 steps **for the current session only**: it is deliberately not saved, because a stored stack once rewound the notes to a days-old state.
 - Save PDF writes a copy of the PDF with your highlights as real highlight annotations. The app opens a PDF-only save dialog.
+- A graceful close never loses your page. A force kill or a power cut can still lose the last instant, because nothing runs at that moment.
+- The window opens centred on the **primary** screen, not on whichever monitor holds the cursor.
 - The exe and the installer are unsigned, so Windows SmartScreen may warn.
 - Do not commit copyrighted PDFs. `.gitignore` already skips `reader/pdf/*.pdf` and the pipeline's `pdf/`, `papers/` and `claims/` folders.
 
