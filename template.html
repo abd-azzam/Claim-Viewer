@@ -1747,11 +1747,13 @@ s.innerHTML='<option value="">(pick a reading)</option>'+DATA.sources.map(x=>`<o
 const db=new Promise(r=>{try{const q=indexedDB.open("cv-pdf",1);q.onupgradeneeded=()=>q.result.createObjectStore("p");q.onsuccess=()=>r(q.result);q.onerror=()=>r(null)}catch(e){r(null)}});
 const key=n=>n.replace(/\.pdf$/i,"").toLowerCase();
 const fallback=(id,pg)=>{$("rt").hidden=true;rd.hidden=true;f.hidden=false;const u=`pdf/${encodeURIComponent(id)}.pdf`;f.src=pg?`${u}?v=${Date.now()}#page=${pg}`:((f.getAttribute("src")||"").startsWith(u)?f.src:u)};
-const scroll=pg=>{const e=pg&&rd.querySelector(`.pg[data-n="${pg}"]`);if(e)rd.scrollTop=e.offsetTop-rd.offsetTop-6;setTimeout(()=>showPage&&showPage(),120)};  // a jump that does not fire scroll still updates the page label
+const scroll=pg=>{if(pg){lastPg=+pg;savePage()}  // a jump is a position too, even if the window closes at once
+  const e=pg&&rd.querySelector(`.pg[data-n="${pg}"]`);if(e)rd.scrollTop=e.offsetTop-rd.offsetTop-6;setTimeout(()=>showPage&&showPage(),120)};  // a jump that does not fire scroll still updates the page label
 const pgn=$("pgnow"),showPage=()=>{const pgs=[...rd.querySelectorAll(".pg[data-n]")];if(!pgn)return;
   if(!pgs.length||!docC){pgn.value="";return}
   const top=rd.getBoundingClientRect().top+10;let n=1;
-  pgs.forEach(e=>{if(e.getBoundingClientRect().top<=top)n=+e.dataset.n||n});
+  for(const e of pgs){const r=e.getBoundingClientRect();if(r.bottom>top){n=+e.dataset.n||n;break}}  // the page on screen
+  lastPg=n;
   if(document.activeElement!==pgn)pgn.value=n+" / "+docC.numPages};
 if(pgn){pgn.onfocus=()=>pgn.select();
   pgn.onkeydown=e=>{if(e.key!=="Enter")return;e.preventDefault();
@@ -1768,9 +1770,9 @@ document.addEventListener("keydown",e=>{
   else if(e.key==="ArrowLeft"||e.key==="PageUp"){e.preventDefault();scroll(Math.max(PAGEN()-1,1))}
 });
 rd.addEventListener("scroll",()=>{clearTimeout(rd._pt);rd._pt=setTimeout(showPage,80)});
-let _lm=0;  // when the current document finished loading
-const savePage=()=>{if(!cur||Date.now()-_lm<900)return;  // a save fired while the pages are still laying out reads the wrong page
-  try{const o=JSON.parse(localStorage.getItem("cv:lastpg")||"{}");o[cur]=PAGEN();localStorage.setItem("cv:lastpg",JSON.stringify(o))}catch(e){}};
+let lastPg=1;  // the page on screen, kept current by showPage and by every jump
+const savePage=()=>{if(!cur)return;  // no measuring here: a save can fire mid-layout, and a wrong measurement would stick
+  try{const o=JSON.parse(localStorage.getItem("cv:lastpg")||"{}");o[cur]=lastPg;localStorage.setItem("cv:lastpg",JSON.stringify(o))}catch(e){}};
 const PAGEN=()=>{const pgs=[...rd.querySelectorAll(".pg[data-n]")];if(!pgs.length||!docC)return 1;
   const top=rd.getBoundingClientRect().top+10;let n=1;
   for(const e of pgs){const r=e.getBoundingClientRect();if(r.bottom>top){n=+e.dataset.n||n;break}}  // the page on screen, not the farthest one that started above the fold
@@ -1831,7 +1833,7 @@ $("phint")&&($("phint").hidden=true);const my=++tok;let buf=null,rErr=null;try{i
  lpn.className="";lpn.textContent="Select text in the PDF, then right-click to add a claim";if(cur===id&&!rd.hidden)return scroll(pg);
  cur=id;f.hidden=true;rd.hidden=false;rd.innerHTML="";
  try{const doc=await pdfjsLib.getDocument({data:new Uint8Array(buf.slice(0))}).promise;if(my!==tok)return;
-  docC=doc;curBuf=buf;_lm=Date.now();Z=1;pg=Math.max(1,Math.min(+pg||1,doc.numPages));await build(pg);showPage();rt.hidden=false}
+  docC=doc;curBuf=buf;Z=1;pg=Math.max(1,Math.min(+pg||1,doc.numPages));lastPg=pg;savePage();await build(pg);showPage();rt.hidden=false}
  catch(e){if(my!==tok)return;lpn.className="warn";lpn.textContent="The reader could not open this PDF"+(/worker/i.test(String(e&&e.message))?" (lib/pdf.worker.min.js is missing)":"")+". It is open in a plain frame instead.";fallback(id,pg)}};
 window.cvIdle=()=>{tok++;cur="";rt.hidden=true;rd.hidden=true;f.hidden=true;f.removeAttribute("src");$("phint")&&($("phint").hidden=false)};  // leave the pane empty instead of parsing a new PDF
 const toast=(m,top)=>{let t=$("toast");if(!t){t=document.createElement("div");t.id="toast";t.setAttribute("aria-live","polite");document.body.append(t)}(document.fullscreenElement||document.body).append(t);t.textContent=m;t.classList.toggle('top',!!top);t.hidden=false;clearTimeout(t._h);t._h=setTimeout(()=>t.hidden=true,3500)};
