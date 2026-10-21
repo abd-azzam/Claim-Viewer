@@ -98,7 +98,7 @@ python test_installer.py
 
 Builds the setup with a throwaway AppId and the name **Claim Viewer (test)**, installs it into a temp folder, checks that the packaged page carries zero readings and that `pdf.js` is there, then uninstalls and deletes the folder. The uninstaller deletes shortcuts by name, so a test built under the real name would remove your own Start-menu entry; this one cannot.
 
-Silent installs abort with exit code 5 while Claim Viewer is running: close the app first.
+The script closes a running Claim Viewer first (a silent install aborts with exit code 5 while the app holds its files) and starts it again when the test is done.
 
 ## Optional: fill the viewer with claims you prepared
 
