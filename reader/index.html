@@ -129,6 +129,8 @@ body.gz #gx{display:none!important}  /* the Layers scroller has no meaning on th
 #zkpick .zkpick{display:grid;gap:6px;padding:8px}
 #zkpick button{height:30px;padding:0 12px;white-space:nowrap;justify-self:stretch;border:1px solid var(--ctl);border-radius:var(--r);background:var(--bg);color:var(--ink);font:inherit;font-size:13px;cursor:pointer}
 #zkpick button:hover{border-color:var(--acc);color:var(--acc)}
+#zkpick button:disabled{opacity:.45;cursor:default}
+#zkpick button:disabled:hover{border-color:var(--ctl);color:var(--ink)}
 #zkpick select{max-width:300px}
 #gout text.hd.drag{opacity:.35}
 #gout text.hd.hit{fill:var(--acc)}  /* the column a drop would swap with */
@@ -1122,19 +1124,20 @@ const askNote=c=>new Promise(res=>{  // two buttons only: file it under an exist
   const cc=$("col").value||"",ids=zkIds().filter(id=>{const n=zkNote(id);if(!cc)return true;
       const cols=n.src?(COL[n.src]||[]):(n.col?[n.col]:[]);return inCol(cols,cc)}),
     num=new Map(zkIds().map((id,i)=>[id,i+1])),d=document.createElement("dialog");d.id="zkpick";
-  d.innerHTML=`<div class="zkpick"><button type="button" data-a="existing" aria-expanded="false">Add to existing note</button>`
-    +`<select hidden aria-label="Existing note">`+(ids.length?ids.map(id=>`<option value="${esc(id)}">${num.get(id)} \u00b7 ${esc((zkNote(id).title||"(untitled)").slice(0,34))}</option>`).join(""):`<option value="">No note in this collection</option>`)+`</select>`
+  d.innerHTML=`<div class="zkpick"><button type="button" data-a="existing"${ids.length?"":" disabled title=\"No note in this collection yet\""} aria-expanded="false">Add to existing note</button>`
+    +(ids.length?`<select hidden aria-label="Existing note">`+ids.map(id=>`<option value="${esc(id)}">${num.get(id)} \u00b7 ${esc((zkNote(id).title||"(untitled)").slice(0,34))}</option>`).join("")+`</select>`:"")
     +`<button type="button" data-a="new">New note</button></div>`;
   const sel=d.querySelector("select"),ex=d.querySelector('[data-a="existing"]');
   let result=null;
   const finish=v=>{result=v;d.close()};   // one exit: onclose hands the answer back
-  ex.onclick=()=>{if(sel.hidden){sel.hidden=false;ex.setAttribute("aria-expanded","true");sel.focus();if(sel.showPicker)try{sel.showPicker()}catch(e){}}
+  if(sel)ex.onclick=()=>{if(sel.hidden){sel.hidden=false;ex.setAttribute("aria-expanded","true");sel.focus();if(sel.showPicker)try{sel.showPicker()}catch(e){}}
     else{sel.hidden=true;ex.setAttribute("aria-expanded","false")}};
-  sel.onchange=()=>finish(sel.value||"");
+  if(sel)sel.onchange=()=>finish(sel.value||"");
   d.querySelector('[data-a="new"]').onclick=()=>finish("__new__");
   d.onclick=e=>{if(e.target===d)finish(null)};  // a click on the page behind closes it
   d.onclose=()=>{d.remove();res(result)};
   (document.fullscreenElement||document.body).append(d);d.show();
+  (ex.disabled?d.querySelector('[data-a="new"]'):ex).focus();
 });
 const zkFromClaim=c=>{if(!c)return;const id=zkNew(null,{src:c.src,page:(c.pdf_page||[])[0]||null,quote:c.quote,tags:(c.pathway||[]).slice(0,1),subt:(c.status==="user"?c.axisA||[]:[]).slice(0,1)});show("notes");toast("Note started from a claim, filed under its pathway")};  // the note graph is where a claim becomes a tag branch
 const zkHealNote=async id=>{const n=zkNote(id);if(!n||!n.src||!n.page)return;
