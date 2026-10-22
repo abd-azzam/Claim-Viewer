@@ -676,7 +676,8 @@ const stCls={exact:"ok",anchored:"warn",ambiguous:"warn",failed:"bad"};
 function card(c){  // `now` keeps extractor-only fields (gist, factor, outcome, tags, section) off imported claims
 
   const cpBtn=`<button type="button" class="pg cpb" data-copy="1" title="Copy this claim with (author, year, p. xx)">Copy</button>`;
-  const pg=c.pdf_page.length?`${cpBtn} <span class="pg">PDF p.${c.pdf_page.map(esc).join(", ")}</span>`:`${cpBtn} <span class="pg">no page</span>`;
+  const cp=String(c.cite_page||"").replace(/^pp?\.\s*/i,"");  // some ledgers already store "p. 80"
+  const pg=c.pdf_page.length?`${cpBtn} <span class="pg"${cp&&cp!==String(c.pdf_page[0])?` title="PDF page ${c.pdf_page.map(esc).join(", ")}"`:""}>${cp&&cp!==String(c.pdf_page[0])?`p. ${esc(cp)} · PDF ${c.pdf_page.map(esc).join(", ")}`:`PDF p.${c.pdf_page.map(esc).join(", ")}`}</span>`:`${cpBtn} <span class="pg">no page</span>`;
   const tags=c.role.map(r=>`<span class="tag q">${esc(ROLE()[r]||r)}</span>`);
   (c.pathway||[]).forEach(p=>tags.push(`<span class="tag">${esc(VB.pathways[p]||p)}</span>`));
   const now=c.status==="user"?c:null;  // imported claims carry extractor fields the app never writes; do not dress them up as tags
@@ -1145,6 +1146,12 @@ try{let _fix=false;Object.entries(ZK.notes||{}).forEach(([k,n])=>{if(!n)return;
    if((n.tags||[]).some(t=>!String(t||"").trim())){n.tags=[...new Set((n.tags||[]).map(t=>String(t||"").trim()).filter(Boolean))];_fix=true}});
  if(_fix)localStorage.setItem("cv:zk",JSON.stringify(ZK))}catch(e){}
 const zkSave=()=>store.set(ZKKEY,JSON.stringify(ZK));
+// one-time seed of a reading block's lists and notes (Week 6); runs once, delete this block and DATA.seed to stop it seeding again
+try{if(!store.get("cv:seed-w6v3")&&DATA.seed){const S=DATA.seed;
+  for(const k of Object.keys(ZK.notes)){if(k.indexOf("w6-")===0)delete ZK.notes[k]}
+  if(S.vocab){ED.v=ED.v||{};for(const cid of Object.keys(S.vocab)){ED.v[cid]=Object.assign({},ED.v[cid]||{},S.vocab[cid])}store.set("cv:edits",JSON.stringify(ED))}
+  if(S.notes){for(const k of Object.keys(S.notes)){ZK.notes[k]=S.notes[k]}}
+  zkSave();store.set("cv:seed-w6v3","1")}}catch(e){}
 let UNDO=[],zkPick=null;  // session only: a persisted stack let one click rewind the notes to a days-old state
 try{localStorage.removeItem("cv:zkundo")}catch(e){}
 const saveUndo=()=>{};
@@ -1403,32 +1410,42 @@ const zkGraphSVG=()=>{
   const subK=k=>{const a=byKey.get(k),c=a.length>1?a.filter(id=>zkIsChild(id)).length:0;  // a merged pill says how many of its notes are children
     return (a.length>1?a.length+" notes":String(zkNote(first(k)).title||"").trim())+(c?" \u00b7 "+c+" child"+(c>1?"ren":""):"")};
   const widK=k=>Math.min(260,Math.max(96,Math.max(7.6*labK(k).length,6.4*subK(k).length)+22));
-  const ROW=64,GAP=26,PAD=44,STEP=236,CT=120;
-  let y=PAD;const pos={},tagP={},NP={};
+  const ROW=64,GAP=26,PAD=44,STEP=236,CT=120,PER=12;
+  const maxDepth=[...groups.values()].reduce((m,g)=>{g.nodes.forEach(nd=>{m=Math.max(m,nd.depth)});return m},0);
+  const maxW=keys.reduce((m,k)=>Math.max(m,widK(k)),120);
+  const COLH=24*ROW,COLW=(maxDepth+2)*STEP+maxW+70,noteX=CT+(maxDepth+1)*STEP+maxW/2;
+  let y=PAD,col=0;const pos={},posC={},TAGC={},tagP={},NP={};
   [...groups.keys()].sort((a,b)=>a.localeCompare(b)).forEach(t=>{
-    const g=groups.get(t),start=y,order=[];
+    const g=groups.get(t),order=[];
     g.nodes.forEach(nd=>nd.notes.forEach(id=>order.push(keyOf(id))));
     g.direct.forEach(id=>order.push(id));
-    [...new Set(order)].forEach(k=>{if(!pos[k]){pos[k]=[0,y];y+=ROW}});
+    const ks=[...new Set(order)].filter(k=>!pos[k]),rows=ks.length;
+    if(y>PAD&&y+rows*ROW>COLH){col++;y=PAD}  // a new column instead of one endless stack that buries its own edges
+    TAGC[t]=col;
+    const start=y;
+    ks.forEach((k,i)=>{pos[k]=[0,y+i*ROW];posC[k]=col});
+    y+=rows*ROW+GAP;
     g.nodes.forEach(nd=>{const ys=nd.notes.map(id=>pos[keyOf(id)][1]);
-      NP[t+"\u0001"+nd.key]=[CT+nd.depth*STEP, ys.length?ys.reduce((a,b)=>a+b,0)/ys.length:start]});
+      NP[t+"\u0001"+nd.key]=[CT+col*COLW+nd.depth*STEP, ys.length?ys.reduce((a,b)=>a+b,0)/ys.length:start]});
     // siblings at the same depth share a y and used to land on top of each other, hiding all but the last
     const byD={};g.nodes.forEach(nd=>{(byD[nd.depth]=byD[nd.depth]||[]).push(nd)});
     Object.keys(byD).forEach(d=>{const arr=byD[d].sort((a,b)=>NP[t+"\u0001"+a.key][1]-NP[t+"\u0001"+b.key][1]);
       let last=-1e9;arr.forEach(nd=>{const p=NP[t+"\u0001"+nd.key];if(p[1]-last<36)p[1]=last+36;last=p[1]})});
     const all=[...g.nodes.values()].flatMap(nd=>nd.notes.map(keyOf)).map(k=>pos[k][1]).concat(g.direct.map(k=>pos[k][1]));  // direct holds pill keys already
-    tagP[t]=[CT,all.length?all.reduce((a,b)=>a+b,0)/all.length:start];
+    tagP[t]=[CT+col*COLW,all.length?all.reduce((a,b)=>a+b,0)/all.length:start];
     y+=GAP});
-  loose.forEach(id=>{if(!pos[id]){pos[id]=[0,y];y+=ROW}});
+  loose.forEach(id=>{if(!pos[id]){pos[id]=[0,y];posC[id]=col;y+=ROW}});
+  // sub-tags of two tags can share a column and a y: push them apart once, globally
+  {const byX={};Object.values(NP).forEach(p=>{(byX[p[0]]=byX[p[0]]||[]).push(p)});
+   Object.values(byX).forEach(arr=>{arr.sort((a,b)=>a[1]-b[1]);let last=-1e9;
+     arr.forEach(p=>{if(p[1]-last<34)p[1]=last+34;last=p[1]})})}
   // tags whose notes average to the same y were drawn on top of each other, so two names overlapped
-  {const order=[...groups.keys()].sort((a,b)=>tagP[a][1]-tagP[b][1]);let last=-1e9;
-   order.forEach(t=>{const p=tagP[t];if(p[1]-last<38)p[1]=last+38;last=p[1]})}
-  const maxDepth=[...groups.values()].reduce((m,g)=>{g.nodes.forEach(nd=>{m=Math.max(m,nd.depth)});return m},0);
-  const maxW=keys.reduce((m,k)=>Math.max(m,widK(k)),120);
-  const noteX=CT+(maxDepth+1)*STEP+maxW/2;
-  keys.forEach(k=>{if(pos[k])pos[k][0]=noteX});
+  [...groups.keys()].forEach(t=>{const same=[...groups.keys()].filter(o=>TAGC[o]===TAGC[t]).sort((a,b)=>tagP[a][1]-tagP[b][1]);
+    let last=-1e9;same.forEach(o=>{const p=tagP[o];if(p[1]-last<38)p[1]=last+38;last=p[1]})});
+  const maxC=Object.values(posC).reduce((m,c)=>Math.max(m,c),0);
+  keys.forEach(k=>{if(pos[k])pos[k][0]=noteX+(posC[k]||0)*COLW});
   const maxY=[...Object.values(NP),...Object.values(pos)].reduce((m,p)=>Math.max(m,p[1]),0);
-  const W=noteX+maxW/2+90,H=Math.max(360,y+PAD,maxY+70);
+  const W=noteX+maxC*COLW+maxW/2+90,H=Math.max(360,COLH+2*PAD,maxY+70,y+PAD);
   const clip=(x,n=26)=>x.length>n?x.slice(0,n-1)+"\u2026":x;
   const curve=(x1,y1,x2,y2)=>`M${x1} ${y1} C${x1+90} ${y1} ${x2-90} ${y2} ${x2} ${y2}`;
   let e="";const pend=[];  // note edges are drawn after the ports are known
@@ -1446,7 +1463,7 @@ const zkGraphSVG=()=>{
   Object.entries(byK).forEach(([k,arr])=>{arr.sort((a,b)=>a.sy-b.sy);
     const p=pos[k],w=widK(k),n=arr.length;
     arr.forEach((q,i)=>{const ty=n===1?p[1]:p[1]-11+22*i/(n-1);
-      e+=`<path class="edge branch" d="${curve(q.sx+58,q.sy,p[0]-w/2,ty)}"/>`})});
+      e+=`<path class="edge branch" d="${curve(q.sx+58,q.sy+Math.max(-14,Math.min(14,(ty-q.sy)*.18)),p[0]-w/2,ty)}"/>`})});
   ids.forEach(id=>(zkNote(id).links||[]).forEach(l=>{const ka=keyOf(id),kb=pos[l.to]?keyOf(l.to):null;if(!pos[ka]||!kb||!pos[kb])return;const a=pos[ka],b=pos[kb];
     e+=`<path class="edge ${l.kind||"link"}" d="M${a[0]} ${a[1]} L${b[0]} ${b[1]}"/>`}));
   let nodes="";
