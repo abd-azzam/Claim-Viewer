@@ -398,6 +398,12 @@ body.rtai #aipane{display:flex}
 #ailog:empty::before{content:"Ask anything about the open reading. Select a sentence in the PDF and right-click it for a one-click explanation.";color:var(--mute);font-size:12.5px;line-height:1.5}
 #aikey{height:34px;padding:0 8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit}
 .aihint{font-size:11.5px;color:var(--mute);flex:none}
+.aibar{display:flex;justify-content:flex-end;flex:none}
+#aiconf{height:26px;padding:0 10px;border:1px solid var(--line);border-radius:7px;background:none;color:var(--mute);font:inherit;font-size:11.5px;font-weight:600;cursor:pointer}
+#aiconf:hover{color:var(--acc);border-color:var(--acc)}
+#aikeybox label{display:grid;gap:4px;font-size:11.5px;font-weight:600;color:var(--mute)}
+#aikeybox .airow{display:flex;gap:10px;align-items:center}
+#aikeybox .airow small{color:var(--mute);font-size:11.5px}
 /* left panel polish: one rhythm for tabs, folder rows and buttons */
 .tabs{gap:6px;margin:0 0 14px}
 .tabs button{flex:1;height:34px;padding:0 10px;border-radius:8px;font-size:13px}
@@ -493,7 +499,11 @@ body.rtai #aipane{display:flex}
 </main>
 <div id="gv"><h1 id="gt"></h1><div class="gc" id="gc2"></div><div id="lkc" class="lg" role="group" aria-label="Declared connections between readings"></div><div id="gx" aria-label="Horizontal scroll" role="group"><div id="gxi"></div></div><div id="gout"></div></div>
 <section><div class="rtabs" role="tablist" aria-label="Right pane"><button type="button" class="on" data-rt="pdf" role="tab" aria-selected="true">PDF</button><button type="button" data-rt="ai" role="tab" aria-selected="false">Ask AI</button></div><div class="rtop"><div class="rsel"><select id="pdfsel" aria-label="Reading"></select><button id="lr" type="button" title="Remove this reading from the viewer (the PDF file on your computer stays)" aria-label="Remove this reading from the viewer"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h7l4 4v14H7zM14 3v4h4M10 12l4 4m0-4-4 4"/></svg></button></div><div id="lpn"></div><div id="phint">Pick a reading here, or from the list on the left.</div></div><div id="rt" hidden><button id="zo" type="button" aria-label="Zoom out">−</button><span id="zv">100%</span><button id="zi" type="button" aria-label="Zoom in">+</button><button id="zf" type="button" title="Fit width" aria-label="Fit width"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button><button id="fb" type="button" title="Read this PDF full screen (Esc to exit)" aria-label="Read this PDF full screen" aria-pressed="false"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg></button><button id="sv" type="button" title="Save PDF" aria-label="Save PDF"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m-4-4 4 4 4-4M5 20h14"/></svg></button><span class="sw" id="hs" role="group" aria-label="Highlight colour"></span><button id="zks" type="button" title="Note on the selected passage" aria-label="Note on the selected passage"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11l3 3v13H5zM8 9h8M8 13h6"/></svg></button><button id="hc" type="button" title="Clear all highlights in this PDF (right-click one highlight to remove only it)" aria-label="Clear all highlights"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13"/></svg></button><span class="pgbrk" aria-hidden="true"></span><input id="pgnow" class="pgnow" inputmode="numeric" aria-label="Page, type a number and press Enter" title="Type a page number, then Enter"></div><iframe id="pdf" allowfullscreen title="Source PDF" hidden></iframe><div id="rd" hidden></div><div id="aipane" hidden>
-<div id="aikeybox" hidden><p>Paste your DeepSeek API key. It is kept in ai.json next to the app and goes nowhere except to DeepSeek.</p><input id="aikey" type="password" placeholder="sk-..." autocomplete="off" spellcheck="false"><button id="aisave" type="button">Save key</button><small id="aikeyms"></small></div>
+<div class="aibar"><button id="aiconf" type="button" title="API key and base URL" hidden>API key</button></div>
+<div id="aikeybox" hidden><p>Your API key and, if you use one, a different base URL. Both are kept in <b>ai.json</b> next to the app; the key goes nowhere except to that endpoint.</p>
+<label>API key<input id="aikey" type="password" placeholder="sk-..." autocomplete="off" spellcheck="false"></label>
+<label>Base URL (optional)<input id="aibase" type="text" placeholder="https://api.deepseek.com" autocomplete="off" spellcheck="false"></label>
+<div class="airow"><button id="aisave" type="button">Save</button><small id="aikeyms"></small></div></div>
 <div id="ailog" aria-live="polite"></div>
 <form id="aif"><textarea id="aiin" rows="2" placeholder="Ask about this reading"></textarea><button type="submit" id="aisend">Send</button></form>
 <div class="aihint">Select a sentence in the PDF, right-click it, then choose <b>Ask AI</b>.</div>
@@ -2218,8 +2228,13 @@ const AI={busy:false,hist:[]};
 const aiTitle=()=>((DATA.sources||[]).find(s=>s.id===cur)||{}).title||"";
 const aiLine=(cls,txt)=>{const d=document.createElement("div");d.className="aim "+cls;d.textContent=txt;const L=$("ailog");if(L){L.appendChild(d);L.scrollTop=L.scrollHeight}return d};
 const aiStatus=async()=>{const box=$("aikeybox");if(!box)return;
-  if(!(window.pywebview&&pywebview.api&&pywebview.api.ai_status)){box.hidden=false;if($("aikeyms"))$("aikeyms").textContent="the chat needs the app window";return}
-  try{const s=await pywebview.api.ai_status();box.hidden=!!s.has_key;if($("aikeyms"))$("aikeyms").textContent=s.has_key?"":("no key yet")}catch(e){}};
+  if(!(window.pywebview&&pywebview.api&&pywebview.api.ai_status)){box.hidden=false;if($("aiconf"))$("aiconf").hidden=true;if($("aikeyms"))$("aikeyms").textContent="the chat needs the app window";return}
+  try{const s=await pywebview.api.ai_status();
+    if($("aibase"))$("aibase").value=s.base||"";
+    box.hidden=!!s.has_key;  // once a key is saved the section folds into one small button
+    if($("aiconf"))$("aiconf").hidden=!s.has_key;
+    if($("aikeyms"))$("aikeyms").textContent=s.has_key?"":"no key yet";
+  }catch(e){}};
 const rtab=name=>{const ai=name==="ai";document.body.classList.toggle("rtai",ai);
   document.querySelectorAll(".rtabs [data-rt]").forEach(b=>{const on=b.dataset.rt===name;b.classList.toggle("on",on);b.setAttribute("aria-selected",on)});
   try{store.set("cv:rtab",name)}catch(e){}
@@ -2237,10 +2252,13 @@ const aiSend=async text=>{text=String(text||"").trim();if(!text||AI.busy)return;
   AI.busy=false;$("aisend").disabled=false};
 const aiAsk=(q,pg)=>{rtab("ai");aiSend("Explain this passage"+(pg?" from page "+pg:"")+":\n\n\u201c"+q+"\u201d")};
 document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest(".rtabs [data-rt]");if(b)rtab(b.dataset.rt);
-  if(e.target.id==="aisave"){const k=($("aikey").value||"").trim();if(!k)return;
-    (window.pywebview&&pywebview.api&&pywebview.api.ai_set_key?pywebview.api.ai_set_key(k):Promise.reject(new Error("the chat needs the app window")))
-      .then(r=>{if(r&&r.ok){$("aikey").value="";aiLine("bot","Key saved. Ask away.");aiStatus()}else aiLine("err","Could not save the key: "+((r&&r.error)||"?"))})
-      .catch(err=>aiLine("err","Could not save the key: "+err.message))}});
+  if(e.target.id==="aiconf"){const box=$("aikeybox");box.hidden=false;e.target.hidden=true;$("aikey").value="";$("aikey").focus();
+    if($("aikeyms"))$("aikeyms").textContent="the saved key stays unless you paste a new one";return}
+  if(e.target.id==="aisave"){const k=($("aikey").value||"").trim(),b=($("aibase").value||"").trim();
+    (window.pywebview&&pywebview.api&&pywebview.api.ai_set_key?pywebview.api.ai_set_key(k,b):Promise.reject(new Error("the chat needs the app window")))
+      .then(r=>{if(r&&r.ok){$("aikey").value="";$("aikeybox").hidden=true;if($("aiconf"))$("aiconf").hidden=false;aiStatus()}
+        else if($("aikeyms"))$("aikeyms").textContent="could not save: "+((r&&r.error)||"?")})
+      .catch(err=>{if($("aikeyms"))$("aikeyms").textContent="could not save: "+err.message})}});
 document.addEventListener("submit",e=>{if(e.target.id!=="aif")return;e.preventDefault();const v=$("aiin").value;$("aiin").value="";aiSend(v)});
 document.addEventListener("keydown",e=>{if(e.target.id==="aiin"&&e.key==="Enter"&&(e.ctrlKey||e.metaKey)){e.preventDefault();$("aif").requestSubmit()}});
 window.addEventListener("pywebviewready",()=>{if(document.body.classList.contains("rtai"))aiStatus()});

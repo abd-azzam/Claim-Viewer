@@ -93,7 +93,7 @@ The same views in the light theme; the toggle sits next to the title.
 
 The right pane has two tabs: **PDF** and **Ask AI**. The chat talks to the DeepSeek API (`deepseek-chat`) through the app, not the page, so no key ever appears in the HTML.
 
-- Paste your key once in the **Ask AI** tab and press **Save key**. It is written to `ai.json` next to the app; that file is git-ignored and never leaves the machine except as the `Authorization` header of a DeepSeek request.
+- Paste your key once in the **Ask AI** tab and press **Save**. An optional **Base URL** lets you point the chat at another OpenAI-compatible endpoint; left empty it uses `https://api.deepseek.com`. Both live in `ai.json` next to the app, which is git-ignored and never leaves the machine except as the `Authorization` header of one request. After saving, the section folds into a small **API key** button in the corner of the tab.
 - Select a sentence in the PDF, right-click, and choose **Ask AI**: the passage and its page go to the chat with a plain-language request. You can also type your own question and press **Send** (Ctrl+Enter).
 - The reply is not saved; the chat lives for the session. Nothing is sent anywhere else, and the rest of the app still works offline.
 
