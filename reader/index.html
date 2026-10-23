@@ -49,7 +49,7 @@ iframe{flex:1;border:0;width:100%}
 #rt button{padding:4px 10px;border:1px solid var(--ctl);border-radius:4px;background:var(--bg);color:var(--ink);font:inherit;cursor:pointer}
 .sw{display:inline-flex;gap:6px;align-items:center}.sw button{width:22px;height:22px;padding:0;border:2px solid var(--ctl);border-radius:50%;cursor:pointer}
 #cm .sw{display:flex;padding:6px 12px}#cm .sw button{display:inline-block;padding:0}
-#cm button:disabled{color:var(--ctl);cursor:not-allowed}.textLayer span{position:absolute;white-space:pre;color:transparent;transform-origin:0 0}.textLayer ::selection{background:transparent}.bsel{position:absolute;z-index:2;background:rgba(0,90,255,.35);pointer-events:none}.rtop{padding:20px 10px 4px}#phint{margin-top:8px;font-size:12px;color:var(--mute)}#phint[hidden]{display:none}.rsel{display:flex;gap:8px;align-items:center}.rsel select{flex:1;min-width:0}#lpn{margin-top:6px;font-size:.8rem;opacity:.65}#lpn:empty{display:none}#lpn.warn{display:block;cursor:pointer;background:#fde68a;color:#3b2f00;padding:6px 8px;font-weight:600}#toast.top{top:14px;transform:translateX(-50%)}#toast{pointer-events:none;position:fixed;left:50%;top:45%;transform:translate(-50%,-50%);z-index:9;background:#1f2937;color:#fff;padding:10px 16px;border-radius:8px;max-width:min(60vw,420px);max-height:40vh;overflow:hidden;overflow-wrap:anywhere;text-align:center}#ask{border:1px solid var(--ctl);border-radius:10px;padding:18px 20px;max-width:min(360px,90vw);overflow-wrap:anywhere;font:inherit}#ask p{margin:0 0 12px}#ask label{display:block;margin:0 0 12px;font-size:.9em}#ask div{display:flex;gap:8px;justify-content:flex-end}
+#cm button:disabled{color:var(--ctl);cursor:not-allowed}.textLayer span{position:absolute;white-space:pre;color:transparent;transform-origin:0 0}.textLayer ::selection{background:transparent}.bsel{position:absolute;z-index:2;background:rgba(0,90,255,.35);pointer-events:none}.rtop{padding:20px 10px 4px}#phint{margin-top:8px;font-size:12px;color:var(--mute)}#phint[hidden]{display:none}.rsel{display:flex;gap:8px;align-items:center}.rsel select{flex:1;min-width:0}#lpn{margin-top:6px;font-size:.8rem;opacity:.65}#lpn:empty{display:none}#lpn.warn{display:block;cursor:pointer;background:#fde68a;color:#3b2f00;padding:6px 8px;font-weight:600}#toast.top{top:14px;transform:translateX(-50%)}#toast{pointer-events:none;position:fixed;left:50%;top:45%;transform:translate(-50%,-50%);z-index:9;background:#1f2937;color:#fff;padding:10px 16px;border-radius:8px;max-width:min(60vw,420px);max-height:40vh;overflow:hidden;overflow-wrap:anywhere;text-align:center}dialog.ask{border:1px solid var(--ctl);border-radius:10px;padding:18px 20px;max-width:min(360px,90vw);overflow-wrap:anywhere;font:inherit}dialog.ask p{margin:0 0 12px}dialog.ask label{display:block;margin:0 0 12px;font-size:.9em}dialog.ask div{display:flex;gap:8px;justify-content:flex-end}
 
 .empty{padding:30px;color:var(--mute)}
 .rl{margin:6px 0 0;padding-left:16px;max-height:34vh;overflow:auto}.rl button{all:unset;cursor:pointer;color:var(--acc);font-weight:600}.rl small{color:var(--mute)}
@@ -90,8 +90,6 @@ body:has(dialog[open]) #hl,body:has(dialog[open]) #hr{display:none!important}  /
 #libp .lrow button{background:none;border:1px solid var(--line);border-radius:4px;color:var(--ink);cursor:pointer;padding:0 5px;font:inherit;line-height:18px}
 #libp .libadd{display:flex;gap:4px;align-items:center;margin:6px 0;flex-wrap:wrap}
 #libp .libadd input,#libp .libadd select{font:inherit;font-size:12px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:4px;min-width:0}
-#libsel{margin:0 0 8px}#libsel .t{font-size:11px;color:var(--mute);margin:0 0 4px}
-#libsel label{display:flex;gap:6px;align-items:center;font-size:12px;padding:2px 0}
 #libp .libadd #libmsg{color:var(--mute);font-size:11px}
 #vl .it{display:flex;gap:4px}#vl .dg{cursor:grab;color:var(--mut,var(--muted));user-select:none;padding:0 2px;align-self:center;font-size:15px}#vl .it{cursor:grab}#vl .it.drag{cursor:grabbing;opacity:.45}#vl .it input,#vl .it .x{cursor:auto}#vl .it input{flex:1;min-width:0;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:6px}#vl .it .k{flex:0 0 40px;text-align:center;font-weight:700}#vl .x{padding:2px 9px;color:var(--dn);border-color:var(--line)}#vl .add{border-style:dashed}
 .bar{position:sticky;top:0;z-index:5;background:var(--bg);padding:14px 0 6px;margin:0;display:flex;gap:6px;align-items:center;flex-wrap:wrap}.bar button,.bar .gbtn{margin:0;padding:4px 10px;border:1px solid var(--line);border-radius:4px;background:var(--bg);color:var(--ink);font:inherit;cursor:pointer}.bar button:hover,.bar .gbtn:hover{border-color:var(--acc)}#count button{margin-left:8px;padding:1px 8px;border:1px solid var(--line);border-radius:4px;background:var(--bg);color:var(--acc);font:inherit;cursor:pointer}button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible,.card:focus-visible,.gbtn:focus-within{outline:2px solid var(--acc);outline-offset:2px}
@@ -248,9 +246,9 @@ select,input[type=search]{min-height:var(--h);padding:0 8px;border-radius:var(--
 #ed .chip button,#ed .lkrow button{min-height:0;padding:0 4px;color:var(--mute)}
 #toast:not(.top){top:auto;bottom:28px;transform:translateX(-50%)}
 #toast{border-radius:var(--rl);box-shadow:var(--sh);font-size:13px}
-#ask{border-radius:var(--rl);padding:20px;box-shadow:var(--sh)}
-#ask button{min-height:var(--h);padding:0 16px;border:1px solid var(--ctl);border-radius:var(--r);background:var(--bg);color:var(--ink);font:inherit;cursor:pointer}
-#ask button[value="1"]{background:var(--acc);border-color:var(--acc);color:var(--bg)}
+dialog.ask{border-radius:var(--rl);padding:20px;box-shadow:var(--sh)}
+dialog.ask button{min-height:var(--h);padding:0 16px;border:1px solid var(--ctl);border-radius:var(--r);background:var(--bg);color:var(--ink);font:inherit;cursor:pointer}
+dialog.ask button[value="1"]{background:var(--acc);border-color:var(--acc);color:var(--bg)}
 #cm{border-radius:var(--rl);box-shadow:var(--sh)}
 #cm button{border-radius:var(--r)}
 #libp #libtree{border-radius:var(--rl)}
@@ -495,7 +493,7 @@ const HID=new Set((()=>{try{return JSON.parse(localStorage.getItem("cv:hide")||"
 DATA.sources=DATA.sources.filter(s=>!HID.has(s.id.toLowerCase()));
 const $=id=>document.getElementById(id);
 // in-app confirm: a native MessageBox can open behind a full-screen window and never answer
-const nask=text=>new Promise(res=>{const d=document.createElement("dialog");d.id="ask";
+const nask=text=>new Promise(res=>{const d=document.createElement("dialog");d.id="nask";d.className="ask";
   d.innerHTML='<p></p><div><button value="0">Cancel</button><button value="1" autofocus>OK</button></div>';
   d.firstChild.textContent=text;let ok=0;
   d.querySelectorAll("button").forEach(b=>b.onclick=()=>{ok=+b.value;d.close()});
@@ -518,7 +516,11 @@ const pwKey=(src,id)=>{const base=(DATA.vocab.pathways||{})[id];  // a pathway i
   return String(id)};
 const all=[];const COL={};DATA.sources.forEach(s=>{COL[s.id]=s.col;s.claims.forEach(c=>all.push({...c,src:s.id,srcTitle:s.title}))});
 // user edits live in this browser (localStorage); Delete only hides, so related-claim indices stay valid
-let ED={m:{},a:[],d:[]};try{ED=JSON.parse(localStorage.getItem("cv:edits"))||ED}catch(e){}
+let ED={m:{},a:[],d:[]};
+try{const p=JSON.parse(localStorage.getItem("cv:edits"));  // a stored [] used to replace every edit and blank the list
+  if(p&&typeof p==="object"&&!Array.isArray(p))ED=p}catch(e){}
+["m","v","co","r","o"].forEach(k=>{if(!ED[k]||typeof ED[k]!=="object"||Array.isArray(ED[k]))ED[k]={}});
+["a","d"].forEach(k=>{if(!Array.isArray(ED[k]))ED[k]=[]});
 const kc=c=>c.src+"\u0001"+c.id;
 const nq=c=>String(c.quote||"").toLowerCase().replace(/\s+/g," ").trim();  // claim text, for spotting the same sentence twice
 const sameClaim=(a,b)=>a.src===b.src&&nq(a).length>20&&nq(a)===nq(b);
@@ -698,7 +700,7 @@ function card(c){  // `now` keeps extractor-only fields (gist, factor, outcome, 
 let RQ=null;  // pending list fill
 // remember where you were in the claim list, per collection
 let lstT=null;
-const lstMap=()=>{try{return JSON.parse(store.get("cv:lists")||"{}")}catch(e){return {}}};
+const lstMap=()=>{try{const d=JSON.parse(store.get("cv:lists")||"{}");return d&&typeof d==="object"&&!Array.isArray(d)?d:{}}catch(e){return {}}};
 const LPROBE=150;  // the line just under the list toolbar where the place is measured
 let lstCol="";  // the collection the list on screen was built for
 const lstSave=()=>{lstT=null;const L=$("list");if(!L||!L.querySelector(".card"))return;
@@ -770,7 +772,7 @@ function open_(src,id){
 }
 // centered dialog instead of the browser's confirm()/alert(); "don't ask again" is remembered per key
 const ask=(msg,key,info)=>new Promise(res=>{if(key&&store.get("cv:skip:"+key)==="1")return res(true);
-  const d=document.createElement("dialog");d.id="ask";d.innerHTML='<p></p>'+(info?'':'<label><input type="checkbox"> Do not ask me again</label>')+'<div>'+(info?'':'<button value="0">Cancel</button>')+'<button value="1" autofocus>OK</button></div>';
+  const d=document.createElement("dialog");d.id="ask";d.className="ask";d.innerHTML='<p></p>'+(info?'':'<label><input type="checkbox"> Do not ask me again</label>')+'<div>'+(info?'':'<button value="0">Cancel</button>')+'<button value="1" autofocus>OK</button></div>';
   d.firstChild.textContent=msg;let ok=0;d.querySelectorAll("button").forEach(b=>b.onclick=()=>{ok=+b.value;d.close()});
   d.onclose=()=>{const c=d.querySelector("input");if(ok&&c&&c.checked&&key)store.set("cv:skip:"+key,"1");d.remove();res(!!ok)};
   document.body.append(d);d.showModal()});
@@ -1023,7 +1025,7 @@ const pOf=c=>(c.pathway||[]).length?c.pathway.map(String):["none"];
     s+=`<path class="e${cls(hitE(e))}${np?" novia":""}" data-a="${e.a}" data-av="${esc(e.x)}" data-b="${e.b}" data-bv="${esc(e.y)}"${e.der&&e.ps.length===1?` data-p="${esc(e.ps[0])}"`:""} d="M${x1},${y1} C${m},${y1} ${m},${y2} ${x2},${y2}" stroke="${c}" stroke-width="${(1+14*Math.sqrt(e.n/mx)).toFixed(1)}"${e.der?` stroke-dasharray="10 6"`:""}><title>${esc(tip)}</title></path>`;});
   const node=(k,x,y,label,n,kind)=>`<g class="n${cls(kind==="f"?sf.includes(k):kind==="p"?sp.includes(k):kind==="o"?so.includes(k):false)}" data-k="${kind}" data-v="${esc(k)}"><rect x="${x}" y="${y-13}" width="${bw}" height="26" rx="5"/><text x="${x+6}" y="${y+4}">${esc(label.length>24?label.slice(0,23)+"…":label)}</text><text class="cnt" x="${x+bw-6}" y="${y+4}" text-anchor="end">${n||0}</text><title>${esc(label)}: ${n||0} claim tags</title></g>`;
   on.forEach(k=>items[k].forEach(x=>s+=node(x,col[k],pos[k][x],lab[k](x),N[k][x],k)));
-  const bar=sc?`<div class="selbar"><b>Selected claim:</b> ${esc(sc.srcTitle.slice(0,40))} · ${esc(sc.quote.slice(0,220))}…<br>Stands at: ${SC.p} ${sp.map(pwName).map(esc).join(" + ")}${sf.length?" → "+esc(SC.a)+" "+esc(sf.join(", ")):""}${so.length?" → "+esc(SC.b)+" "+esc(so.join(", "))+" (change "+esc(sc.direction.join(" / ")||"?")+")":""}${sf.length||so.length?"":". It has no "+esc(SC.a)+" or "+esc(SC.b)+" tag (role "+esc(sc.role.join(", "))+"), so it has no line. It counts only in the "+esc(SC.p)+" box."}<button id="gb">Back to list</button></div>`:"";
+  const bar=sc?`<div class="selbar"><b>Selected claim:</b> ${esc(sc.srcTitle.slice(0,40))} · ${esc(sc.quote.slice(0,220))}…<br>Stands at: ${SC.p} ${sp.map(pwName).map(esc).join(" + ")}${sf.length?" → "+esc(SC.a)+" "+esc(sf.join(", ")):""}${so.length?" → "+esc(SC.b)+" "+esc(so.join(", "))+" (change "+esc(sc.direction.join(" / ")||"?")+")":""}${sf.length||so.length?"":". It has no "+esc(SC.a)+" or "+esc(SC.b)+" tag (role "+esc(sc.role.join(", "))+"), so it has no line. It counts only in the "+esc(SC.p)+" box."}<button type="button" data-gb>Back to list</button></div>`:"";
   return `${bar}
   <p class="count">${rows.length} claims. Click a box or line to list them. Number = claims.</p>
   <div class="lg"><span><i style="background:var(--acc)"></i>${esc(SC.a)}</span><span><i style="background:var(--dp)"></i>${esc(SC.b)} +</span><span><i style="background:var(--dn)"></i>${esc(SC.b)} -</span><span><i style="background:var(--dm)"></i>mixed</span><span><i style="background:var(--mute)"></i>no change / not assessed</span><span>Sign = change in the named value, not good or bad. Line color = most common sign.</span>${on.join("")==="fo"?`<span>Solid line = one claim carries both ${esc(SC.a)} and ${esc(SC.b)}. Width = number of such claims.</span><span>Dashed line = derived: ${esc(SC.a)} and ${esc(SC.b)} claims sit on the same ${esc(SC.p)}, but no claim states the link. Width = shared ${esc(SC.p)}s.</span>`:""}</div>`+s+"</svg>";
@@ -1078,7 +1080,7 @@ function netGraph(rows,sc){
     s+=`<path class="ce${opp?" opp":by==="t"?" tag":""}${si>=0?(si===i||si===j?" hit":" dim"):""}" d="M${a[0].toFixed(1)},${a[1].toFixed(1)} Q${qx.toFixed(1)},${qy.toFixed(1)} ${b[0].toFixed(1)},${b[1].toFixed(1)}"/>`;});
   shown.forEach((c,i)=>{const[x,y]=pt(i);
     s+=`<g class="nn${si>=0?(i===si||nb.has(i)?" hit":" dim"):""}" data-s="${esc(c.src)}" data-id="${esc(c.id)}"><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="7" fill="${colr(c)}"/><title>${esc(c.srcTitle.slice(0,40)+" · "+(c.gist||c.quote||"").slice(0,140))}</title></g>`;});
-  const bar=sc?`<div class="selbar"><b>Selected claim:</b> ${esc(sc.srcTitle.slice(0,40))} · ${esc(sc.quote.slice(0,220))}…<br>${si>=0?"Linked to "+nb.size+" of "+(n-1)+" other claims drawn here. Its links and neighbours are lit.":"It is not among the claims drawn here."}<button id="gb">Back to list</button></div>`:"";
+  const bar=sc?`<div class="selbar"><b>Selected claim:</b> ${esc(sc.srcTitle.slice(0,40))} · ${esc(sc.quote.slice(0,220))}…<br>${si>=0?"Linked to "+nb.size+" of "+(n-1)+" other claims drawn here. Its links and neighbours are lit.":"It is not among the claims drawn here."}<button type="button" data-gb>Back to list</button></div>`:"";
   return `${bar}
   <p class="count">${n} of ${rows.length} claims${rows.length>n?" (first "+CAP+" only, so narrow the list with the filters on the left)":""}. ${E.length} links. Click a dot to open that claim in the list.</p>
   <div class="lg"><span><i style="background:var(--mute)"></i>similar wording</span><span><i style="background:var(--acc)"></i>shares a checked tag</span><span><i style="background:var(--dn)"></i>same ${esc(SC.b)} value, opposite sign</span><span>Wording link = word overlap (TF-IDF cosine at least 0.15), not meaning. Opposite-sign pairs include tag errors, so read both quotes.</span></div>
@@ -1119,7 +1121,7 @@ function linkGraph(rows,sc){
     const out=[...E.values()].filter(e=>e.a===s.id).reduce((q,e)=>q+e.n,0),inn=[...E.values()].filter(e=>e.b===s.id).reduce((q,e)=>q+e.n,0);
     return `<g class="ln${cls(hitN(s.id))}" data-s="${esc(s.id)}"><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r}"/><text class="lnl" x="${lx.toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="${an}">${esc(s.title.length>34?s.title.slice(0,33)+"…":s.title)}</text><title>${esc(s.title)}: ${out} claims link out, ${inn} link in. Click to list this reading's claims.</title></g>`}).join("");
   const defs="<defs>"+Object.keys(LT).map(t=>`<marker id="lkm-${t}" viewBox="0 0 15 12" refX="0" refY="6" markerWidth="15" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><path d="M0,0 L15,6 L0,12z" fill="${LKC[t]}"/></marker>`).join("")+"</defs>";
-  const bar=sc?`<div class="selbar"><b>Selected claim:</b> ${esc(sc.srcTitle.slice(0,40))} · ${esc(sc.quote.slice(0,220))}…<br>${sk.length?"Declared "+sc.links.map(l=>esc(l.t)+" → "+esc((S.find(s=>s.id===l.to)||{}).title||l.to)).join(", ")+". Its arrows are lit.":"This claim has no declared connection. Open it with Edit and pick a Connected reading and a Connection."}<button id="gb">Back to list</button></div>`:"";
+  const bar=sc?`<div class="selbar"><b>Selected claim:</b> ${esc(sc.srcTitle.slice(0,40))} · ${esc(sc.quote.slice(0,220))}…<br>${sk.length?"Declared "+sc.links.map(l=>esc(l.t)+" → "+esc((S.find(s=>s.id===l.to)||{}).title||l.to)).join(", ")+". Its arrows are lit.":"This claim has no declared connection. Open it with Edit and pick a Connected reading and a Connection."}<button type="button" data-gb>Back to list</button></div>`:"";
   return `${bar}
   <p class="count">${total} link${total>1?"s":""} in ${E.size} arrow${E.size>1?"s":""}. Click an arrow to list its claims, a dot to list that reading's claims.</p>
   <div class="lg"><span>Arrow points from the reading that holds the claim to the reading it connects to. Width and number = claims. A loop = the claim connects to a claim in its own reading. Dotted = ambiguous. The three colors are the Connection set in Edit; the chips above filter by them.</span></div>`+`<svg viewBox="0 0 900 ${2*R+180}" role="img" aria-label="Connections between ${n} readings">${defs}${paths}${nodes}${labs}</svg>`;
@@ -1146,12 +1148,14 @@ try{let _fix=false;Object.entries(ZK.notes||{}).forEach(([k,n])=>{if(!n)return;
    if((n.tags||[]).some(t=>!String(t||"").trim())){n.tags=[...new Set((n.tags||[]).map(t=>String(t||"").trim()).filter(Boolean))];_fix=true}});
  if(_fix)localStorage.setItem("cv:zk",JSON.stringify(ZK))}catch(e){}
 const zkSave=()=>store.set(ZKKEY,JSON.stringify(ZK));
-// one-time seed of a reading block's lists and notes (Week 6); runs once, delete this block and DATA.seed to stop it seeding again
-try{if(!store.get("cv:seed-w6v3")&&DATA.seed){const S=DATA.seed;
+// one-time seed of a reading block's lists and notes (Week 6); runs once per seed version, bump DATA.seed.v to re-seed
+try{const SV=(DATA.seed||{}).v;if(SV&&DATA.seed&&store.get("cv:seed-w6")!==SV){const S=DATA.seed;
   for(const k of Object.keys(ZK.notes)){if(k.indexOf("w6-")===0)delete ZK.notes[k]}
+  if(Array.isArray(ZK.order)){ZK.order=ZK.order.filter(id=>String(id).indexOf("w6-")!==0)}
+  if(S.drop&&ED.v){for(const cid of S.drop){delete ED.v[cid]}store.set("cv:edits",JSON.stringify(ED))}
   if(S.vocab){ED.v=ED.v||{};for(const cid of Object.keys(S.vocab)){ED.v[cid]=Object.assign({},ED.v[cid]||{},S.vocab[cid])}store.set("cv:edits",JSON.stringify(ED))}
   if(S.notes){for(const k of Object.keys(S.notes)){ZK.notes[k]=S.notes[k]}}
-  zkSave();store.set("cv:seed-w6v3","1")}}catch(e){}
+  zkSave();store.set("cv:seed-w6",SV)}}catch(e){}
 let UNDO=[],zkPick=null;  // session only: a persisted stack let one click rewind the notes to a days-old state
 try{localStorage.removeItem("cv:zkundo")}catch(e){}
 const saveUndo=()=>{};
@@ -1564,7 +1568,7 @@ const syncGX=()=>{const g=$("gout"),x=$("gx"),xi=$("gxi");if(!g||!x||!xi)return;
 $("gx").addEventListener("scroll",()=>{$("gout").scrollLeft=$("gx").scrollLeft});
 $("gout").addEventListener("scroll",()=>{$("gx").scrollLeft=$("gout").scrollLeft});
 window.addEventListener("resize",()=>{try{syncGX()}catch(e){}});
-const dictCache=JSON.parse(localStorage.getItem("cv:dict")||"{}");
+let dictCache={};try{const d=JSON.parse(localStorage.getItem("cv:dict")||"{}");if(d&&typeof d==="object"&&!Array.isArray(d))dictCache=d}catch(e){}
 const dictSave=()=>{const ks=Object.keys(dictCache);if(ks.length>300)ks.slice(0,ks.length-300).forEach(k=>delete dictCache[k]);
   try{localStorage.setItem("cv:dict",JSON.stringify(dictCache))}catch(e){}};
 const stripTags=h=>String(h||"").replace(/<[^>]*>/g,"").replace(/&quot;/g,'"').replace(/&amp;/g,"&").replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/\s+/g," ").replace(/\s+([.,;:!?])/g,"$1").trim();
@@ -1740,7 +1744,7 @@ $("tl").onclick=()=>show("list");$("tg").onclick=()=>show("graph");$("lb").oncli
   GZ.addEventListener("pointercancel",()=>{if(!DR)return;DR.el.removeAttribute("transform");DR.el.classList.remove("drag");DR=null;clearT()});
 }
 $("gv").addEventListener("click",e=>{
-  if(e.target.id==="gb")return show("list");const p=e.target.closest(".e"),n=e.target.closest(".n"),d=e.target.closest(".nn");
+  if(e.target.closest("[data-gb]"))return show("list");const p=e.target.closest(".e"),n=e.target.closest(".n"),d=e.target.closest(".nn");
   const tg=e.target.closest("#gout .tnode[data-tag]");if(tg){zkPick={kind:"tag",tag:tg.dataset.tag};show("notes");$("zft").value=tg.dataset.tag;$("zfs").value="";zkRenderList();return}
   const sg=e.target.closest("#gout .snode[data-sub]");if(sg){zkPick={kind:"sub",tag:sg.dataset.tag,path:sg.dataset.path};show("notes");$("zfs").value=sg.dataset.sub;zkRenderList();return}
   const zn=e.target.closest("#gout .node[data-zk]");if(zn){
@@ -1967,7 +1971,6 @@ render();
 
 // ---- Library panel (left column, tab "Library"): folders inside the app. launch.py writes library.json. ----
 const libId=()=>"c"+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
-const libSel=()=>$("pdfsel").value||$("src").value||"";
 let LCOLL=new Set();try{LCOLL=new Set(JSON.parse(store.get("cv:libcol")||"[]"))}catch(e){}
 function drawLib(){const _p=performance.now();
   const tree=cTree(),kids={},stack=[];
@@ -1983,7 +1986,6 @@ function drawLib(){const _p=performance.now();
       +`<button type="button" class="lpdf" title="Add PDFs to ${esc(n)}">PDF</button>`+`<button type="button" class="lsub" title="Add a sub-folder inside ${esc(n)}">+</button>`
       +`<button type="button" class="ldel" title="Delete this folder (readings and claims stay)">\u2715</button></div>`}).join("")
     ||'<div class="lrow">No folders yet. Add one below.</div>';
-  if($("libsel"))$("libsel").innerHTML="";
   perf("drawLib",_p);
 }
 // Rebuild every view from LIB in place. A page reload here costs seconds on a 5.8 MB index and
@@ -2047,7 +2049,7 @@ $("libtree").addEventListener("click",async e=>{
     if(!r.added||!r.added.length)return $("libmsg").textContent="No new PDFs.";
     if(r.library){LIB.collections=r.library.collections||LIB.collections;LIB.items=r.library.items||LIB.items}
     r.added.forEach(i=>{if(!DATA.sources.some(x=>x.id===i))DATA.sources.push({id:i,kind:"paper",title:i,claims:[],col:[]})});
-    $("libmsg").textContent=r.added.length+" PDF(s) added to "+cPath(id)+".";
+    $("libmsg").textContent=r.added.length+" PDF(s) added to "+cPath(id)+"."+((r.failed&&r.failed.length)?" "+r.failed.length+" skipped: "+r.failed[0][0]+" ("+r.failed[0][1]+").":"" );
     relib();if(r.added.length){const first=r.added[0];if([...$("pdfsel").options].some(o=>o.value===first)){$("pdfsel").value=first;showPdf(first)}}
   }else if(e.target.classList.contains("lsub")){
     if(row.nextElementSibling&&row.nextElementSibling.classList.contains("lnew")){row.nextElementSibling.querySelector("input").focus();return}
@@ -2064,14 +2066,7 @@ $("libroot").onclick=()=>{const box=$("libtree");const last=box.lastElementChild
   if(last&&last.classList.contains("lnew")){last.querySelector("input").focus();return}
   box.insertAdjacentHTML("beforeend",`<div class="lrow lnew" data-p="" style="padding-left:4px"><input placeholder="New folder name, then Enter" aria-label="New folder name"></div>`);
   box.lastElementChild.querySelector("input").focus()};
-if($("libsel"))$("libsel").addEventListener("change",e=>{
-  if(!e.target.classList.contains("lmem"))return;const sel=libSel();if(!sel)return;
-  const id=e.target.value,it=LIB.items[sel]||(LIB.items[sel]={title:(DATA.sources.find(s=>s.id===sel)||{}).title||sel,collections:[]});
-  it.collections=it.collections||[];
-  if(e.target.checked){if(!it.collections.includes(id))it.collections.push(id)}
-  else it.collections=it.collections.filter(x=>x!==id);
-  const src=DATA.sources.find(s=>s.id===sel);if(src)src.col=it.collections.slice();saveLib();
-});
+
 ;(()=>{const s=$("pdfsel"),f=$("pdf"),rd=$("rd"),lpn=$("lpn"),B="lib/",files={};let cur="",tok=0;
 s.innerHTML='<option value="">(pick a reading)</option>'+DATA.sources.map(x=>`<option value="${esc(x.id)}">${esc(x.title)}</option>`).join("");s.value="";
 {const o=store.get("cv:open");if(o){store.set("cv:open","");if([...s.options].some(x=>x.value===o))s.value=o}}  // after a folder/file pick: show the first new PDF
