@@ -305,18 +305,27 @@ class Api:
 
     def ai_status(self):  # the Ask AI tab asks this before it shows the key box
         c = _ai_cfg()
-        return {"has_key": bool((c.get("key") or "").strip()), "model": c.get("model") or "deepseek-chat"}
+        return {"has_key": bool((c.get("key") or "").strip()), "base": c.get("base") or "",
+                "model": c.get("model") or "deepseek-chat"}
 
-    def ai_set_key(self, key):  # "" clears it
+    def ai_set_key(self, key="", base=""):
+        """Save the key and an optional base URL. An empty key keeps the stored one."""
         key = (key or "").strip()
+        base = (base or "").strip().rstrip("/")
+        if base and not base.lower().startswith(("http://", "https://")):
+            return {"ok": False, "error": "the base URL must start with http:// or https://"}
         c = _ai_cfg()
         if key:
             c["key"] = key
-            c.setdefault("model", "deepseek-chat")
+        if not (c.get("key") or "").strip():
+            return {"ok": False, "error": "paste an API key first"}
+        if base:
+            c["base"] = base
         else:
-            c.pop("key", None)
+            c.pop("base", None)
+        c.setdefault("model", "deepseek-chat")
         _atomic(AI_PATH, json.dumps(c, ensure_ascii=False, indent=1))
-        return {"ok": True, "has_key": bool(key), "model": c.get("model") or "deepseek-chat"}
+        return {"ok": True, "has_key": True, "base": c.get("base") or "", "model": c["model"]}
 
     def ai_chat(self, messages_json):  # DeepSeek is OpenAI-compatible; the page cannot POST from file://
         c = _ai_cfg()
@@ -329,10 +338,12 @@ class Api:
                 return {"ok": False, "error": "no messages"}
         except Exception as e:
             return {"ok": False, "error": "bad messages: %s" % e}
+        base = (c.get("base") or "https://api.deepseek.com").rstrip("/")
+        url = base if base.endswith("/chat/completions") else base + "/chat/completions"
         body = json.dumps({"model": c.get("model") or "deepseek-chat", "messages": msgs[-14:],
                            "temperature": 0.3, "max_tokens": 1200, "stream": False}).encode("utf-8")
         req = urllib.request.Request(
-            "https://api.deepseek.com/chat/completions", data=body,
+            url, data=body,
             headers={"Content-Type": "application/json", "Authorization": "Bearer " + key})
         try:
             with urllib.request.urlopen(req, timeout=120) as r:
