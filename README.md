@@ -38,6 +38,7 @@ Zotero keeps your PDFs and highlights, but it does not draw a graph of how the c
 - **Child notes** branch out of a note (`1a` under `1`, `1aa` under `1a`). Use one for a sub-idea that follows from the parent: the graph draws it as a branch, the parent keeps its own text, and the two stay next to each other in the list. A child is a full note, so it takes claims, tags, sub-tags and links like any other.
 - **To note files the note in the graph.** A note started from a claim takes the claim's pathway as its tag, so it lands under that branch in the note graph instead of "(no tag)".
 - **Connections live in Notes.** The old "other papers: similar / opposite sign" list under a selected card is gone. Use **To note** on a claim to keep the link in its note, where the note graph shows it.
+- **Deselect a claim.** Click anywhere outside the selected card (blank space, a group header, the PDF text) and the selection clears. The click is ignored when it lands on the selected card, inside a dialog or menu, in the graph view, or while text is highlighted, so selecting a quote in the PDF never drops the claim.
 - **Filter and group** the list by the axes, pathways, direction, evidence, author, free text, reading, links, and collection.
 
 ### Notes (Zettelkasten)
@@ -87,6 +88,14 @@ The same views in the light theme; the toggle sits next to the title.
 ![Roles in the light theme](docs/screenshot-roles-light.png)
 
 </details>
+
+### Ask AI
+
+The right pane has two tabs: **PDF** and **Ask AI**. The chat talks to the DeepSeek API (`deepseek-chat`) through the app, not the page, so no key ever appears in the HTML.
+
+- Paste your key once in the **Ask AI** tab and press **Save key**. It is written to `ai.json` next to the app; that file is git-ignored and never leaves the machine except as the `Authorization` header of a DeepSeek request.
+- Select a sentence in the PDF, right-click, and choose **Ask AI**: the passage and its page go to the chat with a plain-language request. You can also type your own question and press **Send** (Ctrl+Enter).
+- The reply is not saved; the chat lives for the session. Nothing is sent anywhere else, and the rest of the app still works offline.
 
 ## Use it without installing anything
 
@@ -174,6 +183,7 @@ Run these from the project folder (the one that holds `template.html`). `build.p
 - Reading and saving PDFs works **offline**: `pdf.js` and `pdf-lib` ship in `lib/` next to the page, not from a CDN. The only network request the page makes is a dictionary lookup on Wiktionary, and only for a word that is not already in the local cache. A lookup that fails (offline, timeout) is not cached, so the same word is tried again next time.
 - Your edits live in the browser or app storage for that folder. The Windows app keys storage to the folder path, so moving the folder loses them: use Export first, then Import.
 - Claim citations are parsed from the PDF title; if a title has no year the citation shows `(Author, p. N)`.
+- Deselecting by click has two limits. While a quote is being edited inline, the first click elsewhere only ends the edit, so you need a second click. In the plain fallback PDF frame (shown only when `pdf.js` cannot load) a click inside the frame does not reach the page, so it does not deselect.
 - The merged-reading pill in the note graph joins a reading's notes into one node; chains that share a reading but sit on different branches all point at that node. Turn *Merge readings* off to keep every note separate.
 - Undo in the note graph holds 30 steps **for the current session only**: it is deliberately not saved, because a stored stack once rewound the notes to a days-old state.
 - Save PDF writes a copy of the PDF with your highlights as real highlight annotations. The app opens a PDF-only save dialog.
