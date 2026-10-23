@@ -387,7 +387,7 @@ body.rtai #aipane{display:flex}
 .aim.bot{align-self:flex-start;background:var(--panel);border:1px solid var(--line)}
 .aim.err{align-self:flex-start;background:color-mix(in srgb,var(--bad) 12%,var(--bg));border:1px solid var(--bad);color:var(--bad)}
 #aif{display:flex;gap:8px;align-items:flex-end;flex:none}
-#aiin{flex:1;min-height:38px;max-height:140px;resize:vertical;font:inherit;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}
+#aiin{flex:1;min-height:38px;max-height:140px;resize:vertical;font:inherit;padding:8px 104px 8px 8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}
 #aisend{height:38px;padding:0 16px;border:1px solid var(--acc);border-radius:8px;background:var(--acc);color:var(--bg);font:inherit;font-weight:600;cursor:pointer}
 #aisend:disabled{opacity:.55;cursor:default}
 #aikeybox{border:1px solid var(--line);border-radius:10px;padding:10px;background:var(--panel);display:grid;gap:8px}
@@ -404,7 +404,9 @@ body.rtai #aipane{display:flex}
 #aikeybox label{display:grid;gap:4px;font-size:11.5px;font-weight:600;color:var(--mute)}
 #aikeybox .airow{display:flex;gap:10px;align-items:center}
 #aikeybox .airow small{color:var(--mute);font-size:11.5px}
-#aimodel{height:38px;max-width:150px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit;font-size:12px;padding:0 6px;flex:none}
+.aiinwrap{position:relative;display:flex;flex:1;min-width:0}
+.aiinwrap #aimodel{position:absolute;right:6px;bottom:6px;height:22px;min-height:0;line-height:20px;max-width:96px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--mute);font:inherit;font-size:11px;padding:0 2px;cursor:pointer}
+#aimodel:hover,#aimodel:focus-visible{color:var(--acc);border-color:var(--acc);outline:none}
 /* left panel polish: one rhythm for tabs, folder rows and buttons */
 .tabs{gap:6px;margin:0 0 14px}
 .tabs button{flex:1;height:34px;padding:0 10px;border-radius:8px;font-size:13px}
@@ -506,7 +508,7 @@ body.rtai #aipane{display:flex}
 <label>Base URL (optional)<input id="aibase" type="text" placeholder="https://api.deepseek.com" autocomplete="off" spellcheck="false"></label>
 <div class="airow"><button id="aisave" type="button">Save</button><small id="aikeyms"></small></div></div>
 <div id="ailog" aria-live="polite"></div>
-<form id="aif"><textarea id="aiin" rows="2" placeholder="Ask about this reading. Enter sends, Shift+Enter starts a new line."></textarea><select id="aimodel" aria-label="Model"><option value="deepseek-v4-flash">DeepSeek Flash</option><option value="deepseek-v4-pro">V4-Pro</option></select><button type="submit" id="aisend">Send</button></form>
+<form id="aif"><div class="aiinwrap"><textarea id="aiin" rows="2" placeholder="Ask about this reading" title="Enter sends, Shift+Enter starts a new line"></textarea><select id="aimodel" aria-label="Model" title="Model"><option value="deepseek-flash">Flash</option><option value="deepseek-v4-pro">V4-Pro</option></select></div><button type="submit" id="aisend">Send</button></form>
 <div class="aihint">Select a sentence in the PDF, right-click it, then choose <b>Ask AI</b>.</div>
 </div></section>
 <button id="hl" type="button" class="edge" title="Hide the left panel" aria-label="Hide the left panel" aria-pressed="false"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button>
@@ -2248,7 +2250,7 @@ const aiModels=async()=>{const sel=$("aimodel");if(!sel||!(window.pywebview&&pyw
   const pro=find(/pro/i),flash=find(/flash/i)||find(/chat/i);
   const out=[];
   if(pro)out.push([pro,"V4-Pro"]);
-  if(flash)out.push([flash,"DeepSeek Flash"]);
+  if(flash)out.push([flash,"Flash"]);
   ids.filter(i=>i!==pro&&i!==flash).slice(0,6).forEach(i=>out.push([i,i]));
   const cur=store.get("cv:aimodel")||sel.value;
   sel.innerHTML=out.map(([v,l])=>`<option value="${esc(v)}">${esc(l)}</option>`).join("");
