@@ -374,6 +374,30 @@ aside{padding:14px 26px 14px 14px}  /* the right gutter holds the fold tab, clea
 .sugg[hidden]{display:none}
 .sugg button{display:block;width:100%;text-align:left;padding:6px 9px;border:0;background:none;color:var(--ink);font:inherit;line-height:1.4;white-space:normal;overflow-wrap:anywhere;cursor:pointer}
 .sugg button:hover,.sugg button:focus-visible{background:color-mix(in srgb,var(--acc) 12%,var(--panel));color:var(--acc);outline:none}
+.rtabs{display:flex;gap:6px;padding:10px 10px 0;border-bottom:1px solid var(--line);flex:none}
+.rtabs button{height:30px;padding:0 14px;border:1px solid transparent;border-radius:8px 8px 0 0;background:none;color:var(--mute);font:inherit;font-weight:600;cursor:pointer}
+.rtabs button.on{background:var(--panel);border-color:var(--line);color:var(--ink)}
+.rtabs button:hover{color:var(--ink)}
+body.rtai .rtop,body.rtai #rt,body.rtai #pdf,body.rtai #rd,body.rtai #phint{display:none!important}
+#aipane{display:none;flex:1;min-height:0;flex-direction:column;gap:8px;padding:10px}
+body.rtai #aipane{display:flex}
+#ailog{flex:1;min-height:0;overflow:auto;display:flex;flex-direction:column;gap:8px}
+.aim{max-width:92%;padding:8px 10px;border-radius:10px;line-height:1.45;white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px}
+.aim.me{align-self:flex-end;background:color-mix(in srgb,var(--acc) 16%,var(--bg));border:1px solid color-mix(in srgb,var(--acc) 35%,var(--line))}
+.aim.bot{align-self:flex-start;background:var(--panel);border:1px solid var(--line)}
+.aim.err{align-self:flex-start;background:color-mix(in srgb,var(--bad) 12%,var(--bg));border:1px solid var(--bad);color:var(--bad)}
+#aif{display:flex;gap:8px;align-items:flex-end;flex:none}
+#aiin{flex:1;min-height:38px;max-height:140px;resize:vertical;font:inherit;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}
+#aisend{height:38px;padding:0 16px;border:1px solid var(--acc);border-radius:8px;background:var(--acc);color:var(--bg);font:inherit;font-weight:600;cursor:pointer}
+#aisend:disabled{opacity:.55;cursor:default}
+#aikeybox{border:1px solid var(--line);border-radius:10px;padding:10px;background:var(--panel);display:grid;gap:8px}
+#aikeybox[hidden]{display:none}
+#aikeybox p{margin:0;font-size:12px;color:var(--mute);line-height:1.4}
+#aikeybox button{justify-self:start;height:32px;padding:0 14px;border:1px solid var(--acc);border-radius:8px;background:var(--acc);color:var(--bg);font:inherit;font-weight:600;cursor:pointer}
+#aikeybox small{color:var(--mute);font-size:11.5px}
+#ailog:empty::before{content:"Ask anything about the open reading. Select a sentence in the PDF and right-click it for a one-click explanation.";color:var(--mute);font-size:12.5px;line-height:1.5}
+#aikey{height:34px;padding:0 8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit}
+.aihint{font-size:11.5px;color:var(--mute);flex:none}
 /* left panel polish: one rhythm for tabs, folder rows and buttons */
 .tabs{gap:6px;margin:0 0 14px}
 .tabs button{flex:1;height:34px;padding:0 10px;border-radius:8px;font-size:13px}
@@ -468,7 +492,12 @@ aside{padding:14px 26px 14px 14px}  /* the right gutter holds the fold tab, clea
 </div>
 </main>
 <div id="gv"><h1 id="gt"></h1><div class="gc" id="gc2"></div><div id="lkc" class="lg" role="group" aria-label="Declared connections between readings"></div><div id="gx" aria-label="Horizontal scroll" role="group"><div id="gxi"></div></div><div id="gout"></div></div>
-<section><div class="rtop"><div class="rsel"><select id="pdfsel" aria-label="Reading"></select><button id="lr" type="button" title="Remove this reading from the viewer (the PDF file on your computer stays)" aria-label="Remove this reading from the viewer"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h7l4 4v14H7zM14 3v4h4M10 12l4 4m0-4-4 4"/></svg></button></div><div id="lpn"></div><div id="phint">Pick a reading here, or from the list on the left.</div></div><div id="rt" hidden><button id="zo" type="button" aria-label="Zoom out">−</button><span id="zv">100%</span><button id="zi" type="button" aria-label="Zoom in">+</button><button id="zf" type="button" title="Fit width" aria-label="Fit width"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button><button id="fb" type="button" title="Read this PDF full screen (Esc to exit)" aria-label="Read this PDF full screen" aria-pressed="false"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg></button><button id="sv" type="button" title="Save PDF" aria-label="Save PDF"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m-4-4 4 4 4-4M5 20h14"/></svg></button><span class="sw" id="hs" role="group" aria-label="Highlight colour"></span><button id="zks" type="button" title="Note on the selected passage" aria-label="Note on the selected passage"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11l3 3v13H5zM8 9h8M8 13h6"/></svg></button><button id="hc" type="button" title="Clear all highlights in this PDF (right-click one highlight to remove only it)" aria-label="Clear all highlights"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13"/></svg></button><span class="pgbrk" aria-hidden="true"></span><input id="pgnow" class="pgnow" inputmode="numeric" aria-label="Page, type a number and press Enter" title="Type a page number, then Enter"></div><iframe id="pdf" allowfullscreen title="Source PDF" hidden></iframe><div id="rd" hidden></div></section>
+<section><div class="rtabs" role="tablist" aria-label="Right pane"><button type="button" class="on" data-rt="pdf" role="tab" aria-selected="true">PDF</button><button type="button" data-rt="ai" role="tab" aria-selected="false">Ask AI</button></div><div class="rtop"><div class="rsel"><select id="pdfsel" aria-label="Reading"></select><button id="lr" type="button" title="Remove this reading from the viewer (the PDF file on your computer stays)" aria-label="Remove this reading from the viewer"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h7l4 4v14H7zM14 3v4h4M10 12l4 4m0-4-4 4"/></svg></button></div><div id="lpn"></div><div id="phint">Pick a reading here, or from the list on the left.</div></div><div id="rt" hidden><button id="zo" type="button" aria-label="Zoom out">−</button><span id="zv">100%</span><button id="zi" type="button" aria-label="Zoom in">+</button><button id="zf" type="button" title="Fit width" aria-label="Fit width"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button><button id="fb" type="button" title="Read this PDF full screen (Esc to exit)" aria-label="Read this PDF full screen" aria-pressed="false"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg></button><button id="sv" type="button" title="Save PDF" aria-label="Save PDF"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m-4-4 4 4 4-4M5 20h14"/></svg></button><span class="sw" id="hs" role="group" aria-label="Highlight colour"></span><button id="zks" type="button" title="Note on the selected passage" aria-label="Note on the selected passage"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11l3 3v13H5zM8 9h8M8 13h6"/></svg></button><button id="hc" type="button" title="Clear all highlights in this PDF (right-click one highlight to remove only it)" aria-label="Clear all highlights"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13"/></svg></button><span class="pgbrk" aria-hidden="true"></span><input id="pgnow" class="pgnow" inputmode="numeric" aria-label="Page, type a number and press Enter" title="Type a page number, then Enter"></div><iframe id="pdf" allowfullscreen title="Source PDF" hidden></iframe><div id="rd" hidden></div><div id="aipane" hidden>
+<div id="aikeybox" hidden><p>Paste your DeepSeek API key. It is kept in ai.json next to the app and goes nowhere except to DeepSeek.</p><input id="aikey" type="password" placeholder="sk-..." autocomplete="off" spellcheck="false"><button id="aisave" type="button">Save key</button><small id="aikeyms"></small></div>
+<div id="ailog" aria-live="polite"></div>
+<form id="aif"><textarea id="aiin" rows="2" placeholder="Ask about this reading"></textarea><button type="submit" id="aisend">Send</button></form>
+<div class="aihint">Select a sentence in the PDF, right-click it, then choose <b>Ask AI</b>.</div>
+</div></section>
 <button id="hl" type="button" class="edge" title="Hide the left panel" aria-label="Hide the left panel" aria-pressed="false"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button>
 <button id="hr" type="button" class="edge" title="Hide the PDF pane" aria-label="Hide the PDF pane" aria-pressed="false"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
 <script src="lib/pdf.min.js"></script><script src="sources.js"></script>
@@ -2177,7 +2206,39 @@ const capture=(q,pg,rs,hg)=>{if(rs&&rs[0]&&!rs[0].t)rs[0].t=q;q=(q||"").replace(
   _it=DATA.sources.find(y=>y.id===src),_cc=$("col").value;
  if(!_it||!inCol(_it.col,_cc)){window.toast("That reading is outside the category you selected.");return}
  const c={id:"u"+Date.now(),src,srcTitle:DATA.sources.find(x=>x.id===src).title,quote:q,gist:"",role:"OTHER",pathway:[],direction:"",status:"user",own_claim:true};norm(c);if(pg){c.pdf_page=[pg];c.cite_page=String(pg)}if(hg)c.hg=hg;else if(rs&&rs.length&&cur===src)c.hg=mark("y",rs);all.push(c);ED.a.push(c);sel=src+c.id;saveED();if(!pass(c))clearFilters();else refresh();const e=[...document.querySelectorAll("#list .card")].find(z=>z.dataset.k===kc(c));if(e)e.scrollIntoView({block:"center"});toast("Claim added"+(pg?" (p."+pg+")":"")+": "+q.slice(0,60));if(hg&&pg)window.healClaim(c,pg)};
-const cm=document.createElement("div");cm.id="cm";cm.hidden=true;cm.innerHTML='<button type="button" class="adb">Add as claim</button><button type="button" class="lkb">Connect to another reading…</button><button type="button" class="zkn">Note on this passage</button><div class="sw">'+swHTML+'</div><button type="button" class="rm">Remove highlight</button><button type="button" class="dfb">Define</button><button type="button" class="cpb">Copy text</button>';document.body.append(cm);
+// ---- right pane: PDF or the DeepSeek chat. The chat is fed by the PDF's right-click menu.
+const AI={busy:false,hist:[]};
+const aiTitle=()=>((DATA.sources||[]).find(s=>s.id===cur)||{}).title||"";
+const aiLine=(cls,txt)=>{const d=document.createElement("div");d.className="aim "+cls;d.textContent=txt;const L=$("ailog");if(L){L.appendChild(d);L.scrollTop=L.scrollHeight}return d};
+const aiStatus=async()=>{const box=$("aikeybox");if(!box)return;
+  if(!(window.pywebview&&pywebview.api&&pywebview.api.ai_status)){box.hidden=false;if($("aikeyms"))$("aikeyms").textContent="the chat needs the app window";return}
+  try{const s=await pywebview.api.ai_status();box.hidden=!!s.has_key;if($("aikeyms"))$("aikeyms").textContent=s.has_key?"":("no key yet")}catch(e){}};
+const rtab=name=>{const ai=name==="ai";document.body.classList.toggle("rtai",ai);
+  document.querySelectorAll(".rtabs [data-rt]").forEach(b=>{const on=b.dataset.rt===name;b.classList.toggle("on",on);b.setAttribute("aria-selected",on)});
+  try{store.set("cv:rtab",name)}catch(e){}
+  if(ai)aiStatus()};
+const aiSend=async text=>{text=String(text||"").trim();if(!text||AI.busy)return;
+  if(!(window.pywebview&&pywebview.api&&pywebview.api.ai_chat)){aiLine("err","The chat needs the app window.");return}
+  AI.busy=true;$("aisend").disabled=true;aiLine("me",text);AI.hist.push({role:"user",content:text});
+  const wait=aiLine("bot","Thinking\u2026");
+  const sys="You help a political science researcher read a paper. The reading is \u201c"+aiTitle()+"\u201d. Answer in plain English in short paragraphs. If a passage is quoted, say what it means, what work it does in the argument, and define any term a newcomer would miss. Say plainly when the text does not settle the question.";
+  try{const r=await pywebview.api.ai_chat(JSON.stringify([{role:"system",content:sys}].concat(AI.hist.slice(-12))));
+    wait.remove();
+    if(r&&r.ok){aiLine("bot",r.text);AI.hist.push({role:"assistant",content:r.text})}
+    else aiLine("err","AI error: "+((r&&r.error)||"no answer"));
+  }catch(e){wait.remove();aiLine("err","AI error: "+((e&&e.message)||e))}
+  AI.busy=false;$("aisend").disabled=false};
+const aiAsk=(q,pg)=>{rtab("ai");aiSend("Explain this passage"+(pg?" from page "+pg:"")+":\n\n\u201c"+q+"\u201d")};
+document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest(".rtabs [data-rt]");if(b)rtab(b.dataset.rt);
+  if(e.target.id==="aisave"){const k=($("aikey").value||"").trim();if(!k)return;
+    (window.pywebview&&pywebview.api&&pywebview.api.ai_set_key?pywebview.api.ai_set_key(k):Promise.reject(new Error("the chat needs the app window")))
+      .then(r=>{if(r&&r.ok){$("aikey").value="";aiLine("bot","Key saved. Ask away.");aiStatus()}else aiLine("err","Could not save the key: "+((r&&r.error)||"?"))})
+      .catch(err=>aiLine("err","Could not save the key: "+err.message))}});
+document.addEventListener("submit",e=>{if(e.target.id!=="aif")return;e.preventDefault();const v=$("aiin").value;$("aiin").value="";aiSend(v)});
+document.addEventListener("keydown",e=>{if(e.target.id==="aiin"&&e.key==="Enter"&&(e.ctrlKey||e.metaKey)){e.preventDefault();$("aif").requestSubmit()}});
+window.addEventListener("pywebviewready",()=>{if(document.body.classList.contains("rtai"))aiStatus()});
+try{rtab(store.get("cv:rtab")==="ai"?"ai":"pdf")}catch(e){rtab("pdf")}
+const cm=document.createElement("div");cm.id="cm";cm.hidden=true;cm.innerHTML='<button type="button" class="adb">Add as claim</button><button type="button" class="lkb">Connect to another reading…</button><button type="button" class="zkn">Note on this passage</button><div class="sw">'+swHTML+'</div><button type="button" class="rm">Remove highlight</button><button type="button" class="dfb">Define</button><button type="button" class="aib">Ask AI</button><button type="button" class="cpb">Copy text</button>';document.body.append(cm);
 let pend=null;const hide=()=>{cm.hidden=true;rd.querySelectorAll(".hl.on").forEach(e=>e.classList.remove("on"))};
 // text-layer spans are wider/taller than the printed glyphs, so snap each rect to the ink drawn on the page canvas
 const ink=(d,q,r)=>{try{const c=d.querySelector("canvas");if(!c)return null;const k=c.width/q.width,Y0=Math.max(q.top,r.top-r.height*.3),Y1=Math.min(q.bottom,r.bottom+r.height*.3),X0=Math.max(q.left,r.left),X1=Math.min(q.right,r.right),px=Math.floor((X0-q.left)*k),py=Math.floor((Y0-q.top)*k),pw=Math.ceil((X1-X0)*k),ph=Math.ceil((Y1-Y0)*k);if(pw<2||ph<2)return null;const D=c.getContext("2d").getImageData(px,py,pw,ph).data,row=new Array(ph).fill(0),dark=(x,y)=>{const i=(y*pw+x)*4;return D[i]+D[i+1]+D[i+2]<450&&D[i+3]>0};let al=0;for(let i=3;i<D.length;i+=4)if(D[i]){al=1;break}if(!al)return null;for(let y=0;y<ph;y++)for(let x=0;x<pw;x++)if(dark(x,y))row[y]++;const th=Math.max(1,Math.round(pw*.01));for(let y=0;y<ph;y++)row[y]=row[y]>=th?row[y]:0;const mid=Math.round(((r.top+r.bottom)/2-Y0)*k),gap=Math.max(2,Math.round(r.height*.08*k));let s=-1;for(let o=0;o<ph&&s<0;o++){if(row[mid+o]>0)s=mid+o;else if(mid-o>=0&&row[mid-o]>0)s=mid-o}if(s<0)return false;let t=s,b=s;for(let y=s,g=0;y>=0&&g<=gap;y--){if(row[y]>0){t=y;g=0}else g++}for(let y=s,g=0;y<ph&&g<=gap;y++){if(row[y]>0){b=y;g=0}else g++}let a=pw,z=-1;for(let x=0;x<pw;x++)for(let y=t;y<=b;y++)if(dark(x,y)){a=Math.min(a,x);z=Math.max(z,x);break}if(z<0)return false;if((b-t+1)/k>r.height*1.3)return null;return{l:q.left+(px+a)/k-.5,t:q.top+(py+t)/k-.5,w:(z-a+1)/k+1,h:(b-t+1)/k+1}}catch(e){return null}};
@@ -2216,7 +2277,8 @@ window.flashHL=flash;window.pageText=async(id,n)=>{if(cur!==id||!docC)return"";c
  const f0=new RegExp(T+"\\s+(?=[A-Z\u201c\"(])").exec(P.slice(s,e));if(f0&&f0.index<40)s+=f0.index+f0[0].length;else if(s>0&&!new RegExp(T+"\\s*$").test(P.slice(0,s))){const m=[...P.slice(0,s).matchAll(new RegExp(T+"\\s+(?=[A-Z\u201c\"(])","g"))].pop(),b=m?m.index+m[0].length:0;if(s-b<300)s=b;else if(/^[a-z]/.test(P.slice(s,e))){const f=new RegExp(T+"\\s+(?=[A-Z\u201c\"(])").exec(P.slice(s,e));if(f)s+=f.index+f[0].length}}
  const r=P.slice(s,e).trim(),rw=new Set(r.toLowerCase().match(/[a-z0-9]+/g)),qw=q.toLowerCase().match(/[a-z0-9]+/g).slice(1,-1);
  return qw.filter(w=>rw.has(w)).length<qw.length*.8||r.length>q.length*1.5+250?q:r};
-const hlQ=m=>{const hs=m.g?[...rd.querySelectorAll(".hl")].filter(e=>e._m.g===m.g):[],t=hs.map(e=>e._m.t).find(Boolean)||"";const q=hs.sort((a,b)=>a._m.n-b._m.n||a._m.y-b._m.y||a._m.x-b._m.x).map(e=>{const r=e.getBoundingClientRect(),d=e.parentElement;return [...d.querySelectorAll(".textLayer span")].map(p=>{const k=p.getBoundingClientRect(),c=Math.min(r.bottom,k.bottom)-Math.max(r.top,k.top),tw=document.createTreeWalker(p,NodeFilter.SHOW_TEXT);if(c<Math.min(r.height,k.height)/2||Math.min(r.right,k.right)<=Math.max(r.left,k.left))return"";const q=document.createRange();let o="";for(let tn;tn=tw.nextNode();)for(let x=0;x<tn.data.length;x++){q.setStart(tn,x);q.setEnd(tn,x+1);const w=q.getBoundingClientRect(),m=w.left+w.width/2;if(w.width&&m>=r.left&&m<r.right)o+=tn.data[x]}return o.trim()}).join(" ")}).join(" ").replace(/\s+/g," ").trim();return{q:t||q,pg:m.n,hg:m.g}};window.hlQ=hlQ;const ctx=e=>{const x=sel_(1),h=hitHL(e);if(!x&&!h)return;e.preventDefault();pend=x||(h?hlQ(h._m):{});pend.hit=h&&h._m;flash(h&&h._m.g);if(x){x.rects=rectsNow();if(x.rects[0])x.rects[0].t=x.q}const a=cm.querySelector(".adb"),lk=cm.querySelector(".lkb"),zkn=cm.querySelector(".zkn"),sw=cm.querySelector(".sw"),rm=cm.querySelector(".rm"),df=cm.querySelector(".dfb"),cp=cm.querySelector(".cpb");
+const hlQ=m=>{const hs=m.g?[...rd.querySelectorAll(".hl")].filter(e=>e._m.g===m.g):[],t=hs.map(e=>e._m.t).find(Boolean)||"";const q=hs.sort((a,b)=>a._m.n-b._m.n||a._m.y-b._m.y||a._m.x-b._m.x).map(e=>{const r=e.getBoundingClientRect(),d=e.parentElement;return [...d.querySelectorAll(".textLayer span")].map(p=>{const k=p.getBoundingClientRect(),c=Math.min(r.bottom,k.bottom)-Math.max(r.top,k.top),tw=document.createTreeWalker(p,NodeFilter.SHOW_TEXT);if(c<Math.min(r.height,k.height)/2||Math.min(r.right,k.right)<=Math.max(r.left,k.left))return"";const q=document.createRange();let o="";for(let tn;tn=tw.nextNode();)for(let x=0;x<tn.data.length;x++){q.setStart(tn,x);q.setEnd(tn,x+1);const w=q.getBoundingClientRect(),m=w.left+w.width/2;if(w.width&&m>=r.left&&m<r.right)o+=tn.data[x]}return o.trim()}).join(" ")}).join(" ").replace(/\s+/g," ").trim();return{q:t||q,pg:m.n,hg:m.g}};window.hlQ=hlQ;const ctx=e=>{const x=sel_(1),h=hitHL(e);if(!x&&!h)return;e.preventDefault();pend=x||(h?hlQ(h._m):{});pend.hit=h&&h._m;flash(h&&h._m.g);if(x){x.rects=rectsNow();if(x.rects[0])x.rects[0].t=x.q}const a=cm.querySelector(".adb"),lk=cm.querySelector(".lkb"),zkn=cm.querySelector(".zkn"),sw=cm.querySelector(".sw"),rm=cm.querySelector(".rm"),df=cm.querySelector(".dfb"),cp=cm.querySelector(".cpb"),aib=cm.querySelector(".aib");
+  aib.hidden=!(x||pend.q);
   cp.hidden=!(x||pend.q);
   const wsel=x?String(x.q||"").trim():"",one=/^[A-Za-z][A-Za-z'\u2019-]{1,40}$/.test(wsel);
   df.hidden=!one;df.textContent=one?"Define \u201c"+wsel+"\u201d":"Define";  // by class: the menu items are not at fixed positions
@@ -2225,6 +2287,7 @@ rd.addEventListener("contextmenu",ctx);rd.addEventListener("click",e=>{if(getSel
 // bound by selector, not by child index: the swatch row moves when another menu item is added
 cm.querySelector(".cpb").onclick=()=>{const q=((pend&&pend.q)||"").trim();hide();if(!q)return;
   copyText(q);};
+cm.querySelector(".aib").onclick=()=>{const q=((pend&&pend.q)||"").trim(),pg=pend&&pend.pg;hide();if(q)aiAsk(q,pg)};
 cm.querySelector(".dfb").onclick=()=>{const w=((pend&&pend.q)||"").trim();const r=cm.getBoundingClientRect();hide();
   if(w)defineWord(w,r.left,r.bottom+6)};
 cm.querySelector(".rm").onclick=()=>{hide();const m=pend&&pend.hit;if(!m)return;const o=HL();o[cur]=(o[cur]||[]).filter(k=>m.g?k.g!==m.g:!(k.n===m.n&&k.x===m.x&&k.y===m.y&&k.c===m.c));saveHL(o);rd.querySelectorAll(".hl").forEach(e=>{const k=e._m;if(m.g?k.g===m.g:k.x===m.x&&k.y===m.y&&k.n===m.n)e.remove()});toast("Highlight removed",1)};

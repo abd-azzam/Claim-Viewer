@@ -18,6 +18,8 @@ import sys
 import tempfile
 import threading
 import time
+import urllib.error
+import urllib.request
 
 import webview
 
@@ -26,6 +28,7 @@ os.chdir(ROOT)
 PDF_DIR = os.path.join(ROOT, "pdf")
 LIB_PATH = os.path.join(ROOT, "library.json")
 SRC_PATH = os.path.join(ROOT, "sources.js")
+AI_PATH = os.path.join(ROOT, "ai.json")
 INDEX = pathlib.Path(ROOT, "index.html")
 
 
@@ -142,6 +145,23 @@ def write_sources(lib):
 RESERVED = {"CON", "PRN", "AUX", "NUL", *(f"COM{i}" for i in range(1, 10)), *(f"LPT{i}" for i in range(1, 10))}
 
 
+def _ai_cfg():
+    try:
+        with open(AI_PATH, encoding="utf-8-sig") as f:
+            d = json.load(f)
+        return d if isinstance(d, dict) else {}
+    except Exception:
+        return {}
+
+
+def _dialog(kind, **kw):
+    """pywebview 6.2.1 has no window= argument; older builds took one to keep the dialog owned by the app."""
+    try:
+        return win.create_file_dialog(kind, window=win, **kw)
+    except TypeError:
+        return win.create_file_dialog(kind, **kw)
+
+
 def safe_id(path):
     stem = re.sub(r"\.pdf$", "", os.path.basename(path), flags=re.I)
     stem = re.sub(r'[\\/:*?"<>|]', "-", stem).strip() or "untitled"
@@ -152,12 +172,8 @@ def safe_id(path):
 
 class Api:
     def save_pdf(self, name, b64):  # PDF-only save dialog; "" when cancelled
-        try:  # window=win keeps the dialog owned by the app, so it cannot open behind it
-            r = win.create_file_dialog(webview.FileDialog.SAVE, save_filename=name,
-                                       file_types=("PDF files (*.pdf)",), window=win)
-        except TypeError:  # pywebview without the window= argument
-            r = win.create_file_dialog(webview.FileDialog.SAVE, save_filename=name,
-                                       file_types=("PDF files (*.pdf)",))
+        try:
+            r = _dialog(webview.FileDialog.SAVE, save_filename=name, file_types=("PDF files (*.pdf)",))
         except Exception:
             return ""
         if not r:
@@ -176,11 +192,7 @@ class Api:
         ext = os.path.splitext(name)[1].lower() or ".png"  # the dialog lists the three image types and nothing else
         types = ("PNG image (*.png)", "JPG image (*.jpg)", "JPEG image (*.jpeg)")
         try:
-            r = win.create_file_dialog(webview.FileDialog.SAVE, save_filename=name,
-                                       file_types=types, window=win)
-        except TypeError:  # pywebview without the window= argument
-            r = win.create_file_dialog(webview.FileDialog.SAVE, save_filename=name,
-                                       file_types=types)
+            r = _dialog(webview.FileDialog.SAVE, save_filename=name, file_types=types)
         except Exception:
             return ""
         if not r:
@@ -247,8 +259,8 @@ class Api:
             picked = list(paths)
         else:
             try:
-                picked = win.create_file_dialog(webview.FileDialog.OPEN, allow_multiple=True,
-                                                file_types=("PDF files (*.pdf)",), window=win)
+                picked = _dialog(webview.FileDialog.OPEN, allow_multiple=True,
+                                 file_types=("PDF files (*.pdf)",))
             except Exception as e:
                 return {"error": str(e)}
         if not picked:
@@ -290,6 +302,54 @@ class Api:
             write_lib(lib)
             write_sources(lib)
         return {"added": added, "failed": failed, "library": lib}  # the page adopts this: its in-memory LIB is stale after a write
+
+    def ai_status(self):  # the Ask AI tab asks this before it shows the key box
+        c = _ai_cfg()
+        return {"has_key": bool((c.get("key") or "").strip()), "model": c.get("model") or "deepseek-chat"}
+
+    def ai_set_key(self, key):  # "" clears it
+        key = (key or "").strip()
+        c = _ai_cfg()
+        if key:
+            c["key"] = key
+            c.setdefault("model", "deepseek-chat")
+        else:
+            c.pop("key", None)
+        _atomic(AI_PATH, json.dumps(c, ensure_ascii=False, indent=1))
+        return {"ok": True, "has_key": bool(key), "model": c.get("model") or "deepseek-chat"}
+
+    def ai_chat(self, messages_json):  # DeepSeek is OpenAI-compatible; the page cannot POST from file://
+        c = _ai_cfg()
+        key = (c.get("key") or "").strip()
+        if not key:
+            return {"ok": False, "error": "no API key yet: paste one in the Ask AI tab"}
+        try:
+            msgs = json.loads(messages_json)
+            if not isinstance(msgs, list) or not msgs:
+                return {"ok": False, "error": "no messages"}
+        except Exception as e:
+            return {"ok": False, "error": "bad messages: %s" % e}
+        body = json.dumps({"model": c.get("model") or "deepseek-chat", "messages": msgs[-14:],
+                           "temperature": 0.3, "max_tokens": 1200, "stream": False}).encode("utf-8")
+        req = urllib.request.Request(
+            "https://api.deepseek.com/chat/completions", data=body,
+            headers={"Content-Type": "application/json", "Authorization": "Bearer " + key})
+        try:
+            with urllib.request.urlopen(req, timeout=120) as r:
+                j = json.loads(r.read().decode("utf-8"))
+        except urllib.error.HTTPError as e:
+            try:
+                msg = json.loads(e.read().decode("utf-8")).get("error", {}).get("message") or str(e)
+            except Exception:
+                msg = str(e)
+            return {"ok": False, "error": "%s (HTTP %s)" % (msg[:300], e.code)}
+        except Exception as e:
+            return {"ok": False, "error": str(e)[:300]}
+        try:
+            txt = j["choices"][0]["message"]["content"]
+        except Exception:
+            return {"ok": False, "error": "unexpected reply: " + json.dumps(j)[:200]}
+        return {"ok": True, "text": txt, "model": j.get("model") or ""}
 
     def log(self, line):  # the page's timing probes land in perf.log next to the exe
         try:
