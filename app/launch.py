@@ -15,6 +15,8 @@ import pathlib
 import re
 import shutil
 import sys
+import tempfile
+import threading
 import time
 
 import webview
@@ -32,22 +34,99 @@ def stop(msg):
     sys.exit(1)
 
 
-def read_lib():
+_LOCKS = {}
+_LOCK_GUARD = threading.Lock()
+
+
+def _lock_for(path):
+    with _LOCK_GUARD:
+        return _LOCKS.setdefault(os.path.normcase(os.path.abspath(path)), threading.Lock())
+
+
+def _swap(tmp, path):
+    """os.replace until the other handle lets go: 320 saves at once used to half-fail with WinError 5."""
+    for i in range(40):
+        try:
+            os.replace(tmp, path)
+            return
+        except PermissionError:
+            if i == 39:
+                raise
+            time.sleep(0.01 * (1 + i % 5))
+
+
+def _atomic(path, text):
+    """Write beside the target under a unique name, then swap it in.
+
+    A shared "<name>.tmp" made two saves collide with WinError 32, and a save that
+    died halfway left the old file replaced by a truncated one."""
+    d = os.path.dirname(path) or "."
+    fd, tmp = tempfile.mkstemp(prefix=".tmp-", suffix=".part", dir=d)
     try:
-        with open(LIB_PATH, encoding="utf-8") as f:
-            lib = json.load(f)
+        with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as f:
+            f.write(text)
+        with _lock_for(path):
+            _swap(tmp, path)
     except Exception:
+        try:
+            os.unlink(tmp)
+        except OSError:
+            pass
+        raise
+
+
+def _atomic_bytes(path, data):
+    d = os.path.dirname(path) or "."
+    fd, tmp = tempfile.mkstemp(prefix=".tmp-", suffix=".part", dir=d)
+    try:
+        with os.fdopen(fd, "wb") as f:
+            f.write(data)
+        with _lock_for(path):
+            _swap(tmp, path)
+    except Exception:
+        try:
+            os.unlink(tmp)
+        except OSError:
+            pass
+        raise
+
+
+def read_lib():
+    """Read library.json, or an empty library, and never hand back a shape the page cannot read.
+
+    A file that fails to parse is copied aside first: the next import used to replace a
+    damaged library with a one-item one and the old readings were gone."""
+    try:
+        with open(LIB_PATH, encoding="utf-8-sig") as f:  # PowerShell 5.1 writes a BOM; json.load rejects it
+            lib = json.load(f)
+    except FileNotFoundError:
+        lib = {"version": 1, "collections": [], "items": {}}
+    except Exception:
+        try:
+            shutil.copy2(LIB_PATH, LIB_PATH + time.strftime(".damaged-%Y%m%d-%H%M%S.json"))
+        except Exception:
+            pass
+        lib = {"version": 1, "collections": [], "items": {}}
+    if not isinstance(lib, dict):
         lib = {"version": 1, "collections": [], "items": {}}
     lib.setdefault("collections", [])
     lib.setdefault("items", {})
+    items = {}
+    for k, v in list(lib["items"].items()):
+        if not isinstance(k, str) or not isinstance(v, dict):
+            continue  # a string item used to stop the app before the window opened
+        if not isinstance(v.get("title"), str):
+            v["title"] = str(v.get("title") or k)
+        cols = v.get("collections")
+        v["collections"] = [str(c) for c in cols] if isinstance(cols, list) else []
+        items[k] = v
+    lib["items"] = items
+    lib["collections"] = [c for c in lib["collections"] if isinstance(c, dict) and isinstance(c.get("id"), str)]
     return lib
 
 
 def write_lib(lib):
-    tmp = LIB_PATH + ".tmp"
-    with open(tmp, "w", encoding="utf-8") as f:
-        json.dump(lib, f, ensure_ascii=False, indent=1)
-    os.replace(tmp, LIB_PATH)
+    _atomic(LIB_PATH, json.dumps(lib, ensure_ascii=False, indent=1))
 
 
 def write_sources(lib):
@@ -57,13 +136,18 @@ def write_sources(lib):
     lib_json = json.dumps(lib, ensure_ascii=False).replace("</", "<\\/")
     body = "window.SOURCES=%s;\nwindow.LIBRARY=%s;\n" % (
         json.dumps(rows, ensure_ascii=False).replace("</", "<\\/"), lib_json)
-    with open(SRC_PATH, "w", encoding="utf-8") as f:
-        f.write("// Written by ClaimViewer.exe from library.json at every start. Do not edit.\n" + body)
+    _atomic(SRC_PATH, "// Written by ClaimViewer.exe from library.json at every start. Do not edit.\n" + body)
+
+
+RESERVED = {"CON", "PRN", "AUX", "NUL", *(f"COM{i}" for i in range(1, 10)), *(f"LPT{i}" for i in range(1, 10))}
 
 
 def safe_id(path):
     stem = re.sub(r"\.pdf$", "", os.path.basename(path), flags=re.I)
-    return re.sub(r'[\\/:*?"<>|]', "-", stem).strip() or "untitled"
+    stem = re.sub(r'[\\/:*?"<>|]', "-", stem).strip() or "untitled"
+    if stem.split(".")[0].upper() in RESERVED:
+        stem += "_"  # a reading called NUL.pdf used to create a file Windows cannot delete
+    return stem
 
 
 class Api:
@@ -81,8 +165,11 @@ class Api:
         f = r if isinstance(r, str) else r[0]
         if not f.lower().endswith(".pdf"):
             f += ".pdf"
-        with open(f, "wb") as fh:
-            fh.write(base64.b64decode(b64))
+        try:
+            data = base64.b64decode(b64, validate=True)  # decode first: a bad payload used to leave a 0-byte file
+        except Exception:
+            return ""
+        _atomic_bytes(f, data)
         return f
 
     def save_image(self, name, b64):  # PNG/JPG save dialog for a graph export; "" when cancelled
@@ -101,8 +188,11 @@ class Api:
         f = r if isinstance(r, str) else r[0]
         if not f.lower().endswith((".png", ".jpg", ".jpeg")):
             f += ext or ".png"
-        with open(f, "wb") as fh:
-            fh.write(base64.b64decode(b64))
+        try:
+            data = base64.b64decode(b64, validate=True)
+        except Exception:
+            return ""
+        _atomic_bytes(f, data)
         return f
 
     def save_pages(self, text):  # reading positions live beside the library, so a wiped WebView2 profile does not lose them
@@ -118,11 +208,7 @@ class Api:
                     continue
                 if n > 0:
                     clean[str(k)] = n
-            p = os.path.join(ROOT, "last-pages.json")
-            tmp = p + ".tmp"
-            with open(tmp, "w", encoding="utf-8") as fh:
-                json.dump(clean, fh, ensure_ascii=False)
-            os.replace(tmp, p)
+            _atomic(os.path.join(ROOT, "last-pages.json"), json.dumps(clean, ensure_ascii=False))
             return {"ok": True, "count": len(clean)}
         except Exception as e:
             return {"ok": False, "error": str(e)}
@@ -138,9 +224,19 @@ class Api:
     def save_library(self, text):
         try:
             lib = json.loads(text)
-            if not isinstance(lib.get("collections"), list) or not isinstance(lib.get("items"), dict):
+            if not isinstance(lib, dict) or not isinstance(lib.get("collections"), list) or not isinstance(lib.get("items"), dict):
                 return {"ok": False, "error": "not a library"}
-            write_lib(lib)
+            for k, v in lib["items"].items():
+                if not isinstance(k, str) or not isinstance(v, dict):
+                    return {"ok": False, "error": "item %r is not an object" % (k,)}
+                if not isinstance(v.get("title"), str):
+                    return {"ok": False, "error": "item %r has no text title" % (k,)}
+                if not isinstance(v.get("collections", []), list):
+                    return {"ok": False, "error": "item %r has no collection list" % (k,)}
+            for c in lib["collections"]:
+                if not isinstance(c, dict) or not isinstance(c.get("id"), str):
+                    return {"ok": False, "error": "a collection is not an object with an id"}
+            write_lib(lib)  # nothing is written until the whole library checks out
             write_sources(lib)
             return {"ok": True}
         except Exception as e:
@@ -159,25 +255,41 @@ class Api:
             return {"added": [], "library": read_lib()}
         os.makedirs(PDF_DIR, exist_ok=True)
         lib = read_lib()
-        added = []
+        added, failed = [], []
+        taken = {k.lower() for k in lib["items"]}
+        try:  # NTFS is case-insensitive: "Smith.pdf" and "smith.pdf" are the same file on disk
+            taken |= {os.path.splitext(f)[0].lower() for f in os.listdir(PDF_DIR)}
+        except OSError:
+            pass
         for src in picked:
-            if not src.lower().endswith(".pdf"):
-                continue
-            i = safe_id(src)
-            n = 2
-            while i in lib["items"]:  # same file name twice: keep both
-                i = "%s (%d)" % (safe_id(src), n)
-                n += 1
-            dst = os.path.join(PDF_DIR, i + ".pdf")
-            if os.path.abspath(src) != os.path.abspath(dst):  # picking a file already in pdf\ threw WinError 32
-                shutil.copy2(src, dst)
-            lib["items"][i] = {"title": i, "collections": [collection] if collection else [],
-                               "tags": []}
-            added.append(i)
+            name = os.path.basename(str(src))
+            try:
+                if not str(src).lower().endswith(".pdf"):
+                    continue
+                if not os.path.isfile(src):
+                    failed.append([name, "file not found"])
+                    continue
+                if os.path.getsize(src) == 0:
+                    failed.append([name, "empty file"])
+                    continue
+                base = safe_id(src)
+                i, n = base, 2
+                while i.lower() in taken:  # same file name twice: keep both
+                    i = "%s (%d)" % (base, n)
+                    n += 1
+                dst = os.path.join(PDF_DIR, i + ".pdf")
+                if os.path.normcase(os.path.abspath(src)) != os.path.normcase(os.path.abspath(dst)):
+                    shutil.copy2(src, dst)  # picking a file already in pdf\\ threw WinError 32
+                lib["items"][i] = {"title": i, "collections": [collection] if collection else [],
+                                   "tags": []}
+                taken.add(i.lower())
+                added.append(i)
+            except Exception as e:  # one unreadable file must not strand the rest of the batch
+                failed.append([name, str(e)])
         if added:
             write_lib(lib)
             write_sources(lib)
-        return {"added": added, "library": lib}  # the page adopts this: its in-memory LIB is stale after a write
+        return {"added": added, "failed": failed, "library": lib}  # the page adopts this: its in-memory LIB is stale after a write
 
     def log(self, line):  # the page's timing probes land in perf.log next to the exe
         try:
@@ -188,16 +300,30 @@ class Api:
         return True
 
     def open_library_folder(self):
-        os.startfile(PDF_DIR)
-        return True
+        try:
+            os.makedirs(PDF_DIR, exist_ok=True)
+            os.startfile(PDF_DIR)
+            return True
+        except Exception:
+            return False
 
 
 h = hashlib.md5(ROOT.lower().encode()).hexdigest()
 store = os.path.join(os.environ.get("LOCALAPPDATA") or ROOT, "ClaimViewer", "p-" + h[:8])
 os.makedirs(store, exist_ok=True)
 
+for f in os.listdir(ROOT):  # halves of a save that died before it could swap the file in
+    if f.startswith(".tmp-") and f.endswith(".part"):
+        try:
+            os.unlink(os.path.join(ROOT, f))
+        except OSError:
+            pass
+
 lib = read_lib()
-write_sources(lib)
+try:
+    write_sources(lib)
+except Exception as e:  # the window still opens; the user sees an empty list instead of no app
+    print("sources.js could not be written:", e)
 if "--selftest" in sys.argv:  # round-trip check used by the build: python launch.py --selftest
     n = len(lib["items"])
     got = json.loads(open(SRC_PATH, encoding="utf-8").read().split("window.LIBRARY=", 1)[1].rstrip().rstrip(";"))
