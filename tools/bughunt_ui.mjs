@@ -160,6 +160,29 @@ if (await has(".card.sel [data-ed]")) {
   out("Edit panel opens; open + close does not change saved edits", open && (await ls()) === before && !take().length, `open=${open}`);
 } else SKIP("Edit panel", "no [data-ed] on a selected card");
 
+// ---- a new claim must keep the folder you were in, and must actually appear
+{
+  const r = await ev(async () => {
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+    const col = document.getElementById("col"), s = document.getElementById("pdfsel"), fa = document.getElementById("fa");
+    if (!col || !s || !window.capture) return null;
+    col.value = col.options[1].value; col.dispatchEvent(new Event("change", { bubbles: true })); await sleep(700);
+    const rid = [...s.options].map(o => o.value).filter(Boolean)[0];
+    if (!rid) return null;
+    s.value = rid; s.dispatchEvent(new Event("change", { bubbles: true })); await sleep(3200);
+    if (fa) { const fo = [...fa.options].map(o => o.value).filter(Boolean)[0];
+      if (fo) { fa.value = fo; fa.dispatchEvent(new Event("change", { bubbles: true })); await sleep(700); } }
+    const before = [col.value, document.getElementById("src").value];
+    window.capture("Automatic check: this quote is long enough to pass the twenty character floor.", 1);
+    await sleep(1400);
+    const after = [col.value, document.getElementById("src").value];
+    const seen = [...document.querySelectorAll(".card")].some(c => c.textContent.includes("Automatic check:"));
+    return { before, after, seen };
+  });
+  out("adding a claim keeps the collection and shows the claim", !!r && r.before[0] === r.after[0] && r.seen,
+      r ? JSON.stringify(r) : "no reading to test");
+}
+
 // ---- graph
 if (await has(".card.sel [data-g]")) {
   await ev(() => document.querySelector(".card.sel [data-g]").click()); await sleep(800);

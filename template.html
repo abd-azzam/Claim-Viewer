@@ -671,6 +671,13 @@ opts($("ev"),"All evidence",VB.evidence);
 let sel=null;
 const FL=["q","col","src","role","pw","fa","oc","dir","ev","own","rl","lt"];
 function clearFilters(){FL.forEach(i=>$(i).value="");refresh()}
+// a new claim used to call clearFilters(), which also wiped Collection and Reading and left the claim
+// under "All collections" where you were not looking. This drops only what hides it and keeps the folder.
+const showNewClaim=c=>{const col=$("col").value;
+  ["q","role","pw","fa","oc","dir","ev","own","rl","lt"].forEach(i=>{const e=$(i);if(e)e.value=""});
+  const sr=$("src");if(sr&&sr.value&&sr.value!==c.src)sr.value=c.src;
+  if(col&&!inCol(COL[c.src]||[],col))$("col").value="";
+  refresh()};
 function pass(c){
   if(c.del)return false;
   const q=$("q").value.toLowerCase();
@@ -2205,7 +2212,7 @@ window.toast=toast;
 const capture=(q,pg,rs,hg)=>{if(rs&&rs[0]&&!rs[0].t)rs[0].t=q;q=(q||"").replace(/\s+/g," ").trim();if(q.length<20)return;const x=all.find(x=>x.src+x.id===sel),src=(!rd.hidden&&cur)||(x&&x.src)||s.value,
   _it=DATA.sources.find(y=>y.id===src),_cc=$("col").value;
  if(!_it||!inCol(_it.col,_cc)){window.toast("That reading is outside the category you selected.");return}
- const c={id:"u"+Date.now(),src,srcTitle:DATA.sources.find(x=>x.id===src).title,quote:q,gist:"",role:"OTHER",pathway:[],direction:"",status:"user",own_claim:true};norm(c);if(pg){c.pdf_page=[pg];c.cite_page=String(pg)}if(hg)c.hg=hg;else if(rs&&rs.length&&cur===src)c.hg=mark("y",rs);all.push(c);ED.a.push(c);sel=src+c.id;saveED();if(!pass(c))clearFilters();else refresh();const e=[...document.querySelectorAll("#list .card")].find(z=>z.dataset.k===kc(c));if(e)e.scrollIntoView({block:"center"});toast("Claim added"+(pg?" (p."+pg+")":"")+": "+q.slice(0,60));if(hg&&pg)window.healClaim(c,pg)};
+ const c={id:"u"+Date.now(),src,srcTitle:DATA.sources.find(x=>x.id===src).title,quote:q,gist:"",role:"OTHER",pathway:[],direction:"",status:"user",own_claim:true};norm(c);if(pg){c.pdf_page=[pg];c.cite_page=String(pg)}if(hg)c.hg=hg;else if(rs&&rs.length&&cur===src)c.hg=mark("y",rs);all.push(c);ED.a.push(c);sel=src+c.id;saveED();if(!pass(c))showNewClaim(c);else refresh();const e=[...document.querySelectorAll("#list .card")].find(z=>z.dataset.k===kc(c));if(e)e.scrollIntoView({block:"center"});toast("Claim added"+(pg?" (p."+pg+")":"")+": "+q.slice(0,60));if(hg&&pg)window.healClaim(c,pg)};
 // ---- right pane: PDF or the DeepSeek chat. The chat is fed by the PDF's right-click menu.
 const AI={busy:false,hist:[]};
 const aiTitle=()=>((DATA.sources||[]).find(s=>s.id===cur)||{}).title||"";
@@ -2277,7 +2284,8 @@ window.flashHL=flash;window.pageText=async(id,n)=>{if(cur!==id||!docC)return"";c
  const f0=new RegExp(T+"\\s+(?=[A-Z\u201c\"(])").exec(P.slice(s,e));if(f0&&f0.index<40)s+=f0.index+f0[0].length;else if(s>0&&!new RegExp(T+"\\s*$").test(P.slice(0,s))){const m=[...P.slice(0,s).matchAll(new RegExp(T+"\\s+(?=[A-Z\u201c\"(])","g"))].pop(),b=m?m.index+m[0].length:0;if(s-b<300)s=b;else if(/^[a-z]/.test(P.slice(s,e))){const f=new RegExp(T+"\\s+(?=[A-Z\u201c\"(])").exec(P.slice(s,e));if(f)s+=f.index+f[0].length}}
  const r=P.slice(s,e).trim(),rw=new Set(r.toLowerCase().match(/[a-z0-9]+/g)),qw=q.toLowerCase().match(/[a-z0-9]+/g).slice(1,-1);
  return qw.filter(w=>rw.has(w)).length<qw.length*.8||r.length>q.length*1.5+250?q:r};
-const hlQ=m=>{const hs=m.g?[...rd.querySelectorAll(".hl")].filter(e=>e._m.g===m.g):[],t=hs.map(e=>e._m.t).find(Boolean)||"";const q=hs.sort((a,b)=>a._m.n-b._m.n||a._m.y-b._m.y||a._m.x-b._m.x).map(e=>{const r=e.getBoundingClientRect(),d=e.parentElement;return [...d.querySelectorAll(".textLayer span")].map(p=>{const k=p.getBoundingClientRect(),c=Math.min(r.bottom,k.bottom)-Math.max(r.top,k.top),tw=document.createTreeWalker(p,NodeFilter.SHOW_TEXT);if(c<Math.min(r.height,k.height)/2||Math.min(r.right,k.right)<=Math.max(r.left,k.left))return"";const q=document.createRange();let o="";for(let tn;tn=tw.nextNode();)for(let x=0;x<tn.data.length;x++){q.setStart(tn,x);q.setEnd(tn,x+1);const w=q.getBoundingClientRect(),m=w.left+w.width/2;if(w.width&&m>=r.left&&m<r.right)o+=tn.data[x]}return o.trim()}).join(" ")}).join(" ").replace(/\s+/g," ").trim();return{q:t||q,pg:m.n,hg:m.g}};window.hlQ=hlQ;const ctx=e=>{const x=sel_(1),h=hitHL(e);if(!x&&!h)return;e.preventDefault();pend=x||(h?hlQ(h._m):{});pend.hit=h&&h._m;flash(h&&h._m.g);if(x){x.rects=rectsNow();if(x.rects[0])x.rects[0].t=x.q}const a=cm.querySelector(".adb"),lk=cm.querySelector(".lkb"),zkn=cm.querySelector(".zkn"),sw=cm.querySelector(".sw"),rm=cm.querySelector(".rm"),df=cm.querySelector(".dfb"),cp=cm.querySelector(".cpb"),aib=cm.querySelector(".aib");
+const hlQ=m=>{const hs=m.g?[...rd.querySelectorAll(".hl")].filter(e=>e._m.g===m.g):[],t=hs.map(e=>e._m.t).find(Boolean)||"";const q=hs.sort((a,b)=>a._m.n-b._m.n||a._m.y-b._m.y||a._m.x-b._m.x).map(e=>{const r=e.getBoundingClientRect(),d=e.parentElement;return [...d.querySelectorAll(".textLayer span")].map(p=>{const k=p.getBoundingClientRect(),c=Math.min(r.bottom,k.bottom)-Math.max(r.top,k.top),tw=document.createTreeWalker(p,NodeFilter.SHOW_TEXT);if(c<Math.min(r.height,k.height)/2||Math.min(r.right,k.right)<=Math.max(r.left,k.left))return"";const q=document.createRange();let o="";for(let tn;tn=tw.nextNode();)for(let x=0;x<tn.data.length;x++){q.setStart(tn,x);q.setEnd(tn,x+1);const w=q.getBoundingClientRect(),m=w.left+w.width/2;if(w.width&&m>=r.left&&m<r.right)o+=tn.data[x]}return o.trim()}).join(" ")}).join(" ").replace(/\s+/g," ").trim();return{q:t||q,pg:m.n,hg:m.g}};window.hlQ=hlQ;window.capture=capture;
+const ctx=e=>{const x=sel_(1),h=hitHL(e);if(!x&&!h)return;e.preventDefault();pend=x||(h?hlQ(h._m):{});pend.hit=h&&h._m;flash(h&&h._m.g);if(x){x.rects=rectsNow();if(x.rects[0])x.rects[0].t=x.q}const a=cm.querySelector(".adb"),lk=cm.querySelector(".lkb"),zkn=cm.querySelector(".zkn"),sw=cm.querySelector(".sw"),rm=cm.querySelector(".rm"),df=cm.querySelector(".dfb"),cp=cm.querySelector(".cpb"),aib=cm.querySelector(".aib");
   aib.hidden=!(x||pend.q);
   cp.hidden=!(x||pend.q);
   const wsel=x?String(x.q||"").trim():"",one=/^[A-Za-z][A-Za-z'\u2019-]{1,40}$/.test(wsel);
