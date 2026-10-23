@@ -327,7 +327,25 @@ class Api:
         _atomic(AI_PATH, json.dumps(c, ensure_ascii=False, indent=1))
         return {"ok": True, "has_key": True, "base": c.get("base") or "", "model": c["model"]}
 
-    def ai_chat(self, messages_json):  # DeepSeek is OpenAI-compatible; the page cannot POST from file://
+    def ai_models(self):  # the picker asks what the endpoint really serves, so a renamed id cannot break it
+        c = _ai_cfg()
+        key = (c.get("key") or "").strip()
+        if not key:
+            return {"ok": False, "models": [], "error": "no API key yet"}
+        base = (c.get("base") or "https://api.deepseek.com").rstrip("/")
+        req = urllib.request.Request(base + "/models",
+                                     headers={"Authorization": "Bearer " + key})
+        try:
+            with urllib.request.urlopen(req, timeout=20) as r:
+                j = json.loads(r.read().decode("utf-8"))
+            ids = [m.get("id") for m in (j.get("data") or []) if isinstance(m, dict) and m.get("id")]
+            return {"ok": True, "models": ids[:40]}
+        except urllib.error.HTTPError as e:
+            return {"ok": False, "models": [], "error": "HTTP %s" % e.code}
+        except Exception as e:
+            return {"ok": False, "models": [], "error": str(e)[:200]}
+
+    def ai_chat(self, messages_json, model=""):  # DeepSeek is OpenAI-compatible; the page cannot POST from file://
         c = _ai_cfg()
         key = (c.get("key") or "").strip()
         if not key:
@@ -340,7 +358,10 @@ class Api:
             return {"ok": False, "error": "bad messages: %s" % e}
         base = (c.get("base") or "https://api.deepseek.com").rstrip("/")
         url = base if base.endswith("/chat/completions") else base + "/chat/completions"
-        body = json.dumps({"model": c.get("model") or "deepseek-chat", "messages": msgs[-14:],
+        want = (model or "").strip() or (c.get("model") or "deepseek-v4-flash")
+        if not re.match(r"^[A-Za-z0-9._:\-]{1,64}$", want):  # only a plain id reaches the request body
+            want = c.get("model") or "deepseek-v4-flash"
+        body = json.dumps({"model": want, "messages": msgs[-14:],
                            "temperature": 0.3, "max_tokens": 1200, "stream": False}).encode("utf-8")
         req = urllib.request.Request(
             url, data=body,
