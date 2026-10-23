@@ -404,6 +404,7 @@ body.rtai #aipane{display:flex}
 #aikeybox label{display:grid;gap:4px;font-size:11.5px;font-weight:600;color:var(--mute)}
 #aikeybox .airow{display:flex;gap:10px;align-items:center}
 #aikeybox .airow small{color:var(--mute);font-size:11.5px}
+#aimodel{height:38px;max-width:150px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit;font-size:12px;padding:0 6px;flex:none}
 /* left panel polish: one rhythm for tabs, folder rows and buttons */
 .tabs{gap:6px;margin:0 0 14px}
 .tabs button{flex:1;height:34px;padding:0 10px;border-radius:8px;font-size:13px}
@@ -505,7 +506,7 @@ body.rtai #aipane{display:flex}
 <label>Base URL (optional)<input id="aibase" type="text" placeholder="https://api.deepseek.com" autocomplete="off" spellcheck="false"></label>
 <div class="airow"><button id="aisave" type="button">Save</button><small id="aikeyms"></small></div></div>
 <div id="ailog" aria-live="polite"></div>
-<form id="aif"><textarea id="aiin" rows="2" placeholder="Ask about this reading"></textarea><button type="submit" id="aisend">Send</button></form>
+<form id="aif"><textarea id="aiin" rows="2" placeholder="Ask about this reading. Enter sends, Shift+Enter starts a new line."></textarea><select id="aimodel" aria-label="Model"><option value="deepseek-v4-flash">DeepSeek Flash</option><option value="deepseek-v4-pro">V4-Pro</option></select><button type="submit" id="aisend">Send</button></form>
 <div class="aihint">Select a sentence in the PDF, right-click it, then choose <b>Ask AI</b>.</div>
 </div></section>
 <button id="hl" type="button" class="edge" title="Hide the left panel" aria-label="Hide the left panel" aria-pressed="false"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button>
@@ -2234,17 +2235,33 @@ const aiStatus=async()=>{const box=$("aikeybox");if(!box)return;
     box.hidden=!!s.has_key;  // once a key is saved the section folds into one small button
     if($("aiconf"))$("aiconf").hidden=!s.has_key;
     if($("aikeyms"))$("aikeyms").textContent=s.has_key?"":"no key yet";
+    if(s.has_key)aiModels();
   }catch(e){}};
 const rtab=name=>{const ai=name==="ai";document.body.classList.toggle("rtai",ai);
   document.querySelectorAll(".rtabs [data-rt]").forEach(b=>{const on=b.dataset.rt===name;b.classList.toggle("on",on);b.setAttribute("aria-selected",on)});
   try{store.set("cv:rtab",name)}catch(e){}
   if(ai)aiStatus()};
+const aiModels=async()=>{const sel=$("aimodel");if(!sel||!(window.pywebview&&pywebview.api&&pywebview.api.ai_models))return;
+  let r=null;try{r=await pywebview.api.ai_models()}catch(e){return}
+  const ids=(r&&r.ok&&Array.isArray(r.models))?r.models:[];if(!ids.length)return;
+  const find=re=>ids.find(i=>re.test(i));
+  const pro=find(/pro/i),flash=find(/flash/i)||find(/chat/i);
+  const out=[];
+  if(pro)out.push([pro,"V4-Pro"]);
+  if(flash)out.push([flash,"DeepSeek Flash"]);
+  ids.filter(i=>i!==pro&&i!==flash).slice(0,6).forEach(i=>out.push([i,i]));
+  const cur=store.get("cv:aimodel")||sel.value;
+  sel.innerHTML=out.map(([v,l])=>`<option value="${esc(v)}">${esc(l)}</option>`).join("");
+  const want=[cur,flash,pro].filter(Boolean);
+  sel.value=want.find(v=>[...sel.options].some(o=>o.value===v))||sel.value;  // Flash by default: it is the cheap one
+};
 const aiSend=async text=>{text=String(text||"").trim();if(!text||AI.busy)return;
   if(!(window.pywebview&&pywebview.api&&pywebview.api.ai_chat)){aiLine("err","The chat needs the app window.");return}
   AI.busy=true;$("aisend").disabled=true;aiLine("me",text);AI.hist.push({role:"user",content:text});
   const wait=aiLine("bot","Thinking\u2026");
   const sys="You help a political science researcher read a paper. The reading is \u201c"+aiTitle()+"\u201d. Answer in plain English in short paragraphs. If a passage is quoted, say what it means, what work it does in the argument, and define any term a newcomer would miss. Say plainly when the text does not settle the question.";
-  try{const r=await pywebview.api.ai_chat(JSON.stringify([{role:"system",content:sys}].concat(AI.hist.slice(-12))));
+  try{const model=($("aimodel")&&$("aimodel").value)||"";
+    const r=await pywebview.api.ai_chat(JSON.stringify([{role:"system",content:sys}].concat(AI.hist.slice(-12))),model);
     wait.remove();
     if(r&&r.ok){aiLine("bot",r.text);AI.hist.push({role:"assistant",content:r.text})}
     else aiLine("err","AI error: "+((r&&r.error)||"no answer"));
@@ -2259,8 +2276,10 @@ document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest
       .then(r=>{if(r&&r.ok){$("aikey").value="";$("aikeybox").hidden=true;if($("aiconf"))$("aiconf").hidden=false;aiStatus()}
         else if($("aikeyms"))$("aikeyms").textContent="could not save: "+((r&&r.error)||"?")})
       .catch(err=>{if($("aikeyms"))$("aikeyms").textContent="could not save: "+err.message})}});
+document.addEventListener("change",e=>{if(e.target.id==="aimodel")try{store.set("cv:aimodel",e.target.value)}catch(err){}});
 document.addEventListener("submit",e=>{if(e.target.id!=="aif")return;e.preventDefault();const v=$("aiin").value;$("aiin").value="";aiSend(v)});
-document.addEventListener("keydown",e=>{if(e.target.id==="aiin"&&e.key==="Enter"&&(e.ctrlKey||e.metaKey)){e.preventDefault();$("aif").requestSubmit()}});
+document.addEventListener("keydown",e=>{if(e.target.id!=="aiin")return;
+  if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();$("aif").requestSubmit()}});  // Shift+Enter keeps the newline
 window.addEventListener("pywebviewready",()=>{if(document.body.classList.contains("rtai"))aiStatus()});
 try{rtab(store.get("cv:rtab")==="ai"?"ai":"pdf")}catch(e){rtab("pdf")}
 const cm=document.createElement("div");cm.id="cm";cm.hidden=true;cm.innerHTML='<button type="button" class="adb">Add as claim</button><button type="button" class="lkb">Connect to another reading…</button><button type="button" class="zkn">Note on this passage</button><div class="sw">'+swHTML+'</div><button type="button" class="rm">Remove highlight</button><button type="button" class="dfb">Define</button><button type="button" class="aib">Ask AI</button><button type="button" class="cpb">Copy text</button>';document.body.append(cm);
