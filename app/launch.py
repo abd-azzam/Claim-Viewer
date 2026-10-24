@@ -873,6 +873,50 @@ def _place(w, h):  # the window opened off to the right, and on a small screen i
 
 
 _ww, _wh, _cx, _cy = _place(1500, 920)
+
+
+def _single_instance():
+    """One ClaimViewer per machine, from any folder. A copy run outside its install folder would
+    otherwise open a blank library (it reads library.json beside itself) and look like data loss."""
+    try:
+        import ctypes
+        from ctypes import wintypes
+
+        kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+        kernel32.CreateMutexW.restype = wintypes.HANDLE
+        h = kernel32.CreateMutexW(None, True, "ClaimViewer.SingleInstance.v1")
+        err = ctypes.get_last_error()
+        if not h or err == 183:  # ERROR_ALREADY_EXISTS: another copy owns the mutex
+            kernel32.CloseHandle(h)
+            return False, h
+        return True, h
+    except Exception:
+        return True, None  # never block startup on a platform quirk
+
+
+_first, _hMutex = _single_instance()
+if not _first:
+    # Do not show a modal box: it blocks the process forever until someone clicks it. The window
+    # that is already open is the feedback; just leave.
+    os._exit(0)
+
+# A copy run outside its install folder finds no library.json beside itself and opens a blank app,
+# which looks exactly like lost data. Refuse that, and say where the real library is.
+_LIB_HERE = os.path.join(ROOT, "library.json")
+_REAL_LIB = r"C:\Apps\ClaimViewer\library.json"
+if not os.path.exists(_LIB_HERE) and os.path.exists(_REAL_LIB):
+    try:
+        import ctypes
+        ctypes.windll.user32.MessageBoxW(
+            None,
+            "This copy of Claim Viewer has no library next to it, so it would open empty.\n\n"
+            "Your readings are in C:\\Apps\\ClaimViewer.\n"
+            "Open Claim Viewer from there (or the Start Menu) instead.",
+            "Claim Viewer - wrong folder", 0x00000030)
+    except Exception:
+        pass
+    os._exit(0)
+
 win = webview.create_window("Claim Viewer", INDEX.as_uri(), js_api=Api(),
                             width=_ww, height=_wh, min_size=(900, 600), text_select=True,
                             x=_cx, y=_cy)
