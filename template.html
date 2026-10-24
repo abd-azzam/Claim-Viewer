@@ -2945,42 +2945,96 @@ const raStop=()=>{RA.on=false;RA.tok++;raAudioStop();
   raBar(false);raLabel("")};
 window.raStop=raStop;window.__ra=RA;window.__raPaint=raPaint;window.__raBoxes=raBoxes;
 // one sentence: fetch its MP3 from the app, play it, and resolve when it ends (or when the user steps on)
+// fetch audio for a sentence without playing it, keyed by text+voice so stepping reuses it
+const RAQ=new Map();
+const raPrefetch=(sn,voice)=>{
+  if(!sn||RAQ.has(sn+voice))return;
+  if(!(window.pywebview&&pywebview.api&&pywebview.api.ai_speak))return;
+  RAQ.set(sn+voice,null);  // reserve the slot so the same sentence is not asked for twice
+  pywebview.api.ai_speak(sn,voice).then(r=>{RAQ.set(sn+voice,r&&r.ok?r.audio:null)})
+    .catch(()=>RAQ.set(sn+voice,null));
+  if(RAQ.size>24){const k=RAQ.keys().next().value;RAQ.delete(k)}  // keep the cache small
+};
 const raSay=(sn,my)=>new Promise(res=>{
   const finish=v=>{if(RA.audio){RA.audio.onended=RA.audio.onerror=null}res(v)};
   if(!(window.pywebview&&pywebview.api&&pywebview.api.ai_speak)){
     try{const u=new SpeechSynthesisUtterance(sn);u.rate=.98;u.onend=()=>finish(1);u.onerror=()=>finish(0);
       speechSynthesis.speak(u);RA.stopSpeak=()=>{try{speechSynthesis.cancel()}catch(e){}finish(0)}}catch(e){finish(0)}
     return}
-  pywebview.api.ai_speak(sn,RA.voice||"").then(r=>{
+  const voice=RA.voice||"",key=sn+voice;
+  const play=b64=>{
     if(my!==RA.tok||!RA.on)return finish(0);
-    if(!r||!r.ok){toast("Voice error: "+((r&&r.error)||"no audio"));return finish(0)}
-    const bin=atob(r.audio),buf=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)buf[i]=bin.charCodeAt(i);
+    if(!b64){toast("Voice error: no audio");return finish(0)}
+    const bin=atob(b64),buf=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)buf[i]=bin.charCodeAt(i);
     raAudioStop();RA.url=URL.createObjectURL(new Blob([buf],{type:"audio/mpeg"}));
     const a=new Audio(RA.url);RA.audio=a;a.onended=()=>finish(1);a.onerror=()=>finish(0);
     RA.stopSpeak=()=>{try{a.pause()}catch(e){}finish(0)};
-    a.play().catch(()=>finish(0))}
-  ).catch(e=>{if(my===RA.tok)toast("Voice error: "+((e&&e.message)||e));finish(0)})});
+    a.play().catch(()=>finish(0));
+    // queue the NEXT sentence while this one is still speaking, so the pause between them is the
+    // natural sentence gap rather than a network round trip
+    const nx=(RA.sents||[])[(RA.idx|0)+1];if(nx)raPrefetch(nx,voice)};
+  const cached=RAQ.get(key);
+  if(cached)return play(cached);                 // already synthesised: start at once
+  pywebview.api.ai_speak(sn,voice).then(r=>{
+    RAQ.set(key,r&&r.ok?r.audio:null);
+    play(r&&r.ok?r.audio:null)})
+  .catch(e=>{if(my===RA.tok)toast("Voice error: "+((e&&e.message)||e));finish(0)})});
+window.__raQ=RAQ;window.__raPrefetch=raPrefetch;window.__raSay=raSay;  // the block is an IIFE: expose for tests
 // split the page into sentences once, so Back and Next can step through them
-const raSentences=P=>(P.match(/[^.!?]+[.!?]+["\u201d\u2019)\]]*\s*|[^.!?]+$/g)||[]).map(t=>t.trim()).filter(t=>t.split(/\s+/).length>=3);
+const raSentences=P=>{
+  // Every dot inside an abbreviation must be defused, not just the last one: "U.S." -> "U<S>" where
+  // U+0001 stands in for the dot, otherwise the splitter still stops at the first "." in "U.S".
+  // Defuse every dot inside a dotted abbreviation. Doing it as "replace the whole abbreviation"
+  // failed on alternation order, so this uses one simple rule per shape:
+  //   a letter followed by a dot followed by another letter or dot  ->  an inner abbreviation dot
+  // plus the common plain abbreviations (Dr., etc.) whose single dot must not end a sentence.
+  const guarded=String(P||"")
+    // a run of two or more "letter+dot" groups is a dotted abbreviation: U.S.  U.K.  e.g.  i.e.  Ph.D.
+    .replace(/(?:\b[A-Za-z]{1,4}\.){2,}/g,m=>m.replace(/\./g,"\u0001"))
+    // single-dot abbreviations whose stop must not end a sentence
+    .replace(/\b(etc|vs|Dr|Mr|Mrs|Ms|Prof|St|No|Vol|pp|Fig|al|cf|Ca|Ltd|Inc|Jr|Sr|approx|dept|est|ed|eds|trans|repr|orig|ser|suppl|chap|sec)\./g,"$1\u0001");
+  return (guarded.match(/[^.!?]+[.!?]+["\u201d\u2019)\]]*\s*|[^.!?]+$/g)||[])
+    .map(t=>t.trim().replace(/\u0001/g,"."))
+    .filter(t=>t.split(/\s+/).length>=3)};
 // page 1 opens with the title and the author line, which carry no full stop, so the splitter glues them
 // to the abstract. Cut the title by matching it against the page, then drop the ALL-CAPS author line.
 const raTitle=(P,id)=>{const T=String(aiTitle(id)||"");if(T.length<12)return P;
-  const parts=T.split(/\s+[-\u2013]\s+/).filter(Boolean),head=nk(P.slice(0,900));
+  // Normalise BOTH sides the same way, or a title ending in "*" (a footnote marker) never matches.
+  const norm=t=>nk(String(t||"").replace(/[*\u2020\u2021]/g," "));
+  const parts=T.split(/\s+[-\u2013]\s+/).filter(Boolean),head=norm(P.slice(0,1200));
   let cut=0;
   for(let i=0;i<parts.length;i++){  // try the title without its "Author (Year) -" prefix
-    const cand=nk(parts.slice(i).join(" "));
+    const cand=norm(parts.slice(i).join(" "));
     if(cand.length<25)continue;
-    const at=head.indexOf(cand.slice(0,40));  // a banner line may sit above the title
+    // match on the first 40 normalised chars: a subtitle or a footnote star must not defeat it
+    const probe=cand.slice(0,40),at=head.indexOf(probe);
     if(at<0)continue;
     const toks=P.split(/\s+/);let acc="";
-    for(let j=0;j<Math.min(toks.length,parts.slice(i).join(" ").split(/\s+/).length+14);j++){
-      acc+=nk(toks[j]);if(acc.length>=at+cand.length){cut=j+1;break}}
+    for(let j=0;j<toks.length;j++){acc+=norm(toks[j]);if(acc.length>=at+cand.length){cut=j+1;break}}
     break}
+  const toks=P.split(/\s+/);
+  if(!cut){
+    // the title may simply be the opening run of words: cut up to its last word
+    const words=norm(T).split(" ").filter(Boolean);
+    if(words.length>=3){
+      let acc="";const want=words.slice(0,8).join(" ");
+      for(let j=0;j<Math.min(toks.length,60);j++){acc+=norm(toks[j]);if(acc.includes(want)){cut=j+1;break}}
+    }
+  }
   if(!cut)return P;
-  const toks=P.split(/\s+/);let k=cut;
-  while(k<toks.length&&/^[^a-z]+$/.test(toks[k].replace(/[^A-Za-z]/g,"")||"x")&&toks[k].length<=24)k++;  // FRED BLOCK, then the abstract
+  // drop what follows the title: the ALL-CAPS author line, affiliations, a footnote star
+  let k=cut;
+  while(k<toks.length&&(
+      /^[^a-z]+$/.test(toks[k].replace(/[^A-Za-z]/g,"")||"x")&&toks[k].length<=26 ||   // FRED BLOCK
+      /^[*\u2020\u2021]+$/.test(toks[k])))k++;
+  // a run of capitalised names with no verb is an author line too ("Fred Block", "James C. Scott")
+  while(k<toks.length){
+    const w=toks[k].replace(/[^A-Za-z.'-]/g,"");
+    if(!w||!/^[A-Z]/.test(w)||w.length>18)break;
+    k++}
   return toks.slice(k).join(" ").trim()||P};
 window.__raTitle=raTitle;
+window.__raSentences=raSentences;
 const raProseStart=list=>{  // page 1 only: skip the banner, the authors and the paper number.
   // OCR can glue the banner to the abstract on one line, so take the LONGEST prose boundary, not the first.
   const wc=t=>t.split(/\s+/).length,isP=t=>{const w=t.split(/\s+/);
@@ -3001,7 +3055,7 @@ const raRun=async(from)=>{
   const my=++RA.tok,id=cur,N=docC?docC.numPages:0;
   raBar(true);raLabel("Preparing the voice\u2026");  // the first sentence takes a few seconds: say so, or it looks dead
   RA.page=Math.max(1,PAGEN());
-  const p1=ocrText(id,RA.page)||await window.pageText(id,RA.page);  // OCR wins when the layer is broken
+  const p1=ocrText(id,RA.page)||await window.pageTextBody(id,RA.page);  // OCR wins when the layer is broken
   RA.sents=raSentences(RA.page===1?raTitle(p1,id):p1);
   if(RA.page===1&&!(from|0)){const k=raProseStart(RA.sents);if(k)RA.sents=RA.sents.slice(k)}
   if(my!==RA.tok||!RA.on)return;
@@ -3010,7 +3064,7 @@ const raRun=async(from)=>{
     if(my!==RA.tok||!RA.on||cur!==id)return raStop();
     if(i>=RA.sents.length){  // page done: go on to the next one
       if(RA.page>=N)break;
-      RA.page++;RA.sents=raSentences(ocrText(id,RA.page)||await window.pageText(id,RA.page));i=0;
+      RA.page++;RA.sents=raSentences(ocrText(id,RA.page)||await window.pageTextBody(id,RA.page));i=0;
       if(!RA.sents.length)continue}
     if(!await raShow(my,i)){i++;continue}
     const ok=await raSay(RA.sents[i],my);
@@ -3031,7 +3085,7 @@ const raAuto=async(my,i)=>{  // continue from i without resetting the token
     if(my!==RA.tok||!RA.on||cur!==id)return;
     if(i>=RA.sents.length){
       if(RA.page>=N)return raStop();
-      RA.page++;RA.sents=raSentences(ocrText(id,RA.page)||await window.pageText(id,RA.page));i=0;
+      RA.page++;RA.sents=raSentences(ocrText(id,RA.page)||await window.pageTextBody(id,RA.page));i=0;
       if(!RA.sents.length)continue}
     if(!await raShow(my,i)){i++;continue}
     const ok=await raSay(RA.sents[i],my);
@@ -3102,7 +3156,24 @@ const ocrScan=async(id,pages,quiet)=>{  // pages: 1-based; quiet skips the per-p
   finally{OCR.busy=false}};
 const ocrText=(id,n)=>{const d=ocrLoad(id);return (d&&d[n]&&d[n].text)||""};
 window.__ocr={OCR,ocrScan,ocrText,ocrLoad};
-window.flashHL=flash;window.pageText=async(id,n)=>{if(cur!==id||!docC)return"";const tc=await(await docC.getPage(n)).getTextContent();return tc.items.map(i=>i.hasEOL&&/\w-$/.test(i.str)?i.str.slice(0,-1):i.str+(i.hasEOL?" ":"")).join("").replace(/\s+/g," ")};window.healClaim=async(c,n)=>{if(c.status!=="user"||c.rs)return;const P=await window.pageText(c.src,n);if(!P)return;c.rs=1;const q=window.restoreQ(P,c.quote);if(q&&q.length>=20&&q!==c.quote){c.quote=q;const k=kc(c);if(!ED.a.includes(c))ED.m[k]={...ED.m[k],quote:q}}saveED();refresh()};window.restoreQ=(P,q,expand)=>{
+window.flashHL=flash;
+// Body text only: drop the running head and footer bands, DOIs and bare page numbers, so read-aloud
+// never recites "Politics & Society 36(2) doi:10.1177/... 172" at the top of every page.
+window.pageTextBody=async(id,n)=>{
+  if(cur!==id||!docC)return "";
+  const pg=await docC.getPage(n),vp=pg.getViewport({scale:1}),tc=await pg.getTextContent();
+  const H=vp.height,top=H*0.078,bot=H*0.94;  // typical margins: 1in of 11in, and the footer
+  const keep=tc.items.filter(it=>{
+    const y=it.transform[5],str=(it.str||"").trim();
+    if(!str)return false;
+    if(y<top||y>bot)return false;                       // the header / footer band itself
+    if(/^(https?:\/\/)?(dx\.)?doi\.org\//i.test(str))return false;
+    if(/^10\.\d{4,}\//.test(str))return false;          // a bare DOI
+    if(/^\d{1,4}$/.test(str))return false;               // a bare page number
+    if(/^(page|pp?\.)\s*\d+/i.test(str))return false;
+    return true});
+  return keep.map(i=>i.hasEOL&&/\w-$/.test(i.str)?i.str.slice(0,-1):i.str+(i.hasEOL?" ":"")).join("").replace(/\s+/g," ").trim()};
+window.pageText=async(id,n)=>{if(cur!==id||!docC)return"";const tc=await(await docC.getPage(n)).getTextContent();return tc.items.map(i=>i.hasEOL&&/\w-$/.test(i.str)?i.str.slice(0,-1):i.str+(i.hasEOL?" ":"")).join("").replace(/\s+/g," ")};window.healClaim=async(c,n)=>{if(c.status!=="user"||c.rs)return;const P=await window.pageText(c.src,n);if(!P)return;c.rs=1;const q=window.restoreQ(P,c.quote);if(q&&q.length>=20&&q!==c.quote){c.quote=q;const k=kc(c);if(!ED.a.includes(c))ED.m[k]={...ED.m[k],quote:q}}saveED();refresh()};window.restoreQ=(P,q,expand)=>{
  const W=q.trim().split(/\s+/),al=c=>/[a-z0-9]/i.test(c||" "),K=a=>a.join("").toLowerCase().replace(/[^a-z0-9]/g,"");
  const ix=[];let k="";
  for(let i=0;i<P.length;i++)if(al(P[i])){k+=P[i].toLowerCase();ix.push(i)}
