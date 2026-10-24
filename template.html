@@ -2189,7 +2189,9 @@ const metaSet=(id,k,v)=>{const it=LIB.items[id]||(LIB.items[id]={});it.meta=it.m
 // because that is what makes a pasted citation usable in the style the reader writes in.
 const CITE_STYLES=[["apa","APA 7"],["mla","MLA 9"],["chicago","Chicago"],
   ["apsa","APSA"],["asa","ASA"],["ieee","IEEE"],["harvard","Harvard"]];
-let CITE_STYLE=(()=>{try{return store.get("cv:citestyle")||"apa"}catch(e){return "apa"}});
+let CITE_STYLE=(()=>{
+  try{const v=store.get("cv:citestyle");return CITE_STYLES.some(x=>x[0]===v)?v:"apa"}  // a stale value must not render "undefined"
+  catch(e){return "apa"}})();
 const citeSetStyle=v=>{CITE_STYLE=v;try{store.set("cv:citestyle",v)}catch(e){}};
 // "Alami, Ilias; Smith, John" -> [["Alami","Ilias"],["Smith","John"]]
 const citeNames=au=>String(au||"").split(/[;]/).map(x=>x.trim()).filter(Boolean).map(x=>{
@@ -2228,13 +2230,13 @@ const citeRaw=(id,style)=>{
         typ=m.type||"book";
   const T=(a,b)=>[a,b].filter(Boolean).join("");
   if(st==="mla"){
-    const au=nameListMLA(ns);
+    const au=auTrim(nameListMLA(ns));
     if(typ==="article")return `${au}. \u201c${ti}.\u201d ${j}${vol?", vol. "+vol:""}${iss?", no. "+iss:""}${pg?", pp. "+pg:""}${yr?", "+yr:""}.`;
     if(typ==="chapter")return `${au}. \u201c${ti}.\u201d ${T(m.booktitle||"", m.booktitle?".":"")}${m.editors?" Ed. "+m.editors+".":""} ${place?place+": ":""}${pub}${yr?", "+yr:""}${pg?". "+pg:""}.`;
     return `${au}. ${ti}.${place?" "+place+":":""}${pub?" "+pub+",":""} ${yr}.`;
   }
   if(st==="ieee"){
-    const au=nameListIEEE(ns);
+    const au=auTrim(nameListIEEE(ns));
     if(typ==="article")return `${au}, \u201c${ti},\u201d ${j}${vol?", vol. "+vol:""}${iss?", no. "+iss:""}${pg?", pp. "+pg:""}, ${yr}${doi?", doi: "+doi:""}.`;
     if(typ==="chapter")return `${au}, \u201c${ti},\u201d in ${m.booktitle||""}${m.editors?", "+m.editors+", Ed.":""} ${place?place+": ":""}${pub}, ${yr}, pp. ${pg}.`;
     return `${au}, ${ti}.${place?" "+place+":":""} ${pub}, ${yr}.`;
@@ -2243,38 +2245,47 @@ const citeRaw=(id,style)=>{
     /* handled above */
   }
   if(st==="chicago"){
-    const au=nameList(ns);
+    const au=auTrim(nameList(ns));
     if(typ==="article")return `${au}. ${yr}. \u201c${ti}.\u201d ${j} ${vol}${iss?" ("+iss+")":""}${pg?": "+pg:""}.${doi?" https://doi.org/"+doi:""}`;
     if(typ==="chapter")return `${au}. ${yr}. \u201c${ti}.\u201d In ${m.booktitle||""}${m.editors?", edited by "+m.editors:""}${pg?", "+pg:""}. ${place?place+": ":""}${pub}.`;
     return `${au}. ${yr}. ${ti}.${place?" "+place+":":""} ${pub}${m.edition?" "+m.edition+" ed.":""}.`;
   }
   if(st==="asa"){
-    const au=nameList(ns);
+    const au=auTrim(nameList(ns));
     if(typ==="article")return `${au}. ${yr}. \u201c${ti}.\u201d ${j} ${vol}${iss?"("+iss+")":""}${pg?": "+pg:""}.`;
     if(typ==="chapter")return `${au}. ${yr}. \u201c${ti}.\u201d Pp. ${pg||"?"} in ${m.booktitle||""}${m.editors?", edited by "+m.editors:""}. ${place?place+": ":""}${pub}.`;
     return `${au}. ${yr}. ${ti}. ${place?place+": ":""}${pub}.`;
   }
   if(st==="harvard"){
-    const au=nameList(ns,"and");
+    const au=auTrim(nameList(ns,"and"));
     if(typ==="article")return `${au} ${yr}, \u201c${ti}\u201d, ${j}, vol. ${vol}${iss?", no. "+iss:""}${pg?", pp. "+pg:""}.`;
     if(typ==="chapter")return `${au} ${yr}, \u201c${ti}\u201d, in ${m.booktitle||""}${m.editors?", "+m.editors+", ed.":""} ${place?place+": ":""}${pub}${pg?", pp. "+pg:""}.`;
     return `${au} ${yr}, ${ti}. ${place?place+": ":""}${pub}.`;
   }
-  // APA 7 (and APSA, which follows it closely with a year-first in-text habit)
-  const au=nameList(ns);
-  const sep=st==="apsa"?" ":" ";
-  if(typ==="article")return `${au}. (${yr}). ${ti}. ${j}${vol?" "+vol:""}${iss?"("+iss+")":""}${pg?", "+pg:""}.${doi?" https://doi.org/"+doi:""}`;
-  if(typ==="chapter")return `${au}. (${yr}). ${ti}. In ${m.editors||""}${m.editors?" (Ed.), ":""}${m.booktitle||""}${pg?" (pp. "+pg+")":""}. ${place?place+": ":""}${pub}.`;
-  return `${au}. (${yr}). ${ti}${m.edition?" ("+m.edition+" ed.)":""}. ${place?place+": ":""}${pub}.`;
+  if(st==="apsa"){
+    // APSA: like APA, but two authors join with "and" (not "&") and the DOI is a bare URL
+    const au=auTrim(nameList(ns,"and"));
+    if(typ==="article")return `${auDot(au)} (${yr}). ${ti}. ${j}${vol?" "+vol:""}${iss?"("+iss+")":""}${pg?", "+pg:""}.${doi?" https://doi.org/"+doi:""}`;
+    if(typ==="chapter")return `${auDot(au)} (${yr}). ${ti}. In ${m.editors||""}${m.editors?", ":""}${m.booktitle||""}${pg?", "+pg:""}. ${place?place+": ":""}${pub}.`;
+    if(typ==="report")return `${auDot(au)} (${yr}). ${ti}. ${place?place+": ":""}${pub}${pg?", "+pg:""}.`;
+    return `${auDot(au)} (${yr}). ${ti}${m.edition?", "+m.edition+" ed.":""}. ${place?place+": ":""}${pub}.`;
+  }
+  // APA 7
+  const au=auTrim(nameList(ns));
+  if(typ==="article")return `${auDot(au)} (${yr}). ${ti}. ${j}${vol?" "+vol:""}${iss?"("+iss+")":""}${pg?", "+pg:""}.${doi?" https://doi.org/"+doi:""}`;
+  if(typ==="chapter")return `${auDot(au)} (${yr}). ${ti}. In ${m.editors||""}${m.editors?" (Ed.), ":""}${m.booktitle||""}${pg?" (pp. "+pg+")":""}. ${place?place+": ":""}${pub}.`;
+  return `${auDot(au)} (${yr}). ${ti}${m.edition?" ("+m.edition+" ed.)":""}. ${place?place+": ":""}${pub}.`;
 };
 // every style funnels through this: a name ending in "." must not meet another ".", and "ed.." is a typo
 const citeClean=t=>String(t)
-  .replace(/\.\./g,".")                       // "I.." -> "I."
-  .replace(/\.\s*\./g,".")
   .replace(/\s+([,.;:])/g,"$1")                // no space before punctuation
   .replace(/\s{2,}/g," ")
   .replace(/\.\s*$/,".")
   .trim();
+// a name list ending in an initial ("Alami, I.") must not meet a full stop the template adds
+// right after it; where the template does NOT add one, keep the stop.
+const auTrim=a=>String(a).replace(/\.+$/,"");
+const auDot=a=>{const t=auTrim(a);return t?t+".":""};
 // every save carries the library.json version we last saw, so a stale in-memory copy is refused
 // instead of silently overwriting a newer file
 // LIBMT is the library.json version this page is based on. It is seeded from the file on load,
