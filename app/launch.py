@@ -901,19 +901,23 @@ def _start():
         # that is already open is the feedback; just leave.
         os._exit(0)
 
-    # A copy run outside its install folder finds no library.json beside itself and opens a blank app,
-    # which looks exactly like lost data. Refuse that, and say where the real library is.
-    _LIB_HERE = os.path.join(ROOT, "library.json")
-    _REAL_LIB = r"C:\Apps\ClaimViewer\library.json"
-    if not os.path.exists(_LIB_HERE) and os.path.exists(_REAL_LIB):
+    # A copy run outside its install folder opens the EMPTY reader page, which looks exactly like
+    # lost data. Refuse only when BOTH hold: this is not the install folder, and the page beside
+    # this exe is the shipped starter (about 300 KB) rather than a real one (several MB).
+    # Checking the folder too matters: a brand new install legitimately starts on the starter page.
+    _REAL = r"C:\Apps\ClaimViewer"
+    _page = os.path.getsize(INDEX) if INDEX.exists() else 0
+    _elsewhere = os.path.normcase(os.path.abspath(ROOT)) != os.path.normcase(_REAL)
+    if _elsewhere and _page < 1_000_000 and os.path.exists(os.path.join(_REAL, "library.json")):
         try:
             import ctypes
             ctypes.windll.user32.MessageBoxW(
                 None,
-                "This copy of Claim Viewer has no library next to it, so it would open empty.\n\n"
-                "Your readings are in C:\\Apps\\ClaimViewer.\n"
+                "This copy of Claim Viewer carries the empty starter page, so it would open with\n"
+                "no readings. Nothing has been lost.\n\n"
+                "Your readings are in " + _REAL + ".\n"
                 "Open Claim Viewer from there (or the Start Menu) instead.",
-                "Claim Viewer - wrong folder", 0x00000030)
+                "Claim Viewer - wrong copy", 0x00000030)
         except Exception:
             pass
         os._exit(0)

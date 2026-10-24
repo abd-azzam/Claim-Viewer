@@ -468,7 +468,7 @@ body.rtai .rtop,body.rtai #rt,body.rtai #pdf,body.rtai #rd,body.rtai #phint,body
 #aipane{display:none;flex:1;min-height:0;flex-direction:column;gap:8px;padding:10px}
 body.rtai #aipane{display:flex}
 #ailog{flex:1;min-height:0;overflow:auto;display:flex;flex-direction:column;gap:8px}
-.aim{max-width:92%;padding:8px 10px;border-radius:10px;line-height:1.45;white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px}
+.aim{max-width:92%;padding:8px 10px;border-radius:10px;line-height:1.55;white-space:normal;overflow-wrap:anywhere;font-size:13px}
 .aim.me{align-self:flex-end;background:color-mix(in srgb,var(--acc) 16%,var(--bg));border:1px solid color-mix(in srgb,var(--acc) 35%,var(--line))}
 .aim.bot{align-self:flex-start;background:var(--panel);border:1px solid var(--line)}
 .aim.sys{align-self:center;max-width:100%;background:none;border:0;color:var(--mute);font-size:11.5px;text-align:center}
@@ -2600,8 +2600,8 @@ const scroll=pg=>{if(pg){lastPg=+pg;lastPgId=cur;savePage()}  // a jump is a pos
   const e=pg&&rd.querySelector(`.pg[data-n="${pg}"]`);if(e)rd.scrollTop=e.offsetTop-rd.offsetTop-6;setTimeout(()=>showPage&&showPage(),120)};  // a jump that does not fire scroll still updates the page label
 const pgn=$("pgnow"),showPage=()=>{const pgs=[...rd.querySelectorAll(".pg[data-n]")];if(!pgn)return;
   if(!pgs.length||!docC){pgn.value="";return}
-  const top=rd.getBoundingClientRect().top+10;let n=1;
-  for(const e of pgs){const r=e.getBoundingClientRect();if(r.bottom>top){n=+e.dataset.n||n;break}}  // the page on screen
+  const bx=rd.getBoundingClientRect(),mid=bx.top+bx.height/2;let n=1;
+  for(const e of pgs){const r=e.getBoundingClientRect();if(r.bottom>mid){n=+e.dataset.n||n;break}}  // the page on screen
   lastPg=n;
   if(document.activeElement!==pgn)pgn.value=n+" / "+docC.numPages};
 if(pgn){pgn.onfocus=()=>pgn.select();
@@ -2632,8 +2632,8 @@ const pushPages=o=>{clearTimeout(_pp);_pp=setTimeout(()=>{try{if(window.pywebvie
 const savePage=()=>{if(!cur||lastPgId!==cur)return;  // no measuring here: a save can fire mid-layout, and a wrong measurement would stick
   try{const o=JSON.parse(localStorage.getItem("cv:lastpg")||"{}");o[cur]=lastPg;localStorage.setItem("cv:lastpg",JSON.stringify(o));pushPages(o)}catch(e){}};
 const PAGEN=()=>{const pgs=[...rd.querySelectorAll(".pg[data-n]")];if(!pgs.length||!docC)return 1;
-  const top=rd.getBoundingClientRect().top+10;let n=1;
-  for(const e of pgs){const r=e.getBoundingClientRect();if(r.bottom>top){n=+e.dataset.n||n;break}}  // the page on screen, not the farthest one that started above the fold
+  const bx=rd.getBoundingClientRect(),mid=bx.top+bx.height/2;let n=1;
+  for(const e of pgs){const r=e.getBoundingClientRect();if(r.bottom>mid){n=+e.dataset.n||n;break}}  // the page on screen, not the farthest one that started above the fold
   return n};
 // the page is saved as soon as scrolling stops, so a close costs nothing; the timer is only a backstop
 let _sv=0;rd.addEventListener("scroll",()=>{clearTimeout(_sv);_sv=setTimeout(savePage,200)},{passive:true});
@@ -2815,101 +2815,136 @@ const aiGo=async(id,n,q,D)=>{rtab("pdf");await window.showPdf(id,n);if(!q)return
     for(const pg of [n-d,n+d])if(pg>=1&&pg<=D.k.length&&on(pg)&&await window.markQuote(id,[pg],q)){toast("That sentence is on page "+pg);return}}
   toast("Could not find that sentence in the PDF")};
 // [p.N: "sentence"] outlines the sentence; a prose "p. N" outlines the sentence of the answer that refers to that page
-const aiCite=(box,txt,D)=>{txt=String(txt||"").replace(/\*\*(.+?)\*\*/g,"$1").replace(/^#{1,6}\s*/gm,"");  // the model still reaches for markdown: strip it, the chip carries the citation
+// Render an answer so that each citation chip sits at the end of the sentence it supports.
+// The answer is cut into sentences first, then each sentence is written as one run of text with
+// its own markers stripped out, and the chips for those markers are appended after its full stop.
+// Nothing is moved afterwards, so a chip cannot drift into the middle of a phrase.
+const aiCite=(box,txt,D)=>{
+  txt=String(txt||"").replace(/\*\*(.+?)\*\*/g,"$1").replace(/^#{1,6}\s*/gm,"");
   const N=D.k.length;
-  const at=v=>{const n=+v;if(n>=1&&n<=N)return n;const m=(D.lbl||{})[n];return m||0};  // printed page number -> PDF page
-  // Find the sentence IN THE PDF that the answer is pointing at, so a chip works even when the
-  // model wrote a bad quote, a bare page number, or no marker at all. Order of trust:
-  //   1. the model's own quote, if it really appears on the cited page
-  //   2. the answer's line containing the reference, matched against the page by word overlap
-  //   3. the first real sentence of the page (so the chip always opens something)
-  const good=q=>q.split(/\s+/).length>=6&&q.length>=40;  // "developmental state" is a fragment
+  const at=v=>{const n=+v;if(n>=1&&n<=N)return n;const m=(D.lbl||{})[n];return m||0};
+  const good=q=>q.split(/\s+/).length>=6&&q.length>=40;
   const pageText=p=>{
     const t=String((D&&D.text)||"");
     const m=t.match(new RegExp("\\[p\\."+p+"\\]\\s*([\\s\\S]*?)(?=\\[p\\.|$)"));
     if(m&&m[1].trim())return m[1].trim();
-    return (D&&D.k&&D.k[p-1])||""};  // fall back to the normalised copy if the block is missing
-  const senOf=(p,q)=>{  // the full sentence on page p that contains quote q, else q itself
+    return (D&&D.k&&D.k[p-1])||""};
+  const senOf=(p,q)=>{
     const P=pageText(p);if(!P)return "";
     const k=nk(q);if(k.length<12)return "";
     const i=P.toLowerCase().replace(/[^a-z0-9]/g,"").indexOf(k.slice(0,50));
     if(i<0)return "";
-    // expand to sentence bounds around the hit
     const isEnd=c=>/[.!?]/.test(c);
     let a=i;while(a>0&&!isEnd(P[a-1]))a--;
     let b=i;while(b<P.length&&!isEnd(P[b]))b++;
     const sen=P.slice(a,Math.min(P.length,b+1)).trim();
     return good(sen)?sen:q};
-  const bestOnPage=(p,line)=>{  // match the answer's line against the page by shared words
+  const words=t=>new Set((t.toLowerCase().match(/[a-z]{4,}/g)||[]).filter(w=>w.length>3));
+  const bestOnPage=(p,line)=>{
     const P=pageText(p);if(!P||!line)return "";
-    const words=t=>new Set((t.toLowerCase().match(/[a-z]{4,}/g)||[]).filter(w=>w.length>3));
     const lw=words(line);if(lw.size<3)return "";
-    const sents=P.split(/(?<=[.!?])\s+/);
     let best="",score=0;
-    for(const sn of sents){
+    for(const sn of P.split(/(?<=[.!?])\s+/)){
       if(!good(sn))continue;
       const sw=words(sn);let hit=0;sw.forEach(w=>{if(lw.has(w))hit++});
       const sc=hit/Math.max(4,sw.size);
       if(sc>score){score=sc;best=sn}}
     return score>=0.25?best:""};
-  const firstOnPage=p=>{  // the page's first real sentence: the chip always has somewhere to go
+  const firstOnPage=p=>{
     const P=pageText(p);if(!P)return "";
-    const sents=P.split(/(?<=[.!?])\s+/).map(x=>x.trim()).filter(good);
-    return sents[0]||""};
-  const near=(pos)=>{
-    const qs=[...txt.matchAll(/["\u201c]([^"\u201d\n]{15,300})["\u201d]/g)].map(x=>({i:x.index,q:x[1].trim()})).filter(x=>good(x.q));
-    if(qs.length){const before=qs.filter(x=>x.i<=pos).pop(),after=qs.find(x=>x.i>pos);return (before||after).q}
-    const a=txt.lastIndexOf("\n",pos-1)+1,b=txt.indexOf("\n",pos)<0?txt.length:txt.indexOf("\n",pos);
-    const seg=txt.slice(a,b),rel=pos-a;
-    const isEnd=i=>/[.!?]/.test(seg[i])&&(i+1>=seg.length||/\s/.test(seg[i+1]))&&!/\b(pp?|e\.g|i\.e|cf|vs|no|vol|ch)\.$/i.test(seg.slice(Math.max(0,i-4),i+1));
-    let st=0,en=seg.length;
-    for(let i=rel;i>=0;i--)if(isEnd(i)){st=i+1;break}
-    for(let i=rel;i<seg.length;i++)if(isEnd(i)){en=i+1;break}
-    const sen=seg.slice(st,en).trim();
-    return good(sen)?sen:""};
-  // resolve a citation to a sentence that is really in the PDF
+    return P.split(/(?<=[.!?])\s+/).map(x=>x.trim()).find(good)||""};
   const inPdf=(p,q)=>!!q&&good(q)&&pageText(p).toLowerCase().replace(/[^a-z0-9]/g,"")
     .includes(q.toLowerCase().replace(/[^a-z0-9]/g,"").slice(0,40));
-  const resolve=(p,q,pos)=>{
+  const resolve=(p,q,line)=>{
     if(!p)return "";
-    if(inPdf(p,q))return senOf(p,q)||q;          // the quote is really on that page
-    const line=(()=>{const a=txt.lastIndexOf("\n",pos-1)+1,b=txt.indexOf("\n",pos)<0?txt.length:txt.indexOf("\n",pos);return txt.slice(a,b)})();
-    // a quote that is nowhere in the PDF is the model inventing: use the page's own sentence
+    if(inPdf(p,q))return senOf(p,q)||q;
     return bestOnPage(p,line)||firstOnPage(p)||""};
-  const plain=(s,off)=>{const re=/\bp{1,2}\.\s*(\d{1,4})\b/g;let j=0,x;
-    while((x=re.exec(s))){const n=at(x[1]);
-      if(!n){box.append(s.slice(j,re.lastIndex));j=re.lastIndex;continue}  // a number we cannot place stays plain text, not a red chip
-      box.append(s.slice(j,x.index));j=re.lastIndex;
-      const q=resolve(n,near(off+x.index),off+x.index),b=document.createElement("button");b.type="button";b.className="aicite";b.textContent="p."+n;
-      b.title=q?"Show the sentence on page "+n:"Go to page "+n;b.dataset.q=q||"";b.onclick=()=>aiGo(D.id,n,q,D);box.append(b)}
-    box.append(s.slice(j))};
-  const re=/\[p\.\s*(\d+)\s*:\s*["\u201c](.+?)["\u201d]\s*\]|\[p\.\s*(\d+)\s*\]/g;let i=0,m;
-  while((m=re.exec(txt))){plain(txt.slice(i,m.index),i);i=re.lastIndex;
-    if(m[3]){const pg=at(m[3]),q=resolve(pg,near(m.index),m.index),b=document.createElement("button");
-      b.type="button";b.className="aicite"+(pg?"":" bad");b.textContent=pg?"p."+pg:"p.?";b.title=pg?(q?"Show the sentence on page "+pg:"Go to page "+pg):"This page is not in the PDF";
-      if(pg){b.dataset.q=q||"";b.onclick=()=>aiGo(D.id,pg,q,D)}box.append(b);continue}
-    const q0=m[2],k=nk(q0),h=[k,k.slice(0,40)],on=p=>k.length>=12&&h.some(x=>(D.k[p-1]||"").includes(x));
-    let n=at(m[1]);
-    if(!on(n)){const found=on(1)?1:D.k.findIndex((_,j)=>on(j+1))+1;
-      if(found>0)n=found}  // the quote is real but on another page: follow the quote
-    const q=resolve(n,on(n)?q0:near(m.index),m.index);  // an invented quote is never used
-    const b=document.createElement("button");b.type="button";b.className="aicite"+(n?"":" bad");b.textContent=n?"p."+n:"p.?";
-    b.title=n?"Show this sentence in the PDF":"This sentence is not in the PDF. Do not trust it.";if(n){b.dataset.q=q;b.onclick=()=>aiGo(D.id,n,q,D)}box.append(b)}
-  plain(txt.slice(i),i)};
-// A chip per page, built from the PDF alone. Used when the model gives no usable citation, so the
-// page chips exist whatever the model does.
+  // Find where a sentence of the ANSWER actually lives in the PDF. The model's page number is
+  // often the journal's printed page ("p. 173" in a 38 page file), so the text decides, not the
+  // number. Returns {pg, q} only when a page really contains the sentence.
+  const STOP=new Set("the and that with this from have been were which their there about into other more most such than then they them these those when where while would could should also because between under over after before during through being both each only very much many some any not but for are was has had its our your his her who whom whose what how why all one two three".split(" "));
+  const locate=(line)=>{
+    const lw=[...words(line)].filter(w=>!STOP.has(w));
+    if(lw.length<4)return null;
+    let best=null,bestScore=0;
+    for(let p=1;p<=N;p++){
+      const P=pageText(p);if(!P)continue;
+      const pw=new Set((P.toLowerCase().match(/[a-z]{4,}/g)||[]));
+      let hit=0;for(const w of lw)if(pw.has(w))hit++;
+      const sc=hit/lw.length;
+      if(sc>bestScore){bestScore=sc;best=p}
+    }
+    // a paraphrase shares maybe half the content words; below that it is a guess
+    if(best&&bestScore>=0.5){
+      const q=bestOnPage(best,line)||firstOnPage(best);
+      return {pg:best,q,score:bestScore};
+    }
+    return null};
+
+  const MARK=/\[p\.\s*(\d+)\s*:\s*["\u201c](.+?)["\u201d]\s*\]|\[p\.\s*(\d+)\s*\]/g;
+  const PROSE=/\bp{1,2}\.\s*(\d{1,4})\b/g;
+  const markersIn=(sentence)=>{
+    const out=[];let m;
+    MARK.lastIndex=0;
+    while((m=MARK.exec(sentence))){
+      const raw=m[3]?m[3]:m[1];
+      const q0=m[3]?"":m[2];
+      const pg=at(raw);
+      // the model's number is only a hint: if the quote or the sentence is really elsewhere, follow it
+      const found=locate(q0||sentence);
+      const use=found?found.pg:pg;
+      out.push({pg:use,q:use?resolve(use,q0,sentence):""});
+    }
+    if(!out.length){  // prose "p. N" only when the sentence carried no explicit marker
+      let p2;PROSE.lastIndex=0;
+      while((p2=PROSE.exec(sentence))){
+        const pg=at(p2[1]);
+        const found=locate(sentence);
+        const use=found?found.pg:pg;
+        if(use)out.push({pg:use,q:resolve(use,"",sentence)});
+      }
+    }
+    const seen=new Set();
+    return out.filter(c=>{  // the same page twice in one sentence is one chip
+      const k=c.pg+"|"+(c.q||"").slice(0,30);
+      if(seen.has(k))return false;seen.add(k);return true});
+  };
+  const strip=s=>s.replace(MARK,"").replace(/\s+([.,;:!?])/g,"$1").replace(/\s{2,}/g," ");
+
+  // A full stop, a blank line, or a new list item ends a sentence, but the dot in "p. 172",
+  // "pp. 4-5", "e.g." and "U.S." is not a full stop. Swap those dots for a placeholder first.
+  const PROT=/(?:\b[A-Za-z]{1,3}\.){2,}|\b(?:pp?|vol|no|ch|sec|fig|ed|eds|e\.g|i\.e|cf|vs|al)\./gi;
+  const guard=t=>t.replace(PROT,m=>m.replace(/\./g,"\u0001"));
+  const unguard=t=>t.replace(/\u0001/g,".");
+  const SENT=/(?<=[.!?])\s+(?=[A-Z\u201c"(\d])|\n{2,}|\n(?=\s*(?:\d+[.)]|[-*\u2022]))/;
+  for(const raw of guard(txt).split(SENT)){
+    const part=unguard(raw);
+    if(!part||!part.trim())continue;
+    const body=strip(part).trim();
+    const chips=markersIn(part);
+    if(body)box.append(body+" ");
+    for(const c of chips){
+      const b=document.createElement("button");
+      b.type="button";b.className="aicite"+(c.pg?"":" bad");
+      b.textContent=c.pg?"p."+c.pg:"p.?";
+      b.title=c.pg?(c.q?"Show this sentence in the PDF":"Go to page "+c.pg)
+                  :"This page is not in the PDF. Do not trust it.";
+      if(c.pg){b.dataset.q=c.q||"";b.onclick=()=>aiGo(D.id,c.pg,c.q,D)}
+      box.append(b);box.append(" ");
+    }
+  }
+  return box};
+
+// One chip for the reading's opening page, and only when the answer cited nothing at all. The
+// reader does not want a page index: a chip must sit after the sentence it supports.
 const aiPages=(D,note,box)=>{
   const target=box||aiLine("bot","");
   if(note)target.append(note+" ");
-  const N=Math.min(D&&D.k?D.k.length:0,12);  // the opening pages: enough to get oriented
-  for(let n=1;n<=N;n++){
-    const P=(D.k[n-1]||"");
-    const first=(P.split(/(?<=[.!?])\s+/).map(x=>x.trim()).find(x=>x.split(/\s+/).length>=6))||"";
-    const b=document.createElement("button");b.type="button";b.className="aicite";b.textContent="p."+n;
-    b.title=first?"Show a sentence on page "+n:"Go to page "+n;
-    b.dataset.q=first;b.onclick=()=>aiGo(D.id,n,first,D);target.append(b);
-    target.append(" ");
-  }
+  const P=((D&&D.k&&D.k[0])||"");
+  const first=(P.split(/(?<=[.!?])\s+/).map(x=>x.trim()).find(x=>x.split(/\s+/).length>=6))||"";
+  const b=document.createElement("button");b.type="button";b.className="aicite";b.textContent="p.1";
+  b.title=first?"Show a sentence on page 1":"Go to page 1";
+  b.dataset.q=first;b.onclick=()=>aiGo(D.id,1,first,D);target.append(b);
   return target};
 const aiSend=async text=>{text=String(text||"").trim();if(!text||AI.busy)return;
   if(!(window.pywebview&&pywebview.api&&pywebview.api.ai_chat)){aiLine("err","The chat needs the app window.");return}
@@ -2940,6 +2975,7 @@ const aiClear=()=>{const L=$("ailog");if(L)L.innerHTML="";AI.hist=[];aiClearBtn(
 const aiClearBtn=()=>{const b=$("aiclear");if(b)b.hidden=!($("ailog")&&$("ailog").children.length)};
 window.__aiClearBtn=aiClearBtn;window.__aiLine=aiLine;window.__aiClear=aiClear;
 window.__aiLoad=aiLoad;window.__aiCite=aiCite;window.__aiPages=aiPages;window.__aiGo=aiGo;
+window.__chipEnd=null;
 document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest(".rtabs [data-rt]");if(b)rtab(b.dataset.rt);
   if(e.target.id==="aiclear"){aiClear();return}
   if(e.target.id==="aiconf"){const box=$("aikeybox");box.hidden=false;e.target.hidden=true;$("aikey").value="";$("aikey").focus();
@@ -2983,7 +3019,11 @@ window.markQuote=async(id,pages,quote)=>{rd.querySelectorAll(".qm").forEach(e=>e
    cx.font=`${h}px ${tc.styles[it.fontName]?.fontFamily||"sans-serif"}`;const tot=cx.measureText(S).width||1,W=it.width*v.scale,xa=t[4]+cx.measureText(S.slice(0,a)).width/tot*W,xb=t[4]+cx.measureText(S.slice(0,b)).width/tot*W,l=L.find(r=>Math.abs(r.y-y)<h/2);
    if(l){l.x0=Math.min(l.x0,xa);l.x1=Math.max(l.x1,xb)}else L.push({y,h,x0:xa,x1:xb})}
   L.forEach(r=>{const d=document.createElement("div");d.className="qm";d.style.cssText=`left:${r.x0/v.width*100}%;top:${r.y/v.height*100}%;width:${(r.x1-r.x0)/v.width*100}%;height:${r.h/v.height*100}%`;pgEl.append(d)});
-  rd.scrollTop=Math.max(0,pgEl.offsetTop-rd.offsetTop+L[0].y-rd.clientHeight/3);return L.length}
+  rd.scrollTop=Math.max(0,pgEl.offsetTop-rd.offsetTop+L[0].y-rd.clientHeight/3);
+  // the scroll handler would relabel from the page at the top edge, which is the previous page
+  // when the quote sits low on its page. The chip said page n, so the label says page n.
+  if(pgn){lastPg=n;pgn.value=n+" / "+docC.numPages}
+  return L.length}
  return 0};
 // ---- read aloud: one sentence at a time, everything else on the page blurs out.
 // The voice is a neural one from the app (edge-tts); the browser's own voice sounds robotic.
