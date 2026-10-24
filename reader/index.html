@@ -143,13 +143,13 @@ body:has(dialog[open]) #hl,body:has(dialog[open]) #hr{display:none!important}  /
   background:transparent;border:0;padding:3px 4px;border-radius:4px}
 #libtbl td input:hover{background:var(--bg)}#libtbl td input:focus{outline:1px solid var(--acc);background:var(--bg)}
 #libtbl td .ttl{min-width:210px;font-weight:500}#libtbl td .yr{min-width:52px}#libtbl td .au{min-width:120px}
-#libtbl td.pdfcell{width:34px;padding:2px 4px}
-#libtbl .pdficon{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;padding:0;
-  border:1px solid var(--ctl);border-radius:6px;background:var(--bg);color:var(--mute);cursor:pointer}
-#libtbl .pdficon:hover{border-color:var(--acc);color:var(--acc);background:color-mix(in srgb,var(--acc) 10%,var(--bg))}
-#libtbl .pdficon svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.7;
+#libtbl td.pdfcell{width:20px;padding:0 2px;text-align:center}
+#libtbl .pdficon{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;padding:0;
+  border:0;border-radius:4px;background:transparent;color:var(--mute);cursor:pointer;vertical-align:middle}
+#libtbl .pdficon:hover{color:var(--acc);background:color-mix(in srgb,var(--acc) 14%,transparent)}
+#libtbl .pdficon svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:1.9;
   stroke-linecap:round;stroke-linejoin:round}
-#libtbl th:first-child{width:34px}
+#libtbl th[aria-label="Open PDF"]{width:20px;padding:0 2px}
 #libtbl td select.typ{font:inherit;font-size:12.5px;font-weight:500;color:var(--ink);background:var(--bg);
   border:1px solid var(--ctl);border-radius:6px;padding:5px 8px;min-width:150px;cursor:pointer}
 #libtbl th:first-child{min-width:150px}
@@ -2247,7 +2247,7 @@ function drawLibTable(){
   if(!shown.length){box.innerHTML='<div class="ltempty">'+(col?"No readings in this folder yet. Add a PDF from the folder list on the left.":"The library is empty. Add a PDF from a folder on the left.")+'</div>';return}
   const gaps=shown.filter(id=>{const m=meta(id);return !m.author||!m.year||!m.title}).length;
   const types=new Set(shown.map(id=>meta(id).type));
-  const cols=["pdf","type","author","year","title"];
+  const cols=["type","author","year","pdf","title"];
   [...types].forEach(t=>(TYPE_COLS[t]||[]).forEach(k=>{if(!cols.includes(k))cols.push(k)}));
   box.innerHTML='<div class="lthead"><b>'+shown.length+' reading'+(shown.length===1?"":"s")+'</b>'
     +(gaps?'<button type="button" id="metafill" title="New PDFs fill themselves on import; press this to retry the '+gaps+' that came back empty">Retry '+gaps+' empty</button>':'')
