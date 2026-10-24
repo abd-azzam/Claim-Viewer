@@ -894,32 +894,37 @@ def _single_instance():
         return True, None  # never block startup on a platform quirk
 
 
-_first, _hMutex = _single_instance()
-if not _first:
-    # Do not show a modal box: it blocks the process forever until someone clicks it. The window
-    # that is already open is the feedback; just leave.
+def _start():
+    _first, _hMutex = _single_instance()
+    if not _first:
+        # Do not show a modal box: it blocks the process forever until someone clicks it. The window
+        # that is already open is the feedback; just leave.
+        os._exit(0)
+
+    # A copy run outside its install folder finds no library.json beside itself and opens a blank app,
+    # which looks exactly like lost data. Refuse that, and say where the real library is.
+    _LIB_HERE = os.path.join(ROOT, "library.json")
+    _REAL_LIB = r"C:\Apps\ClaimViewer\library.json"
+    if not os.path.exists(_LIB_HERE) and os.path.exists(_REAL_LIB):
+        try:
+            import ctypes
+            ctypes.windll.user32.MessageBoxW(
+                None,
+                "This copy of Claim Viewer has no library next to it, so it would open empty.\n\n"
+                "Your readings are in C:\\Apps\\ClaimViewer.\n"
+                "Open Claim Viewer from there (or the Start Menu) instead.",
+                "Claim Viewer - wrong folder", 0x00000030)
+        except Exception:
+            pass
+        os._exit(0)
+
+    win = webview.create_window("Claim Viewer", INDEX.as_uri(), js_api=Api(),
+                                width=_ww, height=_wh, min_size=(900, 600), text_select=True,
+                                x=_cx, y=_cy)
+    webview.settings["ALLOW_DOWNLOADS"] = True
+    webview.start(storage_path=store, private_mode=False)
     os._exit(0)
 
-# A copy run outside its install folder finds no library.json beside itself and opens a blank app,
-# which looks exactly like lost data. Refuse that, and say where the real library is.
-_LIB_HERE = os.path.join(ROOT, "library.json")
-_REAL_LIB = r"C:\Apps\ClaimViewer\library.json"
-if not os.path.exists(_LIB_HERE) and os.path.exists(_REAL_LIB):
-    try:
-        import ctypes
-        ctypes.windll.user32.MessageBoxW(
-            None,
-            "This copy of Claim Viewer has no library next to it, so it would open empty.\n\n"
-            "Your readings are in C:\\Apps\\ClaimViewer.\n"
-            "Open Claim Viewer from there (or the Start Menu) instead.",
-            "Claim Viewer - wrong folder", 0x00000030)
-    except Exception:
-        pass
-    os._exit(0)
 
-win = webview.create_window("Claim Viewer", INDEX.as_uri(), js_api=Api(),
-                            width=_ww, height=_wh, min_size=(900, 600), text_select=True,
-                            x=_cx, y=_cy)
-webview.settings["ALLOW_DOWNLOADS"] = True
-webview.start(storage_path=store, private_mode=False)
-os._exit(0)
+if __name__ == "__main__":
+    _start()
