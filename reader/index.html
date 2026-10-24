@@ -43,13 +43,43 @@ select,input[type=search]{width:100%;padding:6px;border:1px solid var(--line);bo
 section{display:flex;flex-direction:column}
 section header{padding:10px 14px;border-bottom:1px solid var(--line);font-size:13px}
 iframe{flex:1;border:0;width:100%}
-#rd{flex:1;overflow:auto;background:#888}#rd .pg{position:relative;margin:6px auto;background:#fff}#rd canvas{display:block}.textLayer{position:absolute;inset:0;overflow:hidden;line-height:1;z-index:2}
-#rd .pg{isolation:isolate}.hl{position:absolute;z-index:1;mix-blend-mode:multiply;background:var(--hc);pointer-events:none}.hl.on{outline:2px solid var(--acc);outline-offset:-2px}
+#rd{flex:1;overflow:auto;background:#888}.pg.ra-dim canvas:not(.ra-crop),.pg.ra-dim .textLayer,.pg.ra-dim .hl,.pg.ra-dim .qm{filter:blur(4px)}
+:root[data-theme=dark] #rd .pg.ra-dim canvas:not(.ra-crop){filter:invert(.92) hue-rotate(180deg) blur(4px)}.pg.ra-dim{transition:filter .15s}.ra-crop{position:absolute;z-index:7;pointer-events:none;border-radius:2px;box-shadow:0 0 0 1.5px rgba(240,160,0,.9),0 2px 14px rgba(0,0,0,.35)}#ra.on{border-color:var(--acc);color:var(--acc);background:color-mix(in srgb,var(--acc) 14%,var(--bg))}
+#rabar{position:sticky;top:0;z-index:8;display:none;gap:6px;align-items:center;padding:6px;margin:0 6px 4px;border:1px solid var(--line);border-radius:8px;background:var(--panel);box-shadow:0 2px 10px rgba(0,0,0,.14)}
+body.ra-on #rabar{display:flex}
+#rabar button{min-width:0;height:28px;padding:0 10px;border:1px solid var(--ctl);border-radius:6px;background:var(--bg);color:var(--ink);font:inherit;font-size:12px;font-weight:600;cursor:pointer}
+#rabar button:hover{border-color:var(--acc);color:var(--acc)}
+#rabar .ran{flex:1;min-width:0;font-size:11.5px;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#rabar #rastop{border-color:var(--bad);color:var(--bad)}
+#hp[aria-pressed=true]{border-color:var(--acc);color:var(--acc);background:color-mix(in srgb,var(--acc) 14%,var(--bg))}
+#hpop{position:absolute;z-index:12;display:flex;gap:4px;padding:5px;border:1px solid var(--line);border-radius:8px;
+  background:var(--panel);box-shadow:0 4px 14px rgba(0,0,0,.20)}
+#hpop[hidden]{display:none}
+.ocrbox{max-width:430px}
+.ocrbox .ocrhint{margin:0 0 12px;color:var(--mut);font-size:12.5px;line-height:1.5}
+.ocrbox .ocropt{display:flex;align-items:center;gap:8px;padding:8px 10px;margin-bottom:6px;border:1px solid var(--line);
+  border-radius:8px;cursor:pointer;font-size:13px}
+.ocrbox .ocropt:has(input:checked){border-color:var(--acc);background:color-mix(in srgb,var(--acc) 8%,var(--bg))}
+.ocrbox .ocropt input[type=radio]{margin:0;accent-color:var(--acc)}
+.ocrbox .ocropt b{font-weight:600;color:var(--mut)}
+.ocrbox .ocrfrom{margin-left:auto;display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--mut)}
+.ocrbox .ocrfrom input[type=number]{width:58px;height:26px;padding:0 6px;border:1px solid var(--ctl);
+  border-radius:6px;background:var(--bg);color:var(--fg);font:inherit;font-size:12.5px}
+.ocrbox .ocrfrom input[type=number]:disabled{opacity:.45}
+.ocrbox menu{display:flex;gap:8px;justify-content:flex-end;margin:0;padding:0}
+.ocrbox .ocrfrom :is(label,span){display:flex;align-items:center;gap:4px;margin:0;font-size:12.5px;white-space:nowrap}
+.ocrbox .ocropt{flex-wrap:wrap}
+.ocrbox .ocropt>span:first-of-type{white-space:nowrap}
+#rt #hpop button,#hpop button{width:16px;height:16px;min-width:16px;min-height:16px;padding:0;box-sizing:border-box;
+  border:1.5px solid var(--ctl);border-radius:3px;cursor:pointer}
+#rt #hpop button:hover,#hpop button:hover{border-color:var(--acc);transform:none}
+#rabar #rav{height:28px;max-width:190px;min-width:0;border:1px solid var(--ctl);border-radius:6px;background:var(--bg);color:var(--ink);font:inherit;font-size:12px;padding:0 4px;cursor:pointer}#rd .pg{position:relative;margin:6px auto;background:#fff}#rd canvas{display:block}.textLayer{position:absolute;inset:0;overflow:hidden;line-height:1;z-index:2}
+#rd .pg{isolation:isolate}.hl{position:absolute;z-index:1;mix-blend-mode:multiply;background:var(--hc);pointer-events:none}.hl.on{outline:2px solid var(--acc);outline-offset:-2px}.qm{position:absolute;z-index:1;pointer-events:none;outline:2px solid var(--acc);outline-offset:1px;background:rgba(255,140,0,.16)}
 #rt{display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:0 6px 6px}#rt[hidden]{display:none}
 #rt button{padding:4px 10px;border:1px solid var(--ctl);border-radius:4px;background:var(--bg);color:var(--ink);font:inherit;cursor:pointer}
-.sw{display:inline-flex;gap:6px;align-items:center}.sw button{width:22px;height:22px;padding:0;border:2px solid var(--ctl);border-radius:50%;cursor:pointer}
+#hs{gap:4px}.sw{display:inline-flex;gap:6px;align-items:center}.sw button{width:22px;height:22px;padding:0;border:2px solid var(--ctl);border-radius:50%;cursor:pointer}#rt .sw button{width:14px;height:14px;min-width:14px;min-height:14px;padding:0;border-width:1.5px;box-sizing:border-box;border-radius:3px}
 #cm .sw{display:flex;padding:6px 12px}#cm .sw button{display:inline-block;padding:0}
-#cm button:disabled{color:var(--ctl);cursor:not-allowed}.textLayer span{position:absolute;white-space:pre;color:transparent;transform-origin:0 0}.textLayer ::selection{background:transparent}.bsel{position:absolute;z-index:2;background:rgba(0,90,255,.35);pointer-events:none}.rtop{padding:20px 10px 4px}#phint{margin-top:8px;font-size:12px;color:var(--mute)}#phint[hidden]{display:none}.rsel{display:flex;gap:8px;align-items:center}.rsel select{flex:1;min-width:0}#lpn{margin-top:6px;font-size:.8rem;opacity:.65}#lpn:empty{display:none}#lpn.warn{display:block;cursor:pointer;background:#fde68a;color:#3b2f00;padding:6px 8px;font-weight:600}#toast.top{top:14px;transform:translateX(-50%)}#toast{pointer-events:none;position:fixed;left:50%;top:45%;transform:translate(-50%,-50%);z-index:9;background:#1f2937;color:#fff;padding:10px 16px;border-radius:8px;max-width:min(60vw,420px);max-height:40vh;overflow:hidden;overflow-wrap:anywhere;text-align:center}dialog.ask{border:1px solid var(--ctl);border-radius:10px;padding:18px 20px;max-width:min(360px,90vw);overflow-wrap:anywhere;font:inherit}dialog.ask p{margin:0 0 12px}dialog.ask label{display:block;margin:0 0 12px;font-size:.9em}dialog.ask div{display:flex;gap:8px;justify-content:flex-end}
+#cm button:disabled{color:var(--ctl);cursor:not-allowed}.textLayer span{position:absolute;white-space:pre;color:transparent;transform-origin:0 0}.textLayer ::selection{background:transparent}.bsel{position:absolute;z-index:2;background:rgba(0,90,255,.35);pointer-events:none}.rtop{padding:20px 10px 4px}#phint{margin-top:8px;font-size:12px;color:var(--mute)}#phint[hidden]{display:none}.rsel{display:flex;gap:8px;align-items:center}.rsel select{flex:1;min-width:0}#lpn{margin-top:6px;font-size:.8rem;opacity:.65}#lpn:empty{display:none}#lpn.warn{display:block;cursor:pointer;background:#fde68a;color:#3b2f00;padding:6px 8px;font-weight:600}#toast[hidden]{display:none!important}#toast.top{top:14px;transform:translateX(-50%)}#toast{pointer-events:none;position:fixed;left:50%;top:45%;transform:translate(-50%,-50%);z-index:9;background:#1f2937;color:#fff;padding:10px 16px;border-radius:8px;max-width:min(60vw,420px);max-height:40vh;overflow:hidden;overflow-wrap:anywhere;text-align:center}dialog.ask{border:1px solid var(--ctl);border-radius:10px;padding:18px 20px;max-width:min(360px,90vw);overflow-wrap:anywhere;font:inherit}dialog.ask p{margin:0 0 12px}dialog.ask label{display:block;margin:0 0 12px;font-size:.9em}dialog.ask div{display:flex;gap:8px;justify-content:flex-end}.ocrbox{max-width:430px}
 
 .empty{padding:30px;color:var(--mute)}
 .rl{margin:6px 0 0;padding-left:16px;max-height:34vh;overflow:auto}.rl button{all:unset;cursor:pointer;color:var(--acc);font-weight:600}.rl small{color:var(--mute)}
@@ -77,7 +107,12 @@ body.graph main,body.graph section{display:none}body.graph #gv{display:flex;flex
 #zsrc optgroup{font-weight:700}
 #zflt label{overflow-wrap:anywhere}
 body.notes #zflt{display:block}
-body.library #flt{display:none}body.library #libp{display:block}
+body.library #flt{display:none}body.library #libp{display:block}body.library #list,body.library #count{display:none}body.library #libtbl{display:block}
+#libp .lrow{cursor:pointer}
+#libp .lrow input{cursor:pointer}
+#libp .lrow input:not([readonly]){cursor:text}
+#libp .lrow.lsel{background:color-mix(in srgb,var(--acc) 16%,transparent);box-shadow:inset 3px 0 0 var(--acc)}
+#libp .lrow.lsel input{color:var(--ink);font-weight:600}
 body.pdfbig{grid-template-columns:1fr}body.pdfbig>aside,body.pdfbig>main{display:none}
 body.pdfbig #hl,body.pdfbig #hr{display:none!important}  /* full screen is the PDF and nothing else */
 body:has(dialog[open]) #hl,body:has(dialog[open]) #hr{display:none!important}  /* a modal owns the screen */
@@ -91,6 +126,39 @@ body:has(dialog[open]) #hl,body:has(dialog[open]) #hr{display:none!important}  /
 #libp .libadd{display:flex;gap:4px;align-items:center;margin:6px 0;flex-wrap:wrap}
 #libp .libadd input,#libp .libadd select{font:inherit;font-size:12px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:4px;min-width:0}
 #libp .libadd #libmsg{color:var(--mute);font-size:11px}
+#libtbl{overflow:auto;overflow-x:auto;overflow-y:auto;padding:0 2px 20px;max-width:100%}
+#libtbl::-webkit-scrollbar{height:12px;width:12px}
+#libtbl::-webkit-scrollbar-thumb{background:var(--ctl);border-radius:6px}
+#libtbl::-webkit-scrollbar-thumb:hover{background:var(--mute)}
+#libtbl::-webkit-scrollbar-track{background:transparent}
+#libtbl table{min-width:max-content}
+#libtbl table{border-collapse:collapse;width:100%;font-size:12.5px}
+#libtbl th,#libtbl td{border-bottom:1px solid var(--line);padding:5px 7px;text-align:left;vertical-align:top}
+#libtbl th{position:sticky;top:0;background:var(--panel);font-weight:600;font-size:11.5px;color:var(--mute);
+  text-transform:uppercase;letter-spacing:.03em;z-index:1;white-space:nowrap}
+#libtbl td input{width:100%;min-width:60px;font:inherit;font-size:12.5px;color:var(--ink);
+  background:transparent;border:0;padding:3px 4px;border-radius:4px}
+#libtbl td input:hover{background:var(--bg)}#libtbl td input:focus{outline:1px solid var(--acc);background:var(--bg)}
+#libtbl td .ttl{min-width:210px;font-weight:500}#libtbl td .yr{min-width:52px}#libtbl td .au{min-width:120px}
+#libtbl td select.typ{font:inherit;font-size:12.5px;font-weight:500;color:var(--ink);background:var(--bg);
+  border:1px solid var(--ctl);border-radius:6px;padding:5px 8px;min-width:150px;cursor:pointer}
+#libtbl th:first-child{min-width:150px}
+#libtbl td select.typ:focus{outline:1px solid var(--acc)}
+#libtbl tr:hover td{background:color-mix(in srgb,var(--acc) 5%,transparent)}
+#libtbl .ltempty{color:var(--mute);padding:24px 10px;font-size:13px}
+#libtbl .lthead{display:flex;align-items:center;gap:8px;padding:8px 6px 10px}
+#libtbl .lthead b{font-size:13px}
+#libtbl .lthead button{margin-left:auto;font:inherit;font-size:11.5px;color:var(--ink);background:var(--bg);
+  border:1px solid var(--ctl);border-radius:6px;padding:5px 9px;cursor:pointer}
+#libtbl .lthead button:hover{border-color:var(--acc);color:var(--acc)}
+#libtbl .lthead #metafill1{margin-left:0;width:26px;padding:5px 0;text-align:center}
+#citepop{position:fixed;z-index:30;background:var(--panel);border:1px solid var(--line);border-radius:10px;
+  box-shadow:0 8px 26px rgba(0,0,0,.24);padding:6px;min-width:230px;max-width:340px}
+#citepop button{display:block;width:100%;text-align:left;background:none;border:0;border-radius:6px;
+  padding:7px 9px;font:inherit;font-size:12.5px;color:var(--ink);cursor:pointer}
+#citepop button:hover{background:color-mix(in srgb,var(--acc) 12%,transparent)}
+#citepop .cprev{border-top:1px solid var(--line);margin-top:5px;padding:7px 9px 3px;font-size:11.5px;
+  color:var(--mute);line-height:1.45;max-height:110px;overflow:auto}
 #vl .it{display:flex;gap:4px}#vl .dg{cursor:grab;color:var(--mut,var(--muted));user-select:none;padding:0 2px;align-self:center;font-size:15px}#vl .it{cursor:grab}#vl .it.drag{cursor:grabbing;opacity:.45}#vl .it input,#vl .it .x{cursor:auto}#vl .it input{flex:1;min-width:0;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:6px}#vl .it .k{flex:0 0 40px;text-align:center;font-weight:700}#vl .x{padding:2px 9px;color:var(--dn);border-color:var(--line)}#vl .add{border-style:dashed}
 .bar{position:sticky;top:0;z-index:5;background:var(--bg);padding:14px 0 6px;margin:0;display:flex;gap:6px;align-items:center;flex-wrap:wrap}.bar button,.bar .gbtn{margin:0;padding:4px 10px;border:1px solid var(--line);border-radius:4px;background:var(--bg);color:var(--ink);font:inherit;cursor:pointer}.bar button:hover,.bar .gbtn:hover{border-color:var(--acc)}#count button{margin-left:8px;padding:1px 8px;border:1px solid var(--line);border-radius:4px;background:var(--bg);color:var(--acc);font:inherit;cursor:pointer}button:focus-visible,select:focus-visible,input:focus-visible,textarea:focus-visible,.card:focus-visible,.gbtn:focus-within{outline:2px solid var(--acc);outline-offset:2px}
 .selbar{border:1px solid var(--acc);border-radius:6px;padding:8px 10px;margin:8px 0;font-size:13px;background:var(--panel)}.selbar button,.gbtn{margin-left:8px;padding:3px 8px;border:1px solid var(--acc);border-radius:5px;background:var(--bg);color:var(--acc);font:inherit;cursor:pointer}
@@ -378,13 +446,15 @@ aside{padding:14px 26px 14px 14px}  /* the right gutter holds the fold tab, clea
 .rtabs button{height:30px;padding:0 14px;border:1px solid transparent;border-radius:8px 8px 0 0;background:none;color:var(--mute);font:inherit;font-weight:600;cursor:pointer}
 .rtabs button.on{background:var(--panel);border-color:var(--line);color:var(--ink)}
 .rtabs button:hover{color:var(--ink)}
-body.rtai .rtop,body.rtai #rt,body.rtai #pdf,body.rtai #rd,body.rtai #phint{display:none!important}
+body.rtai .rtop,body.rtai #rt,body.rtai #pdf,body.rtai #rd,body.rtai #phint,body.rtai #lpn{display:none!important}
 #aipane{display:none;flex:1;min-height:0;flex-direction:column;gap:8px;padding:10px}
 body.rtai #aipane{display:flex}
 #ailog{flex:1;min-height:0;overflow:auto;display:flex;flex-direction:column;gap:8px}
 .aim{max-width:92%;padding:8px 10px;border-radius:10px;line-height:1.45;white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px}
 .aim.me{align-self:flex-end;background:color-mix(in srgb,var(--acc) 16%,var(--bg));border:1px solid color-mix(in srgb,var(--acc) 35%,var(--line))}
 .aim.bot{align-self:flex-start;background:var(--panel);border:1px solid var(--line)}
+.aim.sys{align-self:center;max-width:100%;background:none;border:0;color:var(--mute);font-size:11.5px;text-align:center}
+.aicite{font:inherit;font-size:11.5px;padding:0 6px;margin:0 2px;border:1px solid var(--acc);border-radius:9px;background:none;color:var(--acc);cursor:pointer}.aicite:hover{background:color-mix(in srgb,var(--acc) 16%,var(--bg))}.aicite.bad{border-color:var(--bad);color:var(--bad);cursor:help}
 .aim.err{align-self:flex-start;background:color-mix(in srgb,var(--bad) 12%,var(--bg));border:1px solid var(--bad);color:var(--bad)}
 #aif{display:flex;gap:8px;align-items:flex-end;flex:none}
 #aiin{flex:1;min-height:38px;max-height:140px;resize:vertical;font:inherit;padding:8px 104px 8px 8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}
@@ -396,10 +466,10 @@ body.rtai #aipane{display:flex}
 #aikeybox button{justify-self:start;height:32px;padding:0 14px;border:1px solid var(--acc);border-radius:8px;background:var(--acc);color:var(--bg);font:inherit;font-weight:600;cursor:pointer}
 #aikeybox small{color:var(--mute);font-size:11.5px}
 #aikey{height:34px;padding:0 8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit}
-.aihint{font-size:11.5px;color:var(--mute);flex:none}
-.aibar{display:flex;justify-content:flex-end;flex:none}
-#aiconf{height:26px;padding:0 10px;border:1px solid var(--line);border-radius:7px;background:none;color:var(--mute);font:inherit;font-size:11.5px;font-weight:600;cursor:pointer}
-#aiconf:hover{color:var(--acc);border-color:var(--acc)}
+.aibar{display:flex;justify-content:flex-end;gap:6px;flex:none}
+#aiconf,#aiclear{height:26px;padding:0 10px;border:1px solid var(--line);border-radius:7px;background:none;color:var(--mute);font:inherit;font-size:11.5px;font-weight:600;cursor:pointer}
+#aiconf:hover,#aiclear:hover{color:var(--acc);border-color:var(--acc)}
+#aiclear[hidden]{display:none}
 #aikeybox label{display:grid;gap:4px;font-size:11.5px;font-weight:600;color:var(--mute)}
 #aikeybox .airow{display:flex;gap:10px;align-items:center}
 #aikeybox .airow small{color:var(--mute);font-size:11.5px}
@@ -485,7 +555,7 @@ body.rtai #aipane{display:flex}
   <datalist id="dlf"></datalist><datalist id="dlo"></datalist>
   <div><button value="ok">Save</button> <button value="x" formnovalidate>Cancel</button></div>
 </form></dialog>
-<main aria-live="polite"><div class="bar"><div class="tabs ln" role="tablist" aria-label="List section"><button id="vc" class="on" role="tab" aria-selected="true">Claims</button><button id="vn" role="tab" aria-selected="false">Notes</button></div><button id="vb" title="Edit lists" aria-label="Edit lists"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg></button><button id="ex" title="Export edits" aria-label="Export edits"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m-4-4 4 4 4-4M5 20h14"/></svg></button><label class="gbtn" title="Import edits" aria-label="Import edits" style="margin:0"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4m-4 4 4-4 4 4M5 20h14"/></svg><input id="im" type="file" accept=".json" hidden></label><button id="rs" title="Reset edits" aria-label="Reset edits"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 3-6.2M4 4v4h4"/></svg></button><button id="ca" title="Clear this reading's claims and highlights" aria-label="Clear this reading's claims and highlights"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M7 7l1 13h8l1-13"/></svg></button></div><p class="count" id="count" aria-live="polite"></p><div id="list"></div>
+<main aria-live="polite"><div class="bar"><div class="tabs ln" role="tablist" aria-label="List section"><button id="vc" class="on" role="tab" aria-selected="true">Claims</button><button id="vn" role="tab" aria-selected="false">Notes</button></div><button id="vb" title="Edit lists" aria-label="Edit lists"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg></button><button id="ex" title="Export edits" aria-label="Export edits"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m-4-4 4 4 4-4M5 20h14"/></svg></button><label class="gbtn" title="Import edits" aria-label="Import edits" style="margin:0"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4m-4 4 4-4 4 4M5 20h14"/></svg><input id="im" type="file" accept=".json" hidden></label><button id="rs" title="Reset edits" aria-label="Reset edits"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 3-6.2M4 4v4h4"/></svg></button><button id="ca" title="Clear this reading's claims and highlights" aria-label="Clear this reading's claims and highlights"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M7 7l1 13h8l1-13"/></svg></button></div><p class="count" id="count" aria-live="polite"></p><div id="list"></div><div id="libtbl" hidden></div>
 <div id="zkv">
   <div class="zbar">
     <h1>Notes</h1>
@@ -500,15 +570,14 @@ body.rtai #aipane{display:flex}
 </div>
 </main>
 <div id="gv"><h1 id="gt"></h1><div class="gc" id="gc2"></div><div id="lkc" class="lg" role="group" aria-label="Declared connections between readings"></div><div id="gx" aria-label="Horizontal scroll" role="group"><div id="gxi"></div></div><div id="gout"></div></div>
-<section><div class="rtabs" role="tablist" aria-label="Right pane"><button type="button" class="on" data-rt="pdf" role="tab" aria-selected="true">PDF</button><button type="button" data-rt="ai" role="tab" aria-selected="false">Ask AI</button></div><div class="rtop"><div class="rsel"><select id="pdfsel" aria-label="Reading"></select><button id="lr" type="button" title="Remove this reading from the viewer (the PDF file on your computer stays)" aria-label="Remove this reading from the viewer"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h7l4 4v14H7zM14 3v4h4M10 12l4 4m0-4-4 4"/></svg></button></div><div id="lpn"></div><div id="phint">Pick a reading here, or from the list on the left.</div></div><div id="rt" hidden><button id="zo" type="button" aria-label="Zoom out">−</button><span id="zv">100%</span><button id="zi" type="button" aria-label="Zoom in">+</button><button id="zf" type="button" title="Fit width" aria-label="Fit width"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button><button id="fb" type="button" title="Read this PDF full screen (Esc to exit)" aria-label="Read this PDF full screen" aria-pressed="false"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg></button><button id="sv" type="button" title="Save PDF" aria-label="Save PDF"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m-4-4 4 4 4-4M5 20h14"/></svg></button><span class="sw" id="hs" role="group" aria-label="Highlight colour"></span><button id="zks" type="button" title="Note on the selected passage" aria-label="Note on the selected passage"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11l3 3v13H5zM8 9h8M8 13h6"/></svg></button><button id="hc" type="button" title="Clear all highlights in this PDF (right-click one highlight to remove only it)" aria-label="Clear all highlights"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13"/></svg></button><span class="pgbrk" aria-hidden="true"></span><input id="pgnow" class="pgnow" inputmode="numeric" aria-label="Page, type a number and press Enter" title="Type a page number, then Enter"></div><iframe id="pdf" allowfullscreen title="Source PDF" hidden></iframe><div id="rd" hidden></div><div id="aipane" hidden>
-<div class="aibar"><button id="aiconf" type="button" title="API key and base URL" hidden>API key</button></div>
+<section><div class="rtabs" role="tablist" aria-label="Right pane"><button type="button" class="on" data-rt="pdf" role="tab" aria-selected="true">PDF</button><button type="button" data-rt="ai" role="tab" aria-selected="false">Ask AI</button></div><div class="rtop"><div class="rsel"><select id="pdfsel" aria-label="Reading"></select><button id="lr" type="button" title="Remove this reading from the viewer (the PDF file on your computer stays)" aria-label="Remove this reading from the viewer"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h7l4 4v14H7zM14 3v4h4M10 12l4 4m0-4-4 4"/></svg></button></div><div id="lpn"></div><div id="phint">Pick a reading here, or from the list on the left.</div></div><div id="rt" hidden><button id="zo" type="button" aria-label="Zoom out">−</button><span id="zv">100%</span><button id="zi" type="button" aria-label="Zoom in">+</button><button id="zf" type="button" title="Fit width" aria-label="Fit width"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button><button id="fb" type="button" title="Read this PDF full screen (Esc to exit)" aria-label="Read this PDF full screen" aria-pressed="false"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg></button><button id="sv" type="button" title="Save PDF" aria-label="Save PDF"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m-4-4 4 4 4-4M5 20h14"/></svg></button><button id="ra" type="button" title="Read this PDF aloud; every other sentence blurs out" aria-label="Read aloud" aria-pressed="false"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M17 8.5a5 5 0 0 1 0 7M19.5 6a8.5 8.5 0 0 1 0 12"/></svg></button><button id="hp" type="button" title="Highlighter: pick a colour, then drag over the text" aria-label="Highlighter" aria-pressed="false" aria-expanded="false"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 15l-4 4h4l4-4M14 4l6 6-8 8-6-6z"/></svg></button><div id="hpop" role="group" aria-label="Highlight colour" hidden></div><button id="ocr" type="button" title="Scan OCR: read this page from its pixels when the PDF text layer is broken" aria-label="Scan OCR"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8V5h4M20 8V5h-4M4 16v3h4M20 16v3h-4"/><path d="M8 11h8M8 14h5"/></svg></button><button id="hc" type="button" title="Clear all highlights in this PDF (right-click one highlight to remove only it)" aria-label="Clear all highlights"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13"/></svg></button><span class="pgbrk" aria-hidden="true"></span><input id="pgnow" class="pgnow" inputmode="numeric" aria-label="Page, type a number and press Enter" title="Type a page number, then Enter"></div><iframe id="pdf" allowfullscreen title="Source PDF" hidden></iframe><div id="rabar" role="group" aria-label="Read aloud controls"><button id="raprev" type="button" title="Previous sentence">&#8592; Back</button><select id="rav" aria-label="Voice" title="Voice"></select><span class="ran" id="rasent"></span><button id="ranext" type="button" title="Next sentence">Next &#8594;</button><button id="rastop" type="button" title="Stop reading and show the page normally">Stop</button></div><div id="rd" hidden></div><div id="aipane" hidden>
+<div class="aibar"><button id="aiclear" type="button" title="Clear this chat" hidden>Clear chat</button><button id="aiconf" type="button" title="API key and base URL" hidden>API key</button></div>
 <div id="aikeybox" hidden><p>Your API key and, if you use one, a different base URL. Both are kept in <b>ai.json</b> next to the app; the key goes nowhere except to that endpoint.</p>
 <label>API key<input id="aikey" type="password" placeholder="sk-..." autocomplete="off" spellcheck="false"></label>
 <label>Base URL (optional)<input id="aibase" type="text" placeholder="https://api.deepseek.com" autocomplete="off" spellcheck="false"></label>
 <div class="airow"><button id="aisave" type="button">Save</button><small id="aikeyms"></small></div></div>
 <div id="ailog" aria-live="polite"></div>
 <form id="aif"><div class="aiinwrap"><textarea id="aiin" rows="2" placeholder="Ask about this reading" title="Enter sends, Shift+Enter starts a new line"></textarea><select id="aimodel" aria-label="Model" title="Model"><option value="deepseek-flash">Flash</option><option value="deepseek-v4-pro">V4-Pro</option></select></div><button type="submit" id="aisend">Send</button></form>
-<div class="aihint">Select a sentence in the PDF, right-click it, then choose <b>Ask AI</b>.</div>
 </div></section>
 <button id="hl" type="button" class="edge" title="Hide the left panel" aria-label="Hide the left panel" aria-pressed="false"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button>
 <button id="hr" type="button" class="edge" title="Hide the PDF pane" aria-label="Hide the PDF pane" aria-pressed="false"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
@@ -546,6 +615,7 @@ function store0(){try{return localStorage.getItem("cv:perf")}catch(e){return nul
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 // Library: collections (folders) over the readings. launch.py writes sources.js from library.json at every start.
 const LIB=(window.LIBRARY&&window.LIBRARY.collections)?window.LIBRARY:DATA.library||{collections:[],items:{}};
+let LFOLDER=(()=>{try{return store.get("cv:libfolder")||null}catch(e){return null}})();
 const CMAP={};LIB.collections.forEach(c=>CMAP[c.id]=c);
 const ANC={};LIB.collections.forEach(c=>{const a=new Set();let p=c.parent;while(p&&CMAP[p]){a.add(p);p=CMAP[p].parent}ANC[c.id]=a});
 DATA.sources.forEach(s=>{const it=LIB.items[s.id];s.col=it&&Array.isArray(it.collections)?it.collections:[]});
@@ -814,8 +884,8 @@ function open_(src,id){
   const c=all.find(x=>x.src===src&&x.id===id);if(!c)return;
   showAll();  // the target card may not be painted yet
   sel=src+id;
-  showPdf(src,pg0(c));
-  if(c.hg){let t=0;const iv=setInterval(()=>{const f=window.flashHL&&window.flashHL(c.hg);if(f){clearInterval(iv);setTimeout(async()=>{const g=window.flashHL(c.hg);g&&g.scrollIntoView({block:"center"});g&&window.healClaim&&window.healClaim(c,g._m.n)},400)}else if(++t>15)clearInterval(iv)},200)}
+  showPdf(src,pg0(c)).then(()=>{if(!c.hg&&window.markQuote)markQuote(src,c.pdf_page.map(Number).filter(n=>n>0),c.quote)});
+  if(c.hg){let t=0;const k=window._ft=(window._ft||0)+1;const iv=setInterval(()=>{if(window._ft!==k)return clearInterval(iv);const f=window.flashHL&&window.flashHL(c.hg);if(f){clearInterval(iv);setTimeout(async()=>{if(window._ft!==k)return;const g=window.flashHL(c.hg);g&&g.scrollIntoView({block:"center"});g&&window.healClaim&&window.healClaim(c,g._m.n)},400)}else if(++t>15)clearInterval(iv)},200)}
   render();
 }
 // centered dialog instead of the browser's confirm()/alert(); "don't ask again" is remembered per key
@@ -1299,7 +1369,7 @@ const zkScopeIds=()=>{const cc=$("col").value||"",rs=$("zsrc"),rv=rs?rs.value:""
     return !cc||inCol(h.src?(COL[h.src]||[]):(h.col?[h.col]:[]),cc)})};
 const zkFillFilters=()=>{const tags=new Set(),subs=new Set(),paths=new Set();
   zkScopeIds().forEach(id=>{const n=zkNote(id);zkTags(n).forEach(t=>tags.add(t));
-    zkPaths({subt:zkNest(n)}).forEach(p=>{for(let i=1;i<=p.length;i++)paths.add(p.slice(0,i).join(" \u203a "))})});  // every branch and every step into it, so typing "A \u203a " offers the children of A
+    zkPaths({subt:zkNest(n)}).forEach(p=>{p.forEach(s=>subs.add(s));for(let i=1;i<=p.length;i++)paths.add(p.slice(0,i).join(" \u203a "))})});  // every branch and every step into it, so typing "A \u203a " offers the children of A
   const dl=(el,vals)=>{if(el)el.innerHTML=[...vals].sort((a,b)=>a.localeCompare(b)).map(v=>`<option value="${esc(v)}"></option>`).join("")};
   dl($("zdlk"),tags);dl($("zdls"),paths);  // typing a tag or a sub-tag offers what is already in this folder
   const opt=(set,cur)=>'<option value="">Any</option>'+[...set].sort((a,b)=>a.localeCompare(b)).map(t=>`<option value="${esc(t)}"${t===cur?" selected":""}>${esc(t)}</option>`).join("");
@@ -1583,7 +1653,6 @@ $("hl").onclick=()=>{SIDES.l=!SIDES.l;sides();syncTabs();if(!SIDES.l)setTimeout(
 $("hr").onclick=()=>{SIDES.r=!SIDES.r;sides();syncTabs()};
 sides();syncTabs();setTimeout(syncTabs,0);setTimeout(dedupeDupes,600);setTimeout(syncTabs,300);
 requestAnimationFrame(()=>document.body.classList.add("tabsr"));setTimeout(()=>document.body.classList.add("tabsr"),400);  // reveal both folds at once, and never leave them hidden if a script error stops the first call
-$("zks").onclick=()=>{const x=window.selQ&&window.selQ();if(!x){toast("Select a sentence in the reading first");return}zkFromPassage(x.q,x.pg)};
 $("zknew").onclick=()=>zkNew(null);
 $("zkidx").onclick=zkIndex;
 $("zklist").addEventListener("click",e=>{const b=e.target.closest&&e.target.closest(".zexp");if(!b)return;
@@ -1793,11 +1862,15 @@ $("tl").onclick=()=>show("list");$("tg").onclick=()=>show("graph");$("lb").oncli
 }
 $("gv").addEventListener("click",e=>{
   if(e.target.closest("[data-gb]"))return show("list");const p=e.target.closest(".e"),n=e.target.closest(".n"),d=e.target.closest(".nn");
-  const tg=e.target.closest("#gout .tnode[data-tag]");if(tg){zkPick={kind:"tag",tag:tg.dataset.tag};show("notes");$("zft").value=tg.dataset.tag;$("zfs").value="";zkRenderList();return}
-  const sg=e.target.closest("#gout .snode[data-sub]");if(sg){zkPick={kind:"sub",tag:sg.dataset.tag,path:sg.dataset.path};show("notes");$("zfs").value=sg.dataset.sub;zkRenderList();return}
+  // the notes list follows the click: tag and sub-tag filters set to what was clicked
+  const follow=(t,s)=>{show("notes");zkFillFilters();$("zft").value=t;
+    if($("zft").value!==t&&$("zsrc")&&$("zsrc").value){$("zsrc").value="";zkFillFilters();$("zft").value=t}  // ponytail: the tag can sit in another reading, so drop the reading filter once; a tag outside the folder stays on "Any"
+    $("zfs").value=s;zkRenderList()};
+  const tg=e.target.closest("#gout .tnode[data-tag]");if(tg){zkPick={kind:"tag",tag:tg.dataset.tag};follow(tg.dataset.tag,"");return}
+  const sg=e.target.closest("#gout .snode[data-sub]");if(sg){zkPick={kind:"sub",tag:sg.dataset.tag,path:sg.dataset.path};follow(sg.dataset.tag,sg.dataset.sub);return}
   const zn=e.target.closest("#gout .node[data-zk]");if(zn){
     if(+zn.dataset.n>1){zkMenu(e.clientX,e.clientY,zn.dataset.src||"");return}  // merged reading: menu only, stay on the graph
-    zkPick={kind:"note",id:zn.dataset.zk};show("notes");zkOpen(zn.dataset.zk);return}
+    zkPick={kind:"note",id:zn.dataset.zk};follow(zkTags(zkNote(zn.dataset.zk))[0]||"","");zkOpen(zn.dataset.zk);return}
   const le=e.target.closest(".le"),ln=e.target.closest(".ln");
   if(le||ln){const d=(le||ln).dataset;$("src").value=d.s;$("lt").value=d.b||"";$("rl").value=d.t||"";return show("list")}
   if(p)toList({[p.dataset.a]:p.dataset.av,[p.dataset.b]:p.dataset.bv,...(p.dataset.p?{p:p.dataset.p}:{})});
@@ -2028,13 +2101,164 @@ function drawLib(){const _p=performance.now();
     if(LCOLL.has(r[0])&&kids[r[0]])closed=r[2]});  // a closed folder hides everything under it
   $("libtree").innerHTML=rows.map(([id,n,d])=>{
     const cnt=DATA.sources.filter(s=>inCol(s.col,id)).length;  // same rule as the filter: a parent counts its children
-    return `<div class="lrow" data-c="${esc(id)}" data-d="${d}" style="padding-left:${4+d*14}px">`
+    return `<div class="lrow${LFOLDER===id?" lsel":""}" data-c="${esc(id)}" data-d="${d}" style="padding-left:${4+d*14}px">`
       +`<button type="button" class="lcol${kids[id]?"":" sp"}" data-col="${esc(id)}" aria-expanded="${LCOLL.has(id)?"false":"true"}" title="${kids[id]?(LCOLL.has(id)?"Show":"Hide")+" what is inside":""}">${kids[id]?(LCOLL.has(id)?"\u25b8":"\u25be"):""}</button>`
-      +`<input value="${esc(n)}" aria-label="Folder name"><span class="cnt">${cnt}</span>`
+      +`<input value="${esc(n)}" readonly aria-label="Folder name (double-click to rename)"><span class="cnt">${cnt}</span>`
       +`<button type="button" class="lpdf" title="Add PDFs to ${esc(n)}">PDF</button>`+`<button type="button" class="lsub" title="Add a sub-folder inside ${esc(n)}">+</button>`
       +`<button type="button" class="ldel" title="Delete this folder (readings and claims stay)">\u2715</button></div>`}).join("")
     ||'<div class="lrow">No folders yet. Add one below.</div>';
+  drawLibTable();
   perf("drawLib",_p);
+}
+
+// ---- Library metadata: one row per reading, Zotero style. Fields live in LIB.items[id].meta and are
+// editable in place; anything missing is guessed from the title, which always carries author and year.
+const META_FIELDS=[["type","Type"],["author","Author"],["year","Year"],["title","Title"],
+  ["journal","Journal"],["volume","Volume"],["issue","Issue"],["pages","Pages"],["doi","DOI"],
+  ["booktitle","Book title"],["editors","Editors"],["city","City"],["publisher","Publisher"],
+  ["edition","Edition"],["isbn","ISBN"]];
+const DOC_TYPES=[["article","Journal article"],["book","Book"],["chapter","Book section"],["report","Report"]];
+// which columns each type needs. A grid cannot change shape per row, so the table shows the union
+// of the types in view and each row keeps its own type in the Type column.
+const TYPE_COLS={article:["journal","volume","issue","pages","doi"],
+  book:["city","publisher","edition","isbn"],
+  chapter:["booktitle","editors","pages","city","publisher"],
+  report:["city","publisher","pages"]};
+// Three title shapes exist in this library: "Author (Year) - Title", a z-library filename
+// "Title (Year) [SERIES] (Author) (site, site)", and a bare slug "Bates-AreaStudiesPolitical-1997".
+const deCamel=w=>w.replace(/([a-z])([A-Z])/g,"$1 $2").replace(/([A-Z]+)([A-Z][a-z])/g,"$1 $2");
+const slugWords=sl=>deCamel(sl).split(/[-_\s]+/).filter(Boolean)
+  .map(w=>/^[A-Z]{2,}$/.test(w)||/^\d+$/.test(w)?w:w[0].toUpperCase()+w.slice(1).toLowerCase()).join(" ");
+const SITE=/z-?lib|1lib|libgen|anna|\.(?:sk|com|org|net|io|ru|is|li|cc)\b/i;
+const metaGuessed=id=>{const it=LIB.items[id]||{},raw=String(it.title||"").trim();
+  const typ=/\bdoi\b|10\.\d{4,}\//i.test(raw)?"article":/\bin:\s|\bedited by\b|\bpp\.\s*\d/i.test(raw)?"chapter":"book";
+  let au="",year="",ti=raw;
+  const sep=raw.match(/\s+-\s+/);
+  if(sep){  // Author (Year) - Title
+    au=raw.slice(0,sep.index);ti=raw.slice(sep.index+sep[0].length);
+    const ym=au.match(/\s*\(((?:19|20)\d{2})\)\s*$/);
+    if(ym){year=ym[1];au=au.slice(0,ym.index).trim()}
+  }else{
+    // drop the trailing "(z-library.sk, 1lib.sk, …)" and any "[SERIES]" block
+    let t=raw.replace(/\s*\(([^()]*)\)\s*$/g,m=>SITE.test(m)?"":m);
+    while(SITE.test(t.match(/\(([^()]*)\)\s*$/)?.[1]||""))t=t.replace(/\s*\([^()]*\)\s*$/,"");
+    t=t.replace(/\s*\[[^\]]*\]\s*/g," ").replace(/\s+/g," ").trim();
+    const tail=t.match(/^(.*?)\s*\(([^()]+)\)\s*$/);
+    if(tail&&!/^(?:19|20)\d{2}$/.test(tail[2].trim())){  // ends with (Author)
+      ti=tail[1].trim();au=tail[2].trim();
+      year=(raw.match(/\(((?:19|20)\d{2})\)/)||[])[1]||"";
+    }else if(!/\s/.test(raw)&&/[-_]/.test(raw)){  // a bare filename
+      const parts=raw.split(/[-_]+/).filter(Boolean);
+      if(parts.length>1&&/^(?:19|20)\d{2}$/.test(parts[parts.length-1]))year=parts.pop();
+      // a capitalised first segment is a surname ("Bates-…"); lowercase means it is all title words
+      if(parts.length>=2&&/^[A-Z][a-z]/.test(parts[0])){au=slugWords(parts.shift());ti=slugWords(parts.join(" "))}
+      else ti=slugWords(parts.join(" "));
+    }else ti=t||raw;
+  }
+  year=year||((raw.match(/\b(?:19|20)\d{2}\b/)||[])[0]||"")||((String(id).match(/(?:^|-)((?:19|20)\d{2})(?:-|$)/)||[])[1]||"");
+  ti=ti.replace(/^\s*\(?(?:19|20)\d{2}\)?\s*[-:]?\s*/,"").replace(/\s{2,}/g," ").trim();
+  return {author:au.trim(),year,title:ti||raw,type:typ}};
+const meta=id=>{const it=LIB.items[id]||{},m=it.meta||{},g=metaGuessed(id),out={};
+  META_FIELDS.forEach(([k])=>{out[k]=m[k]||g[k]||""});
+  // an article that already names a journal or a DOI is an article, whatever the guess said
+  if(!m.type&&(out.journal||out.doi))out.type="article";
+  out.type=out.type||"book";
+  return out};
+const metaSet=(id,k,v)=>{const it=LIB.items[id]||(LIB.items[id]={});it.meta=it.meta||{};
+  if(v)it.meta[k]=v;else delete it.meta[k]};
+// one citation string in a plain, paste-into-Word shape. Chicago-ish, which is what the thesis uses.
+const citeOf=id=>{const m=meta(id),it=LIB.items[id]||{};
+  const au=(m.author||"Unknown").trim(),yr=m.year?m.year:"n.d.",ti=(m.title||it.title||"").trim();
+  const place=[m.city,m.publisher].filter(Boolean).join(": ");
+  if(m.type==="article")return `${au}. ${yr}. \u201c${ti}.\u201d ${m.journal||""}${m.volume?" "+m.volume:""}${m.issue?" ("+m.issue+")":""}${m.pages?": "+m.pages:""}.${m.doi?" https://doi.org/"+m.doi.replace(/^https?:\/\/(dx\.)?doi\.org\//i,""):""}`.replace(/\s+([.,])/g,"$1");
+  if(m.type==="chapter")return `${au}. ${yr}. \u201c${ti}.\u201d${m.booktitle?" In "+m.booktitle+",":""}${m.editors?" edited by "+m.editors+",":""}${m.pages?" "+m.pages+".":""}${place?" "+place+".":""}`.replace(/\s+([.,])/g,"$1");
+  if(m.type==="report")return `${au}. ${yr}. ${ti}.${place?" "+place+".":""}${m.pages?" "+m.pages+".":""}`.replace(/\s+([.,])/g,"$1");
+  return `${au}. ${yr}. ${ti}.${place?" "+place+".":""}${m.edition?" "+m.edition+" ed.":""}`.replace(/\s+([.,])/g,"$1")};
+const metaSave=(id)=>{const j=JSON.stringify(LIB);
+  if(window.pywebview&&pywebview.api&&pywebview.api.save_library){pywebview.api.save_library(j).then(()=>{})}
+  else store.set("cv:lib",j)};
+function drawLibTable(){
+  const box=$("libtbl");if(!box)return;
+  const ids=Object.keys(LIB.items);  // the library is the list here, not the filtered claim set
+  const col=LFOLDER&&CMAP[LFOLDER]?LFOLDER:"";  // the folder picked in the left panel
+  const shown=col?ids.filter(id=>inCol((LIB.items[id]||{}).collections||[],col)):ids;
+  if(!shown.length){box.innerHTML='<div class="ltempty">'+(col?"No readings in this folder yet. Add a PDF from the folder list on the left.":"The library is empty. Add a PDF from a folder on the left.")+'</div>';return}
+  const types=new Set(shown.map(id=>meta(id).type));
+  const cols=["type","author","year","title"];
+  [...types].forEach(t=>(TYPE_COLS[t]||[]).forEach(k=>{if(!cols.includes(k))cols.push(k)}));
+  box.innerHTML='<div class="lthead"><b>'+shown.length+' reading'+(shown.length===1?"":"s")+'</b>'
+    +'<button type="button" id="metafill" title="Look every reading in this view up online (Crossref) and fill the empty fields">Fill missing from the web</button>'
+    +'</div>'
+    +'<table><thead><tr>'+cols.map(k=>`<th>${esc((META_FIELDS.find(f=>f[0]===k)||[k,k])[1])}</th>`).join("")+'</tr></thead><tbody>'
+    +shown.map(id=>{const m=meta(id);
+      return `<tr data-id="${esc(id)}">`+cols.map(k=>{
+        const lab=esc((META_FIELDS.find(f=>f[0]===k)||[k,k])[1]);
+        if(k==="type")return `<td><select class="typ" data-id="${esc(id)}" aria-label="Document type">`
+          +DOC_TYPES.map(([v,n])=>`<option value="${v}"${m.type===v?" selected":""}>${esc(n)}</option>`).join("")
+          +`</select></td>`;
+        return `<td><input class="${k==="title"?"ttl":k==="year"?"yr":k==="author"?"au":""}" data-id="${esc(id)}" data-k="${k}" value="${esc(m[k]||"")}" aria-label="${lab}"></td>`}).join("")+'</tr>'}).join("")
+    +'</tbody></table>';
+  if(!box._wired){box._wired=true;
+    box.addEventListener("change",e=>{
+      const t=e.target.closest("select[data-id]");
+      if(t){metaSet(t.dataset.id,"type",t.value);metaSave(t.dataset.id);drawLibTable();return}
+      const i=e.target.closest("input[data-id]");if(!i)return;
+      metaSet(i.dataset.id,i.dataset.k,i.value.trim());metaSave(i.dataset.id)});
+    box.addEventListener("contextmenu",e=>{const tr=e.target.closest("tr[data-id]");if(!tr)return;
+      e.preventDefault();citeMenu(tr.dataset.id,e.clientX,e.clientY)});
+    box.addEventListener("click",e=>{if(e.target.closest("#metafill"))metaFill()});
+  }
+}
+// Fill the empty fields from Crossref/OpenAlex. A field you already typed is never overwritten.
+const metaFill=async()=>{
+  if(!(window.pywebview&&pywebview.api&&pywebview.api.lookup_meta))return toast("Web fill needs the app window");
+  const col=LFOLDER&&CMAP[LFOLDER]?LFOLDER:"";
+  const ids=Object.keys(LIB.items).filter(id=>!col||inCol((LIB.items[id]||{}).collections||[],col));
+  const todo=ids.filter(id=>{const m=meta(id);
+    return !m.doi&&(!m.publisher||!m.author||!m.year||!m.journal||!m.title)});
+  if(!todo.length)return toast("Nothing to fill: every reading already has its fields",1,4000);
+  toast("Looking up "+todo.length+" reading"+(todo.length===1?"":"s")+" online\u2026",1);
+  let filled=0,missed=0,n=0;
+  for(const id of todo){
+    n++;
+    const it=LIB.items[id]||{},cur=meta(id);
+    const q=[cur.author,cur.year,cur.title||it.title].filter(Boolean).join(" ");
+    let r=null;
+    try{r=await pywebview.api.lookup_meta(q)}catch(err){r=null}
+    if(r&&r.ok){
+      const have=it.meta||(it.meta={});
+      ["type","title","author","year","journal","volume","issue","pages","doi","publisher","city","isbn"].forEach(k=>{
+        if(!have[k]&&r[k])have[k]=r[k]});  // only the blanks
+      filled++;
+    }else missed++;
+    if(n%4===0||n===todo.length){toast("Web fill "+n+" of "+todo.length+"\u2026",1,2500);drawLibTable()}
+  }
+  metaSaveAll();
+  drawLibTable();
+  toast(filled+" filled"+(missed?" \u00b7 "+missed+" not found":"")+" \u00b7 "+todo.length+" looked up",1,6000);
+};
+const metaSaveAll=()=>{const j=JSON.stringify(LIB);
+  if(window.pywebview&&pywebview.api&&pywebview.api.save_library){pywebview.api.save_library(j).then(()=>{})}
+  else store.set("cv:lib",j)};
+let citeBox=null;
+function citeMenu(id,x,y){
+  if(citeBox)citeBox.remove();
+  const b=document.createElement("div");b.id="citepop";
+  b.innerHTML='<button type="button" data-a="copy">Copy citation</button>'
+    +'<button type="button" data-a="text">Copy as plain text</button>'
+    +'<div class="cprev"></div>';
+  document.body.append(b);citeBox=b;
+  b.querySelector(".cprev").textContent=citeOf(id);
+  const r=b.getBoundingClientRect();
+  b.style.left=Math.min(x,innerWidth-r.width-8)+"px";
+  b.style.top=Math.min(y,innerHeight-r.height-8)+"px";
+  b.addEventListener("click",e=>{const a=e.target.closest("button")&&e.target.closest("button").dataset.a;
+    if(!a)return;
+    const txt=a==="text"?citeOf(id).replace(/\u201c|\u201d/g,'"'):citeOf(id);
+    copyText(txt);toast(a==="text"?"Citation copied as plain text":"Citation copied");b.remove();citeBox=null});
+  setTimeout(()=>document.addEventListener("click",function once(ev){
+    if(citeBox&&!citeBox.contains(ev.target)){citeBox.remove();citeBox=null}
+    document.removeEventListener("click",once)}),0);
 }
 // Rebuild every view from LIB in place. A page reload here costs seconds on a 5.8 MB index and
 // made the app feel laggy on every folder tick, so nothing below reloads.
@@ -2077,12 +2301,23 @@ $("pdfsel").addEventListener("change",()=>drawLib());  // the tick list follows 
 $("libtree").addEventListener("change",e=>{if(e.target.tagName!=="INPUT")return;
   const c=e.target.closest(".lrow").dataset.c,n=e.target.value.trim();
   if(!n||!CMAP[c])return;CMAP[c].name=n;saveLib()});
+// the folder name is read-only until it is double-clicked, so a single click can pick the folder
+$("libtree").addEventListener("dblclick",e=>{const i=e.target.closest(".lrow input");
+  if(!i)return;i.readOnly=false;i.focus();i.select()});
+$("libtree").addEventListener("blur",e=>{const i=e.target.closest&&e.target.closest(".lrow input");
+  if(i)i.readOnly=true},true);
 $("libtree").addEventListener("click",async e=>{
   const tw=e.target.closest(".lcol");if(tw&&tw.dataset.col){const id=tw.dataset.col;
     if(LCOLL.has(id))LCOLL.delete(id);else LCOLL.add(id);
     try{store.set("cv:libcol",JSON.stringify([...LCOLL]))}catch(_){}
     drawLib();return}
   const row=e.target.closest(".lrow");if(!row)return;const id=row.dataset.c,d=+row.dataset.d||0;
+  // any click on the row that is not one of its buttons picks this folder for the metadata table
+  if(!e.target.closest("button")&&!e.target.closest("input:not([readonly])")){  // buttons and an open rename keep their job
+    LFOLDER=(LFOLDER===id?null:id);
+    try{store.set("cv:libfolder",LFOLDER||"")}catch(_){}
+    if($("col"))$("col").value=LFOLDER||"";
+    drawLib();drawLibTable();return}
   if(e.target.classList.contains("ldel")){
     if(!await nask("Delete the folder "+cPath(id)+"?\n\nThe readings and their claims stay.","Claim Viewer"))return;
     LIB.collections=LIB.collections.filter(c=>c.id!==id);
@@ -2204,8 +2439,58 @@ $("sv").onclick=async()=>{if(!curBuf)return;const hl=HL()[cur]||[],nm=cur+(hl.le
  else if(fh){const w=await fh.createWritable();await w.write(blob);await w.close();toast("Saved."+note)}
  else{const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=nm;a.click();toast("Saved."+note)}}
  catch(e){toast(e.message==="tmo"?"The save dialog did not answer. Try again.":"Save failed: "+e.message)}};
+$("ocr").onclick=()=>{if(!docC){toast("Open a PDF first");return}ocrAsk()};
+// Scan OCR scope: one page, every page, or a range. Runs in batches so a 300-page book stays responsive.
+const ocrAsk=async()=>{
+  const N=docC?docC.numPages:0;if(!N)return;
+  const n=PAGEN();
+  const box=document.createElement("dialog");box.className="ask ocrbox";
+  box.innerHTML='<h3>Scan OCR</h3><p class="ocrhint">Tesseract reads the page pixels. Use it when a PDF\u2019s own text layer is broken, so highlights and read-aloud stop mangling sentences.</p>'
+   +'<label class="ocropt"><input type="radio" name="ocrmode" value="cur" checked><span>Current page <b>('+n+' of '+N+')</b></span></label>'
+   +'<label class="ocropt"><input type="radio" name="ocrmode" value="all"><span>All pages <b>('+N+')</b></span></label>'
+   +'<label class="ocropt"><input type="radio" name="ocrmode" value="range"><span>Range of pages</span>'
+   +'<span class="ocrfrom"><label>from <input type="number" id="ocrf" min="1" max="'+N+'" value="'+n+'" aria-label="First page"></label>'
+   +'<label>to <input type="number" id="ocrt" min="1" max="'+N+'" value="'+Math.min(N,n+9)+'" aria-label="Last page"></label></span></label>'
+   +'<menu><button type="button" class="ocrgo">Scan</button><button type="button" class="ocrno">Cancel</button></menu>';
+  const close=()=>{box.close();box.remove();document.removeEventListener("keydown",key)};
+  const key=e=>{if(e.key==="Escape")close()};
+  document.addEventListener("keydown",key);
+  const mode=()=>(box.querySelector('input[name=ocrmode]:checked')||{}).value||"cur";
+  const rangeOn=()=>{const f=$("ocrf"),t=$("ocrt");const on=mode()==="range";
+    if(f)f.disabled=!on;if(t)t.disabled=!on};
+  box.querySelectorAll('input[name=ocrmode]').forEach(r=>r.onchange=rangeOn);
+  box.querySelector(".ocrno").onclick=close;
+  box.querySelector(".ocrgo").onclick=async()=>{
+    let a,b;
+    const m=mode();
+    if(m==="cur"){a=b=n}
+    else if(m==="all"){a=1;b=N}
+    else{a=+$("ocrf").value||n;b=+$("ocrt").value||a;
+      if(a>b){const t=a;a=b;b=t}
+      a=Math.max(1,a);b=Math.min(N,b)}
+    close();
+    const pages=[];for(let i=a;i<=b;i++)pages.push(i);
+    await ocrRange(cur,pages)
+  };
+  document.body.append(box);box.showModal();rangeOn();
+  const f=$("ocrf");f&&f.select()};
+const ocrRange=async(id,pages)=>{  // one call per page through ocrScan, in slices, so the UI stays live
+  if(!pages.length)return;
+  if(pages.length===1)return ocrScan(id,pages);
+  const CH=25;let done=0;
+  for(let i=0;i<pages.length;i+=CH){
+    const slice=pages.slice(i,i+CH);
+    if(!docC)break;  // the PDF was closed mid-run
+    await ocrScan(id,slice,true);
+    done+=slice.length;
+    toast("OCR "+Math.min(done,pages.length)+" of "+pages.length+" pages\u2026")
+  }
+  const c=ocrLoad(id)||{};
+  const ok=pages.filter(n=>c[n]&&c[n].text).length;
+  toast("OCR finished: "+ok+" of "+pages.length+" pages read"+(ok<pages.length?" \u00b7 "+(pages.length-ok)+" failed":""),1,6000)};
 $("hc").onclick=async()=>{if(!await ask("Remove all highlights in this PDF?","clearhl"))return;const o=HL();delete o[cur];saveHL(o);rd.querySelectorAll(".hl").forEach(e=>e.remove())};
 window.showPdf=async(id,pg)=>{if(!id)return;  // the dropdown starts on "(pick a reading)"; loading pdf/.pdf only 404s
+ if(s.value!==id){if(![...s.options].some(o=>o.value===id)){const x=DATA.sources.find(q=>q.id===id);s.insertAdjacentHTML("beforeend",`<option value="${esc(id)}">${esc(x?x.title:id)}</option>`)}s.value=id;drawLib()}  // a reading outside the chosen collection has no option: add one, or the dropdown keeps naming the old reading  // a card click opens the reading: the dropdown must name it (set directly: a change event would start a second load)
  if(!window.pdfjsLib){lpn.className="warn";lpn.textContent="The reader files are missing: lib/pdf.min.js is not next to the page. The PDF opens in a plain frame until it is restored.";fallback(id,pg);return}  // no CDN to fall back on
  if(pg==null){try{pg=(JSON.parse(localStorage.getItem("cv:lastpg")||"{}"))[id]||null}catch(e){}}  // resume where the user left off
  if(pg!=null){pg=Math.max(1,+pg||1)}  // the clamp to numPages happens after the document loads
@@ -2216,19 +2501,29 @@ $("phint")&&($("phint").hidden=true);const my=++tok;let buf=null,rErr=null;try{i
  lpn.className="";lpn.textContent="Select text in the PDF, then right-click to add a claim";if(cur===id&&!rd.hidden)return scroll(pg);
  cur=id;f.hidden=true;rd.hidden=false;rd.innerHTML="";
  try{const doc=await pdfjsLib.getDocument({data:new Uint8Array(buf.slice(0))}).promise;if(my!==tok)return;
-  docC=doc;curBuf=buf;Z=1;pg=Math.max(1,Math.min(+pg||1,doc.numPages));lastPg=pg;lastPgId=id;savePage();await build(pg);showPage();rt.hidden=false}
+  docC=doc;curBuf=buf;Z=1;pg=Math.max(1,Math.min(+pg||1,doc.numPages));lastPg=pg;lastPgId=id;savePage();await build(pg);showPage();rt.hidden=false;if(document.body.classList.contains("rtai"))aiLoad()}
  catch(e){if(my!==tok)return;lpn.className="warn";lpn.textContent="The reader could not open this PDF"+(/worker/i.test(String(e&&e.message))?" (lib/pdf.worker.min.js is missing)":"")+". It is open in a plain frame instead.";fallback(id,pg)}};
 window.cvIdle=()=>{tok++;cur="";lastPgId="";rt.hidden=true;rd.hidden=true;f.hidden=true;f.removeAttribute("src");$("phint")&&($("phint").hidden=false)};  // leave the pane empty instead of parsing a new PDF
-const toast=(m,top)=>{let t=$("toast");if(!t){t=document.createElement("div");t.id="toast";t.setAttribute("aria-live","polite");document.body.append(t)}(document.fullscreenElement||document.body).append(t);t.textContent=m;t.classList.toggle('top',!!top);t.hidden=false;clearTimeout(t._h);t._h=setTimeout(()=>t.hidden=true,3500)};
+const toast=(m,top,ms)=>{let t=$("toast");if(!t){t=document.createElement("div");t.id="toast";t.setAttribute("aria-live","polite");document.body.append(t)}(document.fullscreenElement||document.body).append(t);t.textContent=m;t.classList.toggle('top',!!top);t.hidden=false;clearTimeout(t._h);t._h=setTimeout(()=>{t.hidden=true},ms||3500)};
 window.toast=toast;
 const capture=(q,pg,rs,hg)=>{if(rs&&rs[0]&&!rs[0].t)rs[0].t=q;q=(q||"").replace(/\s+/g," ").trim();if(q.length<20)return;const x=all.find(x=>x.src+x.id===sel),src=(!rd.hidden&&cur)||(x&&x.src)||s.value,
   _it=DATA.sources.find(y=>y.id===src),_cc=$("col").value;
  if(!_it||!inCol(_it.col,_cc)){window.toast("That reading is outside the category you selected.");return}
  const c={id:"u"+Date.now(),src,srcTitle:DATA.sources.find(x=>x.id===src).title,quote:q,gist:"",role:"OTHER",pathway:[],direction:"",status:"user",own_claim:true};norm(c);if(pg){c.pdf_page=[pg];c.cite_page=String(pg)}if(hg)c.hg=hg;else if(rs&&rs.length&&cur===src)c.hg=mark("y",rs);all.push(c);ED.a.push(c);sel=src+c.id;saveED();if(!pass(c))showNewClaim(c);else refresh();const e=[...document.querySelectorAll("#list .card")].find(z=>z.dataset.k===kc(c));if(e)e.scrollIntoView({block:"center"});toast("Claim added"+(pg?" (p."+pg+")":"")+": "+q.slice(0,60));if(hg&&pg)window.healClaim(c,pg)};
 // ---- right pane: PDF or the DeepSeek chat. The chat is fed by the PDF's right-click menu.
-const AI={busy:false,hist:[]};
-const aiTitle=()=>((DATA.sources||[]).find(s=>s.id===cur)||{}).title||"";
-const aiLine=(cls,txt)=>{const d=document.createElement("div");d.className="aim "+cls;d.textContent=txt;const L=$("ailog");if(L){L.appendChild(d);L.scrollTop=L.scrollHeight}return d};
+const AI={busy:false,hist:[],docs:{}};
+// The chat reads the reading on its own: it does not need the PDF tab to have rendered it first.
+const aiId=()=>(($("pdfsel")&&$("pdfsel").value)||cur||"");  // the dropdown is the truth: `cur` lags while the AI tab is open
+const aiTitle=id=>((DATA.sources||[]).find(s=>s.id===(id||aiId()))||{}).title||"";
+const aiDoc=async id=>{if(AI.docs[id])return AI.docs[id];
+  if(!await ready())throw new Error("the reader files are missing (lib/pdf.min.js)");
+  const buf=await bytes(id);if(!buf)throw new Error("PDF not found in the pdf folder");
+  const doc=await pdfjsLib.getDocument({data:new Uint8Array(buf.slice(0))}).promise;
+  for(const k in AI.docs)if(k!==id){try{AI.docs[k].destroy()}catch(e){}delete AI.docs[k]}  // one reading at a time: a cached book holds its pages in memory
+  return AI.docs[id]=doc};
+const aiPageText=async(doc,n)=>{const tc=await(await doc.getPage(n)).getTextContent();
+  return tc.items.map(i=>i.hasEOL&&/\w-$/.test(i.str)?i.str.slice(0,-1):i.str+(i.hasEOL?" ":"")).join("").replace(/\s+/g," ")};
+const aiLine=(cls,txt)=>{const d=document.createElement("div");d.className="aim "+cls;d.textContent=txt;const L=$("ailog");if(L){L.appendChild(d);L.scrollTop=L.scrollHeight}aiClearBtn();return d};
 const aiStatus=async()=>{const box=$("aikeybox");if(!box)return;
   if(!(window.pywebview&&pywebview.api&&pywebview.api.ai_status)){box.hidden=false;if($("aiconf"))$("aiconf").hidden=true;if($("aikeyms"))$("aikeyms").textContent="the chat needs the app window";return}
   try{const s=await pywebview.api.ai_status();
@@ -2241,7 +2536,7 @@ const aiStatus=async()=>{const box=$("aikeybox");if(!box)return;
 const rtab=name=>{const ai=name==="ai";document.body.classList.toggle("rtai",ai);
   document.querySelectorAll(".rtabs [data-rt]").forEach(b=>{const on=b.dataset.rt===name;b.classList.toggle("on",on);b.setAttribute("aria-selected",on)});
   try{store.set("cv:rtab",name)}catch(e){}
-  if(ai)aiStatus()};
+  if(ai){aiStatus();aiLoad();aiClearBtn()}else if(cur&&!docC)showPdf(cur)};  // back on the PDF tab: a reading picked inside the chat still needs rendering
 const aiModels=async()=>{const sel=$("aimodel");if(!sel||!(window.pywebview&&pywebview.api&&pywebview.api.ai_models))return;
   let r=null;try{r=await pywebview.api.ai_models()}catch(e){return}
   const ids=(r&&r.ok&&Array.isArray(r.models))?r.models:[];if(!ids.length)return;
@@ -2256,20 +2551,83 @@ const aiModels=async()=>{const sel=$("aimodel");if(!sel||!(window.pywebview&&pyw
   const want=[cur,flash,pro].filter(Boolean);
   sel.value=want.find(v=>[...sel.options].some(o=>o.value===v))||sel.value;  // Flash by default: it is the cheap one
 };
+// The open reading is the context: every page's text, tagged [p.N], goes in the user turn and the answer cites it back.
+const aiRead=async id=>{const doc=await aiDoc(id),N=doc.numPages,pg=[],note=aiLine("sys","Reading the PDF\u2026");
+  for(let n=1;n<=N;n++){pg.push(await aiPageText(doc,n));if(aiId()!==id){note.remove();return null}}
+  note.remove();let text="",used=0;
+  for(;used<N&&text.length+pg[used].length<2e5;used++)text+="[p."+(used+1)+"] "+pg[used]+"\n\n";  // ponytail: whole text up to 200k characters, no retrieval; a long book is cut after page `used`
+  if(text.trim().length<200){aiLine("err","This PDF has no text layer, so the AI cannot read it.");return null}
+  let lbl={};try{const ls=await doc.getPageLabels();if(Array.isArray(ls))ls.forEach((L,n)=>{const m=String(L||"").match(/\d+/);
+    if(m&&!(+m[0] in lbl))lbl[+m[0]]=n+1})}catch(e){}  // printed page 169 -> PDF page 1
+  return {id,k:pg.map(nk),text,lbl}};
+const aiLoad=()=>{const id=aiId();if(!id)return Promise.resolve(null);
+  if(!AI.L||AI.L.id!==id){AI.hist=[];const L=AI.L={id,p:aiRead(id)};
+    const drop=()=>{if(AI.L===L)AI.L=null};L.p.then(r=>{if(!r)drop()},drop)}  // a failed or abandoned read must not stay cached
+  return AI.L.p};
+const aiGo=async(id,n,q,D)=>{rtab("pdf");await window.showPdf(id,n);if(!q)return;
+  if(await window.markQuote(id,[n],q))return;
+  const k=nk(q);
+  if(k.length<40)return;  // a short fragment matches the title and half the document: turn the page, outline nothing
+  const on=p=>((D&&D.k[p-1])||"").includes(k.slice(0,60));
+  for(let d=1;D&&d<=D.k.length;d++){  // the sentence is not on the cited page: look outwards from it, never from page 1
+    for(const pg of [n-d,n+d])if(pg>=1&&pg<=D.k.length&&on(pg)&&await window.markQuote(id,[pg],q)){toast("That sentence is on page "+pg);return}}
+  toast("Could not find that sentence in the PDF")};
+// [p.N: "sentence"] outlines the sentence; a prose "p. N" outlines the sentence of the answer that refers to that page
+const aiCite=(box,txt,D)=>{txt=String(txt||"").replace(/\*\*(.+?)\*\*/g,"$1").replace(/^#{1,6}\s*/gm,"");  // the model still reaches for markdown: strip it, the chip carries the citation
+  const N=D.k.length;
+  const at=v=>{const n=+v;if(n>=1&&n<=N)return n;const m=(D.lbl||{})[n];return m||0};  // printed page number -> PDF page
+  const near=(pos)=>{  // the sentence the answer cites: the quoted span nearest the reference, else the sentence itself
+    const good=q=>q.split(/\s+/).length>=6&&q.length>=40;  // "developmental state" is a fragment, not the cited sentence
+    const qs=[...txt.matchAll(/["\u201c]([^"\u201d\n]{15,300})["\u201d]/g)].map(x=>({i:x.index,q:x[1].trim()})).filter(x=>good(x.q));
+    if(qs.length){const before=qs.filter(x=>x.i<=pos).pop(),after=qs.find(x=>x.i>pos);return (before||after).q}  // a quote just before the reference is the one it names
+    const a=txt.lastIndexOf("\n",pos-1)+1,b=txt.indexOf("\n",pos)<0?txt.length:txt.indexOf("\n",pos);
+    const seg=txt.slice(a,b),rel=pos-a;
+    const isEnd=i=>/[.!?]/.test(seg[i])&&(i+1>=seg.length||/\s/.test(seg[i+1]))&&!/\b(pp?|e\.g|i\.e|cf|vs|no|vol|ch)\.$/i.test(seg.slice(Math.max(0,i-4),i+1));
+    let st=0,en=seg.length;
+    for(let i=rel;i>=0;i--)if(isEnd(i)){st=i+1;break}
+    for(let i=rel;i<seg.length;i++)if(isEnd(i)){en=i+1;break}
+    const sen=seg.slice(st,en).trim();
+    return good(sen)?sen:""};  // nothing quotable on this line: the chip just turns the page
+  const plain=(s,off)=>{const re=/\bp{1,2}\.\s*(\d{1,4})\b/g;let j=0,x;
+    while((x=re.exec(s))){const n=at(x[1]);
+      if(!n){box.append(s.slice(j,re.lastIndex));j=re.lastIndex;continue}  // a number we cannot place stays plain text, not a red chip
+      box.append(s.slice(j,x.index));j=re.lastIndex;
+      const q=near(off+x.index),b=document.createElement("button");b.type="button";b.className="aicite";b.textContent="p."+n;
+      b.title=q?"Show the sentence on page "+n:"Go to page "+n;b.dataset.q=q||"";b.onclick=()=>aiGo(D.id,n,q,D);box.append(b)}
+    box.append(s.slice(j))};
+  const re=/\[p\.\s*(\d+)\s*:\s*["\u201c](.+?)["\u201d]\s*\]|\[p\.\s*(\d+)\s*\]/g;let i=0,m;
+  while((m=re.exec(txt))){plain(txt.slice(i,m.index),i);i=re.lastIndex;
+    if(m[3]){const pg=at(m[3]),q=near(m.index),b=document.createElement("button");
+      b.type="button";b.className="aicite"+(pg?"":" bad");b.textContent=pg?"p."+pg:"p.?";b.title=pg?(q?"Show the sentence on page "+pg:"Go to page "+pg):"This page is not in the PDF";
+      if(pg){b.dataset.q=q||"";b.onclick=()=>aiGo(D.id,pg,q,D)}box.append(b);continue}
+    const q=m[2],k=nk(q),h=[k,k.slice(0,40)],on=p=>k.length>=12&&h.some(x=>(D.k[p-1]||"").includes(x));
+    let n=at(m[1]);if(!on(n))n=on(1)?1:D.k.findIndex((_,j)=>on(j+1))+1;
+    const b=document.createElement("button");b.type="button";b.className="aicite"+(n?"":" bad");b.textContent=n?"p."+n:"p.?";
+    b.title=n?"Show this sentence in the PDF":"This sentence is not in the PDF. Do not trust it.";if(n){b.dataset.q=q;b.onclick=()=>aiGo(D.id,n,q,D)}box.append(b)}
+  plain(txt.slice(i),i)};
 const aiSend=async text=>{text=String(text||"").trim();if(!text||AI.busy)return;
   if(!(window.pywebview&&pywebview.api&&pywebview.api.ai_chat)){aiLine("err","The chat needs the app window.");return}
-  AI.busy=true;$("aisend").disabled=true;aiLine("me",text);AI.hist.push({role:"user",content:text});
+  const id0=aiId();if(!id0){aiLine("err","Pick a reading in the PDF tab first, or click a reading on the left.");return}
+  AI.busy=true;$("aisend").disabled=true;aiLine("me",text);
   const wait=aiLine("bot","Thinking\u2026");
-  const sys="You help a political science researcher read a paper. The reading is \u201c"+aiTitle()+"\u201d. Answer in plain English in short paragraphs. If a passage is quoted, say what it means, what work it does in the argument, and define any term a newcomer would miss. Say plainly when the text does not settle the question.";
-  try{const model=($("aimodel")&&$("aimodel").value)||"";
-    const r=await pywebview.api.ai_chat(JSON.stringify([{role:"system",content:sys}].concat(AI.hist.slice(-12))),model);
+  try{const D=await aiLoad();if(!D){if(aiId()!==id0){wait.remove();AI.busy=false;$("aisend").disabled=false;return}throw new Error("could not read that PDF")}  // the reading changed during the read: end quietly
+    const me={role:"user",content:text};  // joins the history only when the answer arrives
+    const sys="You help a political science researcher read \u201c"+aiTitle(id0)+"\u201d. That PDF is loaded here and its full text comes inside <pdf> tags in the latest user message, one block per PDF page, each block starting with [p.N]. Never say that no PDF is attached: the text in the <pdf> tags is the PDF, and it is the only source you may use. Answer in plain English in short paragraphs. If a passage is quoted, say what it means, what work it does in the argument, and define any term a newcomer would miss. Ground every claim in the text: right after it, cite the supporting sentence as [p.N: \"sentence\"], where N is the number of the block it came from and the sentence is copied word for word from that block (at most 30 words, no quotation marks inside). For example: The state is hidden from political debate [p.3: \"the developmental state is hidden\"]. Always name the page in the prose as well, as p.N, so the reader can turn to it, and use the block number (the PDF page, counting from 1), never a printed page number from the document's own header. Write that citation marker every single time you state something from the text; an answer with no marker is a failed answer. Do not use markdown bold or headings. Say plainly when the text does not settle the question, and cite nothing then.";
+    const withPdf={role:"user",content:"<pdf title=\""+aiTitle(id0)+"\">\n"+D.text+"</pdf>\n\n"+text};  // the text rides in the user turn: the model reads it there more reliably than in the system role
+    const model=($("aimodel")&&$("aimodel").value)||"";
+    const r=await pywebview.api.ai_chat(JSON.stringify([{role:"system",content:sys}].concat(AI.hist.slice(-10),withPdf)),model);
     wait.remove();
-    if(r&&r.ok){aiLine("bot",r.text);AI.hist.push({role:"assistant",content:r.text})}
+    if(aiId()!==id0){}  // the reading changed while the reply was pending: drop it, it belongs to another document
+    else if(r&&r.ok){aiCite(aiLine("bot",""),r.text,D);AI.hist.push(me,{role:"assistant",content:r.text})}
     else aiLine("err","AI error: "+((r&&r.error)||"no answer"));
   }catch(e){wait.remove();aiLine("err","AI error: "+((e&&e.message)||e))}
   AI.busy=false;$("aisend").disabled=false};
 const aiAsk=(q,pg)=>{rtab("ai");aiSend("Explain this passage"+(pg?" from page "+pg:"")+":\n\n\u201c"+q+"\u201d")};
+const aiClear=()=>{const L=$("ailog");if(L)L.innerHTML="";AI.hist=[];aiClearBtn()};
+const aiClearBtn=()=>{const b=$("aiclear");if(b)b.hidden=!($("ailog")&&$("ailog").children.length)};
+window.__aiClearBtn=aiClearBtn;window.__aiLine=aiLine;window.__aiClear=aiClear;
 document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest(".rtabs [data-rt]");if(b)rtab(b.dataset.rt);
+  if(e.target.id==="aiclear"){aiClear();return}
   if(e.target.id==="aiconf"){const box=$("aikeybox");box.hidden=false;e.target.hidden=true;$("aikey").value="";$("aikey").focus();
     if($("aikeyms"))$("aikeyms").textContent="the saved key stays unless you paste a new one";return}
   if(e.target.id==="aisave"){const k=($("aikey").value||"").trim(),b=($("aibase").value||"").trim();
@@ -2281,8 +2639,9 @@ document.addEventListener("change",e=>{if(e.target.id==="aimodel")try{store.set(
 document.addEventListener("submit",e=>{if(e.target.id!=="aif")return;e.preventDefault();const v=$("aiin").value;$("aiin").value="";aiSend(v)});
 document.addEventListener("keydown",e=>{if(e.target.id!=="aiin")return;
   if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();$("aif").requestSubmit()}});  // Shift+Enter keeps the newline
-window.addEventListener("pywebviewready",()=>{if(document.body.classList.contains("rtai"))aiStatus()});
+window.addEventListener("pywebviewready",()=>{if(document.body.classList.contains("rtai"))aiStatus();raVoices()});
 try{rtab(store.get("cv:rtab")==="ai"?"ai":"pdf")}catch(e){rtab("pdf")}
+try{aiClearBtn()}catch(e){}  // nothing to clear yet: the button starts hidden
 const cm=document.createElement("div");cm.id="cm";cm.hidden=true;cm.innerHTML='<button type="button" class="adb">Add as claim</button><button type="button" class="lkb">Connect to another reading…</button><button type="button" class="zkn">Note on this passage</button><div class="sw">'+swHTML+'</div><button type="button" class="rm">Remove highlight</button><button type="button" class="dfb">Define</button><button type="button" class="aib">Ask AI</button><button type="button" class="cpb">Copy text</button>';document.body.append(cm);
 let pend=null;const hide=()=>{cm.hidden=true;rd.querySelectorAll(".hl.on").forEach(e=>e.classList.remove("on"))};
 // text-layer spans are wider/taller than the printed glyphs, so snap each rect to the ink drawn on the page canvas
@@ -2295,6 +2654,214 @@ const sel_=(min=20)=>{const g=getSelection();if(!g.rangeCount||!rd.contains(g.an
 window.selQ=()=>sel_(1);window.curSrc=()=>cur;  // the reader closure owns sel_ and cur; the toolbar and notes live outside it
 const hitHL=e=>[...rd.querySelectorAll(".hl")].find(h=>{const r=h.getBoundingClientRect();return e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom});
 const flash=g=>{rd.querySelectorAll(".hl.on").forEach(e=>e.classList.remove("on"));let f;rd.querySelectorAll(".hl").forEach(e=>{if(g&&e._m.g===g){e.classList.add("on");f=f||e}});return f};
+const nk=s=>s.toLowerCase().replace(/[^a-z0-9]/g,"");
+// outline the clicked claim's quote on its page: the baked yellow marks every claim of the page alike, so it cannot say which one was clicked
+window.markQuote=async(id,pages,quote)=>{rd.querySelectorAll(".qm").forEach(e=>e.remove());if(cur!==id||!docC||!quote)return 0;
+ const qk=nk(quote);if(qk.length<12)return 0;
+ for(const n of pages){const pgEl=rd.querySelector(`.pg[data-n="${n}"]`);if(!pgEl)continue;
+  const tc=await(await docC.getPage(n)).getTextContent();if(cur!==id)return 0;
+  let P="";const at=[];  // at[j] = [item, offset in the item] for the j-th letter or digit of the page
+  tc.items.forEach(it=>[...it.str].forEach((ch,o)=>{const k=nk(ch);if(k.length===1){P+=k;at.push([it,o])}}));
+  let i=P.indexOf(qk);if(i<0){i=P.indexOf(qk.slice(0,40));if(i<0)continue}  // a quote that runs on to the next page matches by its start
+  const e=Math.min(i+qk.length,P.length)-1,v=pgEl._v,L=[],cx=document.createElement("canvas").getContext("2d");
+  for(let j=i;j<=e;j++){const [it,o]=at[j],S=it.str,t=pdfjsLib.Util.transform(v.transform,it.transform),h=Math.hypot(t[2],t[3]),y=t[5]-h;
+   let a=o,b=o+1;if(j===i)while(a>0&&!/\s/.test(S[a-1]))a--;if(j===e)while(b<S.length&&!/\s/.test(S[b]))b++;  // letter widths are only estimated: the two ends snap to whole words so the block never stops mid-word
+   cx.font=`${h}px ${tc.styles[it.fontName]?.fontFamily||"sans-serif"}`;const tot=cx.measureText(S).width||1,W=it.width*v.scale,xa=t[4]+cx.measureText(S.slice(0,a)).width/tot*W,xb=t[4]+cx.measureText(S.slice(0,b)).width/tot*W,l=L.find(r=>Math.abs(r.y-y)<h/2);
+   if(l){l.x0=Math.min(l.x0,xa);l.x1=Math.max(l.x1,xb)}else L.push({y,h,x0:xa,x1:xb})}
+  L.forEach(r=>{const d=document.createElement("div");d.className="qm";d.style.cssText=`left:${r.x0/v.width*100}%;top:${r.y/v.height*100}%;width:${(r.x1-r.x0)/v.width*100}%;height:${r.h/v.height*100}%`;pgEl.append(d)});
+  rd.scrollTop=Math.max(0,pgEl.offsetTop-rd.offsetTop+L[0].y-rd.clientHeight/3);return L.length}
+ return 0};
+// ---- read aloud: one sentence at a time, everything else on the page blurs out.
+// The voice is a neural one from the app (edge-tts); the browser's own voice sounds robotic.
+const RA={on:false,tok:0,idx:-1,sents:[],page:0,audio:null,url:"",voice:""};
+const raBoxes=()=>{const qs=[...rd.querySelectorAll(".qm")];if(!qs.length)return null;
+  const pg=qs[0].closest(".pg");if(!pg)return null;const pr=pg.getBoundingClientRect();
+  let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
+  for(const e of qs){const r=e.getBoundingClientRect();if(!r.width&&!r.height)continue;
+    x0=Math.min(x0,r.left-pr.left);y0=Math.min(y0,r.top-pr.top);x1=Math.max(x1,r.right-pr.left);y1=Math.max(y1,r.bottom-pr.top)}
+  if(!isFinite(x0)||!isFinite(x1)||x1-x0<4||y1-y0<4)return null;  // no usable box: blur only, never a zero-size hole
+  const padY=4,padX=3;  // the quote box hugs the ink: without a margin the ascenders and descenders are cut off
+  return {pg,x0:x0-padX,y0:y0-padY,x1:x1+padX,y1:y1+padY}};
+const raWait=async(pg)=>{for(let i=0;i<25;i++){if(pg&&pg.querySelector("canvas"))return pg;await new Promise(r=>setTimeout(r,60))}return pg};  // the canvas is lazy: it appears after the page scrolls in
+const raPaint=(n,box)=>{rd.querySelectorAll(".ra-crop").forEach(e=>e.remove());
+  rd.querySelectorAll(".pg").forEach(pg=>pg.classList.add("ra-dim"));  // every page blurs; the crop below is the only sharp thing
+  if(!box)return;
+  const cv=box.pg.querySelector("canvas");if(!cv)return;
+  const cw=parseFloat(cv.style.width)||cv.clientWidth||1,k=cv.width/cw;  // device pixels per CSS pixel
+  box={...box,x0:Math.max(0,box.x0),y0:Math.max(0,box.y0),x1:Math.min(box.pg.clientWidth,box.x1),y1:Math.min(box.pg.clientHeight,box.y1)};
+  const sx=Math.max(0,box.x0*k),sy=Math.max(0,box.y0*k),sw=Math.min(cv.width-sx,(box.x1-box.x0)*k),sh=Math.min(cv.height-sy,(box.y1-box.y0)*k);
+  if(sw<4||sh<4)return;
+  const out=document.createElement("canvas");out.className="ra-crop";out.width=sw;out.height=sh;
+  out.style.cssText=`left:${box.x0}px;top:${box.y0}px;width:${(box.x1-box.x0)}px;height:${(box.y1-box.y0)}px`;
+  out.getContext("2d").drawImage(cv,sx,sy,sw,sh,0,0,sw,sh);
+  box.pg.append(out)};
+const raBar=(on)=>{document.body.classList.toggle("ra-on",!!on);
+  const b=$("ra");if(b){b.setAttribute("aria-pressed",on?"true":"false");b.classList.toggle("on",!!on)}};
+const raLabel=t=>{const e=$("rasent");if(e)e.textContent=t||""};
+const raAudioStop=()=>{if(RA.audio){try{RA.audio.pause()}catch(e){}
+  RA.audio=null}if(RA.url){try{URL.revokeObjectURL(RA.url)}catch(e){}RA.url=""}};
+const raStop=()=>{RA.on=false;RA.tok++;raAudioStop();
+  rd.querySelectorAll(".ra-crop").forEach(e=>e.remove());rd.querySelectorAll(".pg.ra-dim").forEach(e=>e.classList.remove("ra-dim"));
+  raBar(false);raLabel("")};
+window.raStop=raStop;window.__ra=RA;window.__raPaint=raPaint;window.__raBoxes=raBoxes;
+// one sentence: fetch its MP3 from the app, play it, and resolve when it ends (or when the user steps on)
+const raSay=(sn,my)=>new Promise(res=>{
+  const finish=v=>{if(RA.audio){RA.audio.onended=RA.audio.onerror=null}res(v)};
+  if(!(window.pywebview&&pywebview.api&&pywebview.api.ai_speak)){
+    try{const u=new SpeechSynthesisUtterance(sn);u.rate=.98;u.onend=()=>finish(1);u.onerror=()=>finish(0);
+      speechSynthesis.speak(u);RA.stopSpeak=()=>{try{speechSynthesis.cancel()}catch(e){}finish(0)}}catch(e){finish(0)}
+    return}
+  pywebview.api.ai_speak(sn,RA.voice||"").then(r=>{
+    if(my!==RA.tok||!RA.on)return finish(0);
+    if(!r||!r.ok){toast("Voice error: "+((r&&r.error)||"no audio"));return finish(0)}
+    const bin=atob(r.audio),buf=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)buf[i]=bin.charCodeAt(i);
+    raAudioStop();RA.url=URL.createObjectURL(new Blob([buf],{type:"audio/mpeg"}));
+    const a=new Audio(RA.url);RA.audio=a;a.onended=()=>finish(1);a.onerror=()=>finish(0);
+    RA.stopSpeak=()=>{try{a.pause()}catch(e){}finish(0)};
+    a.play().catch(()=>finish(0))}
+  ).catch(e=>{if(my===RA.tok)toast("Voice error: "+((e&&e.message)||e));finish(0)})});
+// split the page into sentences once, so Back and Next can step through them
+const raSentences=P=>(P.match(/[^.!?]+[.!?]+["\u201d\u2019)\]]*\s*|[^.!?]+$/g)||[]).map(t=>t.trim()).filter(t=>t.split(/\s+/).length>=3);
+// page 1 opens with the title and the author line, which carry no full stop, so the splitter glues them
+// to the abstract. Cut the title by matching it against the page, then drop the ALL-CAPS author line.
+const raTitle=(P,id)=>{const T=String(aiTitle(id)||"");if(T.length<12)return P;
+  const parts=T.split(/\s+[-\u2013]\s+/).filter(Boolean),head=nk(P.slice(0,900));
+  let cut=0;
+  for(let i=0;i<parts.length;i++){  // try the title without its "Author (Year) -" prefix
+    const cand=nk(parts.slice(i).join(" "));
+    if(cand.length<25)continue;
+    const at=head.indexOf(cand.slice(0,40));  // a banner line may sit above the title
+    if(at<0)continue;
+    const toks=P.split(/\s+/);let acc="";
+    for(let j=0;j<Math.min(toks.length,parts.slice(i).join(" ").split(/\s+/).length+14);j++){
+      acc+=nk(toks[j]);if(acc.length>=at+cand.length){cut=j+1;break}}
+    break}
+  if(!cut)return P;
+  const toks=P.split(/\s+/);let k=cut;
+  while(k<toks.length&&/^[^a-z]+$/.test(toks[k].replace(/[^A-Za-z]/g,"")||"x")&&toks[k].length<=24)k++;  // FRED BLOCK, then the abstract
+  return toks.slice(k).join(" ").trim()||P};
+window.__raTitle=raTitle;
+const raProseStart=list=>{  // page 1 only: skip the banner, the authors and the paper number.
+  // OCR can glue the banner to the abstract on one line, so take the LONGEST prose boundary, not the first.
+  const wc=t=>t.split(/\s+/).length,isP=t=>{const w=t.split(/\s+/);
+    return w.length>=18&&w.filter(x=>x===x.toLowerCase()&&/[a-z]/.test(x)).length>=8};  // no full stop test: OCR loses them
+  const idx=list.map((t,i)=>[i,t]).filter(([,t])=>isP(t));
+  if(!idx.length)return 0;
+  const k=idx.reduce((a,b)=>wc(b[1])>wc(a[1])?b:a)[0];
+  return k>0&&k<=6?k:0};  // a real body line never sits past the head
+const raShow=async(my,i)=>{const n=RA.page,id=cur;
+  const sn=RA.sents[i];if(!sn)return false;
+  const got=await window.markQuote(id,[n],sn);
+  if(my!==RA.tok||cur!==id)return false;
+  if(got)await raWait(rd.querySelector(`.pg[data-n="${n}"]`));
+  raPaint(n,got?raBoxes():null);
+  raLabel(sn.length>120?sn.slice(0,117)+"\u2026":sn);
+  RA.idx=i;return true};
+const raRun=async(from)=>{
+  const my=++RA.tok,id=cur,N=docC?docC.numPages:0;
+  raBar(true);raLabel("Preparing the voice\u2026");  // the first sentence takes a few seconds: say so, or it looks dead
+  RA.page=Math.max(1,PAGEN());
+  const p1=ocrText(id,RA.page)||await window.pageText(id,RA.page);  // OCR wins when the layer is broken
+  RA.sents=raSentences(RA.page===1?raTitle(p1,id):p1);
+  if(RA.page===1&&!(from|0)){const k=raProseStart(RA.sents);if(k)RA.sents=RA.sents.slice(k)}
+  if(my!==RA.tok||!RA.on)return;
+  let i=Math.max(0,Math.min(from|0,RA.sents.length-1));
+  for(let guard=0;guard<4000;guard++){
+    if(my!==RA.tok||!RA.on||cur!==id)return raStop();
+    if(i>=RA.sents.length){  // page done: go on to the next one
+      if(RA.page>=N)break;
+      RA.page++;RA.sents=raSentences(ocrText(id,RA.page)||await window.pageText(id,RA.page));i=0;
+      if(!RA.sents.length)continue}
+    if(!await raShow(my,i)){i++;continue}
+    const ok=await raSay(RA.sents[i],my);
+    if(my!==RA.tok||!RA.on||cur!==id)return;
+    if(!ok)return raStop();
+    i++}
+  raStop()};
+const raStep=d=>{if(!RA.on)return;const i=RA.idx+d;
+  if(i<0){toast("This is the first sentence");return}
+  if(i>=RA.sents.length){toast("This is the last sentence of the page");return}
+  RA.tok++;if(RA.stopSpeak)RA.stopSpeak();  // cut the current audio, then show and read the new sentence
+  const my=RA.tok;
+  raShow(my,i).then(ok=>{if(!ok||my!==RA.tok)return;
+    raSay(RA.sents[i],my).then(v=>{if(my!==RA.tok||!RA.on)return;if(!v)return raStop();raAuto(my,i+1)})})};
+const raAuto=async(my,i)=>{  // continue from i without resetting the token
+  const id=cur,N=docC?docC.numPages:0;
+  for(let guard=0;guard<4000;guard++){
+    if(my!==RA.tok||!RA.on||cur!==id)return;
+    if(i>=RA.sents.length){
+      if(RA.page>=N)return raStop();
+      RA.page++;RA.sents=raSentences(ocrText(id,RA.page)||await window.pageText(id,RA.page));i=0;
+      if(!RA.sents.length)continue}
+    if(!await raShow(my,i)){i++;continue}
+    const ok=await raSay(RA.sents[i],my);
+    if(my!==RA.tok||!RA.on)return;
+    if(!ok)return raStop();
+    i++}
+  raStop()};
+// voices: one fetch per run from the app, the chosen one kept in localStorage and in ai.json
+const raVoices=async()=>{const sel=$("rav");if(!sel)return;
+  let r=null;try{r=await pywebview.api.ai_voices()}catch(e){}
+  const vs=(r&&Array.isArray(r.voices))?r.voices:[];
+  if(!vs.length)return;
+  const want=RA.voice||store.get("cv:voice")||"";
+  sel.innerHTML=vs.map(v=>`<option value="${esc(v.id)}">${esc(v.label)}</option>`).join("");
+  if(want&&[...sel.options].some(o=>o.value===want))sel.value=want;
+  RA.voice=sel.value;
+  if(r&&r.ok===false)toast("Voice list is the built-in set: "+((r.error||"").slice(0,80)))};
+$("rav").onchange=()=>{RA.voice=$("rav").value;try{store.set("cv:voice",RA.voice)}catch(e){}
+  if(window.pywebview&&pywebview.api&&pywebview.api.ai_set_voice)pywebview.api.ai_set_voice(RA.voice).catch(()=>{})};
+window.__raVoices=raVoices;
+$("ra").onclick=()=>{if(!docC){toast("Open a PDF first");return}
+  if(!RA.voice)raVoices();
+  if(RA.on)return raStop();
+  RA.on=true;raRun(0)};
+$("raprev").onclick=()=>raStep(-1);
+$("ranext").onclick=()=>raStep(1);
+$("rastop").onclick=raStop;
+// ---- OCR: Tesseract reads the page pixels, so a PDF with a broken text layer still gives clean
+// sentences and exact word boxes. Cached per reading so a page is scanned once.
+const OCR={by:{},busy:false};
+const ocrKey=id=>"cv:ocr:"+id;
+const ocrLoad=id=>{if(OCR.by[id])return OCR.by[id];try{const s=store.get(ocrKey(id));if(s){const d=JSON.parse(s);if(d&&typeof d==="object")return OCR.by[id]=d}}catch(e){}return null};
+const ocrSave=id=>{try{store.set(ocrKey(id),JSON.stringify(OCR.by[id]||{}))}catch(e){}};
+// render the page with pdf.js at 2x, then let Tesseract read those pixels
+const ocrScan=async(id,pages,quiet)=>{  // pages: 1-based; quiet skips the per-page toast in a batch
+  if(!(window.pywebview&&pywebview.api&&pywebview.api.ocr_image)){toast("OCR needs the app window");return null}
+  if(OCR.busy)return null;
+  const want=pages&&pages.length?pages:[PAGEN()];
+  if(cur!==id||!docC){toast("Open that reading in the PDF tab first");return null}
+  want.forEach(n=>{if(n<1||n>docC.numPages)throw new Error("page "+n+" is outside this PDF")});
+  OCR.busy=true;if(!quiet)toast("Scanning page "+want[0]+" with OCR\u2026");
+  try{
+    OCR.by[id]=OCR.by[id]||{};
+    let got=0,bad=0;
+    for(const n of want){
+      try{
+        const S=2,pg=await docC.getPage(n),vp=pg.getViewport({scale:S});
+        const cv=document.createElement("canvas");
+        cv.width=Math.max(1,Math.round(vp.width));cv.height=Math.max(1,Math.round(vp.height));  // whole pixels only
+        // a canvas that is not in the document, so pdf.js cannot collide with the reader's render task
+        const task=pg.render({canvasContext:cv.getContext("2d",{willReadFrequently:true}),viewport:vp});
+        await Promise.race([task.promise,new Promise((_,no)=>setTimeout(()=>{try{task.cancel()}catch(e){}no(new Error("this page took over 60s to render"))},60000))]);
+        const b64=cv.toDataURL("image/png");
+        const r=await pywebview.api.ocr_image(b64,S);
+        if(!r||!r.ok){bad++;if(!quiet)toast("OCR page "+n+": "+((r&&r.error)||"no text found"));continue}
+        OCR.by[id][n]={text:r.text,words:r.words||[],S};
+        got++;
+      }catch(e){bad++;if(!quiet)toast("OCR page "+n+": "+((e&&e.message)||"could not render this page"))}
+    }
+    if(got)ocrSave(id);
+    if(!got){toast("OCR read nothing on "+(want.length>1?want.length+" pages":"this page")+(bad?" \u00b7 "+bad+" failed":""),1);return null}
+    if(bad)toast(bad+" of "+want.length+" pages could not be read",1);
+    const d=got?OCR.by[id][want[0]]:null;
+    if(quiet)return got?OCR.by[id]:null;
+    toast(got?("OCR read page "+want[0]+": "+(d.text||"").replace(/\s+/g," ").slice(0,80)+" \u00b7 "+((d.words||[]).length)+" words"):"OCR found no text on that page",1,6000);
+    return got?OCR.by[id]:null
+  }catch(e){toast("OCR failed: "+((e&&e.message)||e));return null}
+  finally{OCR.busy=false}};
+const ocrText=(id,n)=>{const d=ocrLoad(id);return (d&&d[n]&&d[n].text)||""};
+window.__ocr={OCR,ocrScan,ocrText,ocrLoad};
 window.flashHL=flash;window.pageText=async(id,n)=>{if(cur!==id||!docC)return"";const tc=await(await docC.getPage(n)).getTextContent();return tc.items.map(i=>i.hasEOL&&/\w-$/.test(i.str)?i.str.slice(0,-1):i.str+(i.hasEOL?" ":"")).join("").replace(/\s+/g," ")};window.healClaim=async(c,n)=>{if(c.status!=="user"||c.rs)return;const P=await window.pageText(c.src,n);if(!P)return;c.rs=1;const q=window.restoreQ(P,c.quote);if(q&&q.length>=20&&q!==c.quote){c.quote=q;const k=kc(c);if(!ED.a.includes(c))ED.m[k]={...ED.m[k],quote:q}}saveED();refresh()};window.restoreQ=(P,q,expand)=>{
  const W=q.trim().split(/\s+/),al=c=>/[a-z0-9]/i.test(c||" "),K=a=>a.join("").toLowerCase().replace(/[^a-z0-9]/g,"");
  const ix=[];let k="";
@@ -2350,8 +2917,22 @@ cm.onclick=e=>{const c=e.target.dataset&&e.target.dataset.c;if(!c)return;hide();
     rd.querySelectorAll(".hl").forEach(el=>{if(same(el._m)){el._m.c=c;el.style.setProperty("--hc",HC[c])}});
     toast("Recoloured to "+HN[c]);return}
   pend&&mark(c,pend.rects)};
-$("hs").innerHTML=swHTML;$("hs").onmousedown=e=>e.preventDefault();$("hs").onclick=e=>{const c=e.target.dataset&&e.target.dataset.c;if(c)mark(c,rectsNow())};
-document.addEventListener("mousedown",e=>{if(!cm.contains(e.target))hide()});document.addEventListener("fullscreenchange",hide);
+// highlighter: the button opens a colour popup and stays open until it is pressed again
+const hpBtn=$("hp"),hpPop=$("hpop");
+if(hpPop){hpPop.innerHTML=swHTML;
+  const hpAt=()=>{const r=hpBtn.getBoundingClientRect(),pr=hpBtn.offsetParent?hpBtn.offsetParent.getBoundingClientRect():{left:0,top:0};
+    hpPop.style.left=Math.round(r.left-pr.left)+"px";hpPop.style.top=Math.round(r.bottom-pr.top+6)+"px"};
+  const hpSet=on=>{hpPop.hidden=!on;hpBtn.setAttribute("aria-pressed",on?"true":"false");hpBtn.setAttribute("aria-expanded",on?"true":"false");
+    if(on)hpAt()};
+  hpBtn.onclick=e=>{e.stopPropagation();hpSet(hpPop.hidden)};
+  hpPop.onclick=e=>{const c=e.target.dataset&&e.target.dataset.c;if(!c)return;e.stopPropagation();
+    const rs=rectsNow();if(rs&&rs.length)mark(c,rs);else toast("Select a sentence in the PDF first")};
+  hpPop.onmousedown=e=>e.preventDefault();  // keep the text selection alive while picking a colour
+  document.addEventListener("click",e=>{if(!hpPop.hidden&&!hpPop.contains(e.target)&&e.target!==hpBtn)hpSet(false)});
+  document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!hpPop.hidden)hpSet(false)});
+  window.addEventListener("resize",()=>{if(!hpPop.hidden)hpAt()});
+  window.__hpSet=hpSet}
+["mousedown","pointerdown","click"].forEach(t=>document.addEventListener(t,e=>{if(!cm.contains(e.target)){window._ft=(window._ft||0)+1;hide()}},true));document.addEventListener("fullscreenchange",hide);
 document.addEventListener("keydown",e=>{if(e.key==="Escape")hide();if(e.altKey&&e.key==="a"){const x=sel_();if(x)capture(x.q,x.pg,rectsNow())}});
 rd.addEventListener("scroll",()=>{cm.hidden=true});
 lpn.onclick=()=>{};  // the toolbar picker is gone; use Library > PDF on a folder
@@ -2361,7 +2942,7 @@ $("lr").onclick=async()=>{const id=s.value;if(!id)return;const n=all.filter(c=>c
  try{store.set("cv:src",JSON.stringify(JSON.parse(store.get("cv:src")||"[]").filter(x=>x.id.toLowerCase()!==k)))}catch(e){}
  const d=await db;if(d)await new Promise(r=>{const t=d.transaction("p","readwrite");t.objectStore("p").delete(k);t.oncomplete=t.onerror=t.onabort=()=>r()});
  DATA.sources=DATA.sources.filter(x=>x.id.toLowerCase()!==k);  // in place: no reload
- if(cur===id&&window.cvIdle)window.cvIdle();
+ if(cur===id&&window.cvIdle)window.cvIdle();if(window.raStop)window.raStop();
  relib();toast("Reading removed")};  // ponytail: hide, not delete; a page cannot delete a file on disk
 async function addPdfs(fl){const d=await db,have=new Set(DATA.sources.map(x=>key(x.id))),add=[],ps=fl.filter(x=>/\.pdf$/i.test(x.name));
  if(!ps.length)return toast("No PDF found there.");

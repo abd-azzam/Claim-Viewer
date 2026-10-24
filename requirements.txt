@@ -1,5 +1,6 @@
 # Only for the optional claims pipeline (verify.py, build.py).
-# The viewer and the Windows app need none of these; build_exe.bat installs pywebview and pyinstaller itself.
+# The viewer and the Windows app need none of these; build_exe.bat installs pywebview, pyinstaller and edge-tts itself.
 pymupdf
 numpy
 scipy
+edge-tts
