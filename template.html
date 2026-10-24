@@ -147,7 +147,10 @@ body:has(dialog[open]) #hl,body:has(dialog[open]) #hr{display:none!important}  /
   border:1px solid var(--ctl);border-radius:6px;padding:5px 8px;min-width:150px;cursor:pointer}
 #libtbl th:first-child{min-width:150px}
 #libtbl td select.typ:focus{outline:1px solid var(--acc)}
-#libtbl tr:hover td{background:color-mix(in srgb,var(--acc) 5%,transparent)}
+#libtbl tbody tr{cursor:pointer}
+#libtbl tbody tr:hover td{background:color-mix(in srgb,var(--acc) 7%,transparent)}
+#libtbl tbody tr:hover td input{background:transparent}
+#libtbl td input{cursor:text}
 #libtbl .ltempty{color:var(--mute);padding:24px 10px;font-size:13px}
 #libtbl .lthead{display:flex;align-items:center;gap:8px;padding:8px 6px 10px}
 #libtbl .lthead b{font-size:13px}
@@ -160,6 +163,7 @@ body:has(dialog[open]) #hl,body:has(dialog[open]) #hr{display:none!important}  /
 #citepop button{display:block;width:100%;text-align:left;background:none;border:0;border-radius:6px;
   padding:7px 9px;font:inherit;font-size:12.5px;color:var(--ink);cursor:pointer}
 #citepop button:hover{background:color-mix(in srgb,var(--acc) 12%,transparent)}
+#citepop .csep{border-top:1px solid var(--line);margin:5px 0}
 #citepop .cprev{border-top:1px solid var(--line);margin-top:5px;padding:7px 9px 3px;font-size:11.5px;
   color:var(--mute);line-height:1.45;max-height:110px;overflow:auto}
 #vl .it{display:flex;gap:4px}#vl .dg{cursor:grab;color:var(--mut,var(--muted));user-select:none;padding:0 2px;align-self:center;font-size:15px}#vl .it{cursor:grab}#vl .it.drag{cursor:grabbing;opacity:.45}#vl .it input,#vl .it .x{cursor:auto}#vl .it input{flex:1;min-width:0;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:6px}#vl .it .k{flex:0 0 40px;text-align:center;font-weight:700}#vl .x{padding:2px 9px;color:var(--dn);border-color:var(--line)}#vl .add{border-style:dashed}
@@ -2229,8 +2233,20 @@ function drawLibTable(){
       e.preventDefault();citeMenu(tr.dataset.id,e.clientX,e.clientY)});
     box.addEventListener("click",e=>{if(e.target.closest("#metafill"))return metaFill();
       const tr=e.target.closest("tr[data-id]");
-      if(!tr||e.target.closest("input,select"))return;  // an editable cell keeps the click
-      openInReader(tr.dataset.id)});
+      if(!tr||e.target.closest("select"))return;  // a dropdown keeps the click
+      const cell=e.target.closest("input");
+      // a click on a text cell still opens the reading, but only after the double-click window,
+      // so two quick clicks can mean "rename" instead of "open"
+      clearTimeout(box._t);
+      box._t=setTimeout(()=>openInReader(tr.dataset.id),cell?230:0)});
+    box.addEventListener("dblclick",e=>{
+      const tr=e.target.closest("tr[data-id]");if(!tr)return;
+      clearTimeout(box._t);  // cancel the pending open: this was a rename, not a view
+      const cell=e.target.closest("input");
+      if(cell&&cell.dataset.k==="title"){cell.focus();cell.select();return}
+      const t=tr.querySelector('input[data-k="title"]');
+      if(t){t.focus();t.select()}
+    });
   }
 }
 // A click on a library row opens that PDF in the reader, so the table is also a navigation list.
@@ -2241,6 +2257,23 @@ const openInReader=id=>{
   if(tab)tab.click();  // rtab() is block-scoped; the tab button is the public route
   s.value=id;
   if(window.showPdf)window.showPdf(id);else s.dispatchEvent(new Event("change"));
+};
+// Fill one reading. force=false only fills blanks (what import does); force=true replaces every
+// field the lookup returned, because a wrong automatic result has to be correctable.
+const metaFillOne=async(id,force)=>{
+  if(!(window.pywebview&&pywebview.api&&pywebview.api.lookup_meta))return toast("Web fill needs the app window");
+  const it=LIB.items[id]||{},cur=meta(id);
+  const q=[cur.author,cur.year,cur.title||it.title].filter(Boolean).join(" ");
+  toast("Looking up \u201c"+String(it.title||id).slice(0,40)+"\u201d\u2026",1,3000);
+  let r=null;
+  try{r=await pywebview.api.lookup_meta(q)}catch(e){r=null}
+  if(!r||!r.ok){return toast("No match found online for this reading",1,5000)}
+  const m=it.meta||(it.meta={});
+  const KEYS=["type","title","author","year","journal","volume","issue","pages","doi","publisher","city","isbn"];
+  let n=0;
+  KEYS.forEach(k=>{if(!r[k])return;if(force||!m[k]){if(m[k]!==r[k])n++;m[k]=r[k]}});
+  await libSave();drawLibTable();
+  toast(n?("Filled "+n+" field"+(n===1?"":"s")+" from "+r.source+(force?" (replaced)":"")):"Already up to date",1,5000);
 };
 // Fill the empty fields from Crossref/OpenAlex. A field you already typed is never overwritten.
 const metaFill=async()=>{
@@ -2277,14 +2310,21 @@ function citeMenu(id,x,y){
   const b=document.createElement("div");b.id="citepop";
   b.innerHTML='<button type="button" data-a="copy">Copy citation</button>'
     +'<button type="button" data-a="text">Copy as plain text</button>'
+    +'<div class="csep"></div>'
+    +'<button type="button" data-a="fill">Fill metadata from the web</button>'
+    +'<button type="button" data-a="refill">Replace all fields from the web</button>'
+    +'<button type="button" data-a="open">Open this PDF</button>'
     +'<div class="cprev"></div>';
   document.body.append(b);citeBox=b;
   b.querySelector(".cprev").textContent=citeOf(id);
   const r=b.getBoundingClientRect();
   b.style.left=Math.min(x,innerWidth-r.width-8)+"px";
   b.style.top=Math.min(y,innerHeight-r.height-8)+"px";
-  b.addEventListener("click",e=>{const a=e.target.closest("button")&&e.target.closest("button").dataset.a;
+  b.addEventListener("click",e=>{
+    const btn=e.target.closest("button");const a=btn&&btn.dataset.a;
     if(!a)return;
+    if(a==="fill"||a==="refill"){b.remove();citeBox=null;return metaFillOne(id,a==="refill")}
+    if(a==="open"){b.remove();citeBox=null;return openInReader(id)}
     const txt=a==="text"?citeOf(id).replace(/\u201c|\u201d/g,'"'):citeOf(id);
     copyText(txt);toast(a==="text"?"Citation copied as plain text":"Citation copied");b.remove();citeBox=null});
   setTimeout(()=>document.addEventListener("click",function once(ev){
