@@ -37,6 +37,11 @@ copy /y dist\ClaimViewer.exe "%APP%\ClaimViewer.exe" >nul || (
 )
 if exist "%APP%\dist" rmdir /s /q "%APP%\dist"
 if exist "%APP%\build" rmdir /s /q "%APP%\build"
+rem The repo's own dist\ holds a second copy of the exe beside the EMPTY reader page and no
+rem library.json. Launching it by mistake opens a blank app that looks like lost data. Never
+rem leave it behind: the installer is already built by this point.
+if exist dist rmdir /s /q dist
+if exist build rmdir /s /q build
 if not exist "%APP%\release" mkdir "%APP%\release"
 copy /y release\ClaimViewer-Setup-2.1.0.exe "%APP%\release\" >nul 2>&1
 echo Installed: %APP%\ClaimViewer.exe
