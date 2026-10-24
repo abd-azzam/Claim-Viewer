@@ -136,6 +136,23 @@ def write_lib(lib):
     _atomic(LIB_PATH, json.dumps(lib, ensure_ascii=False, indent=1))
 
 
+def _lib_mtime():
+    """The version token the page sends back on its next save, so a stale copy cannot clobber."""
+    try:
+        return os.path.getmtime(LIB_PATH)
+    except OSError:
+        return 0
+
+
+def meta_query_from_title(name):
+    """Build a search string from a PDF file name: 'Bates-AreaStudiesPolitical-1997' -> 'Bates Area Studies Political 1997'."""
+    s = re.sub(r"\.pdf$", "", os.path.basename(name or ""), flags=re.I)
+    s = s.replace("_", " ").replace("-", " ")
+    s = re.sub(r"([a-z])([A-Z])", r"\1 \2", s)
+    s = re.sub(r"[^A-Za-z0-9 ]+", " ", s)
+    return re.sub(r"\s+", " ", s).strip()
+
+
 def write_sources(lib):
     """sources.js is the only way the file:// page can read the library at load."""
     rows = [{"id": i, "title": v.get("title") or i} for i, v in sorted(
@@ -313,11 +330,19 @@ class Api:
         except Exception:
             return {}
 
-    def save_library(self, text):
+    def save_library(self, text, base_mtime=0):
         try:
             lib = json.loads(text)
             if not isinstance(lib, dict) or not isinstance(lib.get("collections"), list) or not isinstance(lib.get("items"), dict):
                 return {"ok": False, "error": "not a library"}
+            # A stale in-memory copy must never overwrite a newer library.json: two saves racing
+            # (web fill + a cell edit, or two windows) silently dropped one of them.
+            try:
+                cur = os.path.getmtime(LIB_PATH)
+                if base_mtime and cur > float(base_mtime) + 1.5:
+                    return {"ok": False, "error": "stale", "mtime": cur}
+            except OSError:
+                pass
             for k, v in lib["items"].items():
                 if not isinstance(k, str) or not isinstance(v, dict):
                     return {"ok": False, "error": "item %r is not an object" % (k,)}
@@ -330,7 +355,7 @@ class Api:
                     return {"ok": False, "error": "a collection is not an object with an id"}
             write_lib(lib)  # nothing is written until the whole library checks out
             write_sources(lib)
-            return {"ok": True}
+            return {"ok": True, "mtime": _lib_mtime()}
         except Exception as e:
             return {"ok": False, "error": str(e)}
 
@@ -378,10 +403,30 @@ class Api:
                 added.append(i)
             except Exception as e:  # one unreadable file must not strand the rest of the batch
                 failed.append([name, str(e)])
+        # Fill each new reading's bibliography from the web as it arrives, so the library is
+        # usable without pressing anything. A failure here must never lose the import.
+        filled = 0
+        for i in added:
+            try:
+                q = meta_query_from_title(i)
+                if not q:
+                    continue
+                got = self.lookup_meta(q)
+                if got and got.get("ok"):
+                    m = lib["items"][i].setdefault("meta", {})
+                    for k in ("type", "title", "author", "year", "journal", "volume", "issue",
+                              "pages", "doi", "publisher", "city", "isbn"):
+                        if not m.get(k) and got.get(k):
+                            m[k] = got[k]
+                    if not lib["items"][i].get("title") or lib["items"][i]["title"] == i:
+                        lib["items"][i]["title"] = got.get("title") or i
+                    filled += 1
+            except Exception:
+                pass
         if added:
             write_lib(lib)
             write_sources(lib)
-        return {"added": added, "failed": failed, "library": lib}  # the page adopts this: its in-memory LIB is stale after a write
+        return {"added": added, "failed": failed, "library": lib, "filled": filled}  # the page adopts this: its in-memory LIB is stale after a write
 
     def ai_status(self):  # the Ask AI tab asks this before it shows the key box
         c = _ai_cfg()
@@ -711,6 +756,23 @@ class Api:
                                           if isinstance((it.get("primary_location") or {}).get("source"), dict) else ""),
                        "city": "", "isbn": ""}
                 return out
+        except Exception:
+            pass
+        # --- Google Books: the best source for books that Crossref has no record of
+        try:
+            j = get("https://www.googleapis.com/books/v1/volumes?maxResults=3&q=" + urllib.parse.quote(q))
+            for it in (j.get("items") or []):
+                v = it.get("volumeInfo") or {}
+                ttl = clean(v.get("title"))
+                if not ttl or not alike(q, ttl + " " + clean(" ".join(v.get("authors") or [])) + " " + str(v.get("publishedDate") or "")):
+                    continue
+                return {"ok": True, "source": "googlebooks", "type": "book", "title": ttl,
+                        "author": clean("; ".join(v.get("authors") or [])),
+                        "year": clean((v.get("publishedDate") or "")[:4]),
+                        "journal": "", "volume": "", "issue": "",
+                        "pages": clean(str(v.get("pageCount") or "")),
+                        "doi": "", "publisher": clean(v.get("publisher")), "city": "",
+                        "isbn": clean((v.get("industryIdentifiers") or [{}])[0].get("identifier"))}
         except Exception:
             pass
         return {"ok": False, "error": "no match found online"}

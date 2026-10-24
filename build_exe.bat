@@ -24,3 +24,22 @@ for %%A in (dist\index.html) do if %%~zA GTR 1000000 (
   exit /b 1
 )
 "%ISCC%" ClaimViewer.iss || exit /b 1
+rem ONE binary only: install it, then drop the build copy so no stale dist\ClaimViewer.exe
+rem can ever be tested by mistake (that is how a fixed bug looked unfixed for hours).
+set "APP=C:\Apps\ClaimViewer"
+if exist "%APP%\ClaimViewer.exe" (
+  taskkill /IM ClaimViewer.exe /F >nul 2>&1
+  ping -n 3 127.0.0.1 >nul
+)
+copy /y dist\ClaimViewer.exe "%APP%\ClaimViewer.exe" >nul || (
+  echo Could not install the exe. Is ClaimViewer still running?
+  exit /b 1
+)
+if exist "%APP%\dist" rmdir /s /q "%APP%\dist"
+if exist "%APP%\build" rmdir /s /q "%APP%\build"
+if not exist "%APP%\release" mkdir "%APP%\release"
+copy /y release\ClaimViewer-Setup-2.1.0.exe "%APP%\release\" >nul 2>&1
+echo Installed: %APP%\ClaimViewer.exe
+rem both hashes must match: the installed app and the one the installer carries
+certutil -hashfile dist\ClaimViewer.exe SHA256 | findstr /r /v "hash CertUtil"
+certutil -hashfile "%APP%\ClaimViewer.exe" SHA256 | findstr /r /v "hash CertUtil"

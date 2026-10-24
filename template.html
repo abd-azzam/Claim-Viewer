@@ -107,7 +107,8 @@ body.graph main,body.graph section{display:none}body.graph #gv{display:flex;flex
 #zsrc optgroup{font-weight:700}
 #zflt label{overflow-wrap:anywhere}
 body.notes #zflt{display:block}
-body.library #flt{display:none}body.library #libp{display:block}body.library #list,body.library #count{display:none}body.library #libtbl{display:block}
+body.library #flt{display:none}body.library #libp{display:block}body.library #list,body.library #count{display:none}body.library #libtbl{display:flex;flex-direction:column;flex:1;min-height:0}
+body.library main{display:flex;flex-direction:column;min-height:0}
 #libp .lrow{cursor:pointer}
 #libp .lrow input{cursor:pointer}
 #libp .lrow input:not([readonly]){cursor:text}
@@ -126,7 +127,9 @@ body:has(dialog[open]) #hl,body:has(dialog[open]) #hr{display:none!important}  /
 #libp .libadd{display:flex;gap:4px;align-items:center;margin:6px 0;flex-wrap:wrap}
 #libp .libadd input,#libp .libadd select{font:inherit;font-size:12px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:4px;min-width:0}
 #libp .libadd #libmsg{color:var(--mute);font-size:11px}
-#libtbl{overflow:auto;overflow-x:auto;overflow-y:auto;padding:0 2px 20px;max-width:100%}
+#libtbl{overflow:auto;overflow-x:auto;overflow-y:auto;padding:0 2px 20px;max-width:100%;flex:1;min-height:0}
+/* the table scrolls inside this box, so its horizontal bar sits at the window edge, not mid-pane */
+#libtbl{scrollbar-gutter:stable}
 #libtbl::-webkit-scrollbar{height:12px;width:12px}
 #libtbl::-webkit-scrollbar-thumb{background:var(--ctl);border-radius:6px}
 #libtbl::-webkit-scrollbar-thumb:hover{background:var(--mute)}
@@ -2174,20 +2177,38 @@ const citeOf=id=>{const m=meta(id),it=LIB.items[id]||{};
   if(m.type==="chapter")return `${au}. ${yr}. \u201c${ti}.\u201d${m.booktitle?" In "+m.booktitle+",":""}${m.editors?" edited by "+m.editors+",":""}${m.pages?" "+m.pages+".":""}${place?" "+place+".":""}`.replace(/\s+([.,])/g,"$1");
   if(m.type==="report")return `${au}. ${yr}. ${ti}.${place?" "+place+".":""}${m.pages?" "+m.pages+".":""}`.replace(/\s+([.,])/g,"$1");
   return `${au}. ${yr}. ${ti}.${place?" "+place+".":""}${m.edition?" "+m.edition+" ed.":""}`.replace(/\s+([.,])/g,"$1")};
-const metaSave=(id)=>{const j=JSON.stringify(LIB);
-  if(window.pywebview&&pywebview.api&&pywebview.api.save_library){pywebview.api.save_library(j).then(()=>{})}
-  else store.set("cv:lib",j)};
+// every save carries the library.json version we last saw, so a stale in-memory copy is refused
+// instead of silently overwriting a newer file
+let LIBMT=0;
+const libSave=async()=>{
+  const j=JSON.stringify(LIB);
+  if(!(window.pywebview&&pywebview.api&&pywebview.api.save_library)){store.set("cv:lib",j);return {ok:true}}
+  let r=null;
+  try{r=await pywebview.api.save_library(j,LIBMT)}catch(e){r={ok:false,error:String(e)}}
+  if(r&&r.ok){LIBMT=r.mtime||LIBMT;return r}
+  if(r&&r.error==="stale"){
+    toast("Another change was saved first; reloading the library",1,4000);
+    try{const fresh=await fetch("library.json?t="+Date.now()).then(x=>x.json());
+      if(fresh&&fresh.items){Object.keys(LIB).forEach(k=>delete LIB[k]);Object.assign(LIB,fresh);
+        LIBMT=0;relib();drawLibTable()}}catch(e){}
+    return r;
+  }
+  if(r&&r.error)toast("Could not save the library: "+r.error,1,5000);
+  return r;
+};
+const metaSave=(id)=>{libSave()};
 function drawLibTable(){
   const box=$("libtbl");if(!box)return;
   const ids=Object.keys(LIB.items);  // the library is the list here, not the filtered claim set
   const col=LFOLDER&&CMAP[LFOLDER]?LFOLDER:"";  // the folder picked in the left panel
   const shown=col?ids.filter(id=>inCol((LIB.items[id]||{}).collections||[],col)):ids;
   if(!shown.length){box.innerHTML='<div class="ltempty">'+(col?"No readings in this folder yet. Add a PDF from the folder list on the left.":"The library is empty. Add a PDF from a folder on the left.")+'</div>';return}
+  const gaps=shown.filter(id=>{const m=meta(id);return !m.author||!m.year||!m.title}).length;
   const types=new Set(shown.map(id=>meta(id).type));
   const cols=["type","author","year","title"];
   [...types].forEach(t=>(TYPE_COLS[t]||[]).forEach(k=>{if(!cols.includes(k))cols.push(k)}));
   box.innerHTML='<div class="lthead"><b>'+shown.length+' reading'+(shown.length===1?"":"s")+'</b>'
-    +'<button type="button" id="metafill" title="Look every reading in this view up online (Crossref) and fill the empty fields">Fill missing from the web</button>'
+    +(gaps?'<button type="button" id="metafill" title="New PDFs fill themselves on import; press this to retry the '+gaps+' that came back empty">Retry '+gaps+' empty</button>':'')
     +'</div>'
     +'<table><thead><tr>'+cols.map(k=>`<th>${esc((META_FIELDS.find(f=>f[0]===k)||[k,k])[1])}</th>`).join("")+'</tr></thead><tbody>'
     +shown.map(id=>{const m=meta(id);
@@ -2206,9 +2227,21 @@ function drawLibTable(){
       metaSet(i.dataset.id,i.dataset.k,i.value.trim());metaSave(i.dataset.id)});
     box.addEventListener("contextmenu",e=>{const tr=e.target.closest("tr[data-id]");if(!tr)return;
       e.preventDefault();citeMenu(tr.dataset.id,e.clientX,e.clientY)});
-    box.addEventListener("click",e=>{if(e.target.closest("#metafill"))metaFill()});
+    box.addEventListener("click",e=>{if(e.target.closest("#metafill"))return metaFill();
+      const tr=e.target.closest("tr[data-id]");
+      if(!tr||e.target.closest("input,select"))return;  // an editable cell keeps the click
+      openInReader(tr.dataset.id)});
   }
 }
+// A click on a library row opens that PDF in the reader, so the table is also a navigation list.
+const openInReader=id=>{
+  const s=$("pdfsel");
+  if(!s||![...s.options].some(o=>o.value===id))return toast("That reading has no PDF in the app");
+  const tab=document.querySelector('.rtabs [data-rt="pdf"]');
+  if(tab)tab.click();  // rtab() is block-scoped; the tab button is the public route
+  s.value=id;
+  if(window.showPdf)window.showPdf(id);else s.dispatchEvent(new Event("change"));
+};
 // Fill the empty fields from Crossref/OpenAlex. A field you already typed is never overwritten.
 const metaFill=async()=>{
   if(!(window.pywebview&&pywebview.api&&pywebview.api.lookup_meta))return toast("Web fill needs the app window");
@@ -2237,9 +2270,7 @@ const metaFill=async()=>{
   drawLibTable();
   toast(filled+" filled"+(missed?" \u00b7 "+missed+" not found":"")+" \u00b7 "+todo.length+" looked up",1,6000);
 };
-const metaSaveAll=()=>{const j=JSON.stringify(LIB);
-  if(window.pywebview&&pywebview.api&&pywebview.api.save_library){pywebview.api.save_library(j).then(()=>{})}
-  else store.set("cv:lib",j)};
+const metaSaveAll=()=>libSave();
 let citeBox=null;
 function citeMenu(id,x,y){
   if(citeBox)citeBox.remove();
