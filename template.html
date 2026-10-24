@@ -2771,7 +2771,7 @@ const aiStatus=async()=>{const box=$("aikeybox");if(!box)return;
     box.hidden=!!s.has_key;  // once a key is saved the section folds into one small button
     if($("aiconf"))$("aiconf").hidden=!s.has_key;
     if($("aikeyms"))$("aikeyms").textContent=s.has_key?"":"no key yet";
-    if(s.has_key)aiModels();
+    if(s.has_key)aiModels();  // refresh from the endpoint every time the tab opens
   }catch(e){}};
 const rtab=name=>{const ai=name==="ai";document.body.classList.toggle("rtai",ai);
   document.querySelectorAll(".rtabs [data-rt]").forEach(b=>{const on=b.dataset.rt===name;b.classList.toggle("on",on);b.setAttribute("aria-selected",on)});
@@ -2788,8 +2788,10 @@ const aiModels=async()=>{const sel=$("aimodel");if(!sel||!(window.pywebview&&pyw
   ids.filter(i=>i!==pro&&i!==flash).slice(0,6).forEach(i=>out.push([i,i]));
   const cur=store.get("cv:aimodel")||sel.value;
   sel.innerHTML=out.map(([v,l])=>`<option value="${esc(v)}">${esc(l)}</option>`).join("");
-  const want=[cur,flash,pro].filter(Boolean);
-  sel.value=want.find(v=>[...sel.options].some(o=>o.value===v))||sel.value;  // Flash by default: it is the cheap one
+  // prefer what was saved, but only if the endpoint still serves it; otherwise take the first real one
+  const saved=cur&&ids.includes(cur)?cur:null;
+  sel.value=saved||flash||pro||out[0][0];
+  try{store.set("cv:aimodel",sel.value)}catch(e){}  // so the next send cannot use a dead name
 };
 // The open reading is the context: every page's text, tagged [p.N], goes in the user turn and the answer cites it back.
 const aiRead=async id=>{const doc=await aiDoc(id),N=doc.numPages,pg=[],note=aiLine("sys","Reading the PDF\u2026");
@@ -2816,10 +2818,47 @@ const aiGo=async(id,n,q,D)=>{rtab("pdf");await window.showPdf(id,n);if(!q)return
 const aiCite=(box,txt,D)=>{txt=String(txt||"").replace(/\*\*(.+?)\*\*/g,"$1").replace(/^#{1,6}\s*/gm,"");  // the model still reaches for markdown: strip it, the chip carries the citation
   const N=D.k.length;
   const at=v=>{const n=+v;if(n>=1&&n<=N)return n;const m=(D.lbl||{})[n];return m||0};  // printed page number -> PDF page
-  const near=(pos)=>{  // the sentence the answer cites: the quoted span nearest the reference, else the sentence itself
-    const good=q=>q.split(/\s+/).length>=6&&q.length>=40;  // "developmental state" is a fragment, not the cited sentence
+  // Find the sentence IN THE PDF that the answer is pointing at, so a chip works even when the
+  // model wrote a bad quote, a bare page number, or no marker at all. Order of trust:
+  //   1. the model's own quote, if it really appears on the cited page
+  //   2. the answer's line containing the reference, matched against the page by word overlap
+  //   3. the first real sentence of the page (so the chip always opens something)
+  const good=q=>q.split(/\s+/).length>=6&&q.length>=40;  // "developmental state" is a fragment
+  const pageText=p=>{
+    const t=String((D&&D.text)||"");
+    const m=t.match(new RegExp("\\[p\\."+p+"\\]\\s*([\\s\\S]*?)(?=\\[p\\.|$)"));
+    if(m&&m[1].trim())return m[1].trim();
+    return (D&&D.k&&D.k[p-1])||""};  // fall back to the normalised copy if the block is missing
+  const senOf=(p,q)=>{  // the full sentence on page p that contains quote q, else q itself
+    const P=pageText(p);if(!P)return "";
+    const k=nk(q);if(k.length<12)return "";
+    const i=P.toLowerCase().replace(/[^a-z0-9]/g,"").indexOf(k.slice(0,50));
+    if(i<0)return "";
+    // expand to sentence bounds around the hit
+    const isEnd=c=>/[.!?]/.test(c);
+    let a=i;while(a>0&&!isEnd(P[a-1]))a--;
+    let b=i;while(b<P.length&&!isEnd(P[b]))b++;
+    const sen=P.slice(a,Math.min(P.length,b+1)).trim();
+    return good(sen)?sen:q};
+  const bestOnPage=(p,line)=>{  // match the answer's line against the page by shared words
+    const P=pageText(p);if(!P||!line)return "";
+    const words=t=>new Set((t.toLowerCase().match(/[a-z]{4,}/g)||[]).filter(w=>w.length>3));
+    const lw=words(line);if(lw.size<3)return "";
+    const sents=P.split(/(?<=[.!?])\s+/);
+    let best="",score=0;
+    for(const sn of sents){
+      if(!good(sn))continue;
+      const sw=words(sn);let hit=0;sw.forEach(w=>{if(lw.has(w))hit++});
+      const sc=hit/Math.max(4,sw.size);
+      if(sc>score){score=sc;best=sn}}
+    return score>=0.25?best:""};
+  const firstOnPage=p=>{  // the page's first real sentence: the chip always has somewhere to go
+    const P=pageText(p);if(!P)return "";
+    const sents=P.split(/(?<=[.!?])\s+/).map(x=>x.trim()).filter(good);
+    return sents[0]||""};
+  const near=(pos)=>{
     const qs=[...txt.matchAll(/["\u201c]([^"\u201d\n]{15,300})["\u201d]/g)].map(x=>({i:x.index,q:x[1].trim()})).filter(x=>good(x.q));
-    if(qs.length){const before=qs.filter(x=>x.i<=pos).pop(),after=qs.find(x=>x.i>pos);return (before||after).q}  // a quote just before the reference is the one it names
+    if(qs.length){const before=qs.filter(x=>x.i<=pos).pop(),after=qs.find(x=>x.i>pos);return (before||after).q}
     const a=txt.lastIndexOf("\n",pos-1)+1,b=txt.indexOf("\n",pos)<0?txt.length:txt.indexOf("\n",pos);
     const seg=txt.slice(a,b),rel=pos-a;
     const isEnd=i=>/[.!?]/.test(seg[i])&&(i+1>=seg.length||/\s/.test(seg[i+1]))&&!/\b(pp?|e\.g|i\.e|cf|vs|no|vol|ch)\.$/i.test(seg.slice(Math.max(0,i-4),i+1));
@@ -2827,24 +2866,51 @@ const aiCite=(box,txt,D)=>{txt=String(txt||"").replace(/\*\*(.+?)\*\*/g,"$1").re
     for(let i=rel;i>=0;i--)if(isEnd(i)){st=i+1;break}
     for(let i=rel;i<seg.length;i++)if(isEnd(i)){en=i+1;break}
     const sen=seg.slice(st,en).trim();
-    return good(sen)?sen:""};  // nothing quotable on this line: the chip just turns the page
+    return good(sen)?sen:""};
+  // resolve a citation to a sentence that is really in the PDF
+  const inPdf=(p,q)=>!!q&&good(q)&&pageText(p).toLowerCase().replace(/[^a-z0-9]/g,"")
+    .includes(q.toLowerCase().replace(/[^a-z0-9]/g,"").slice(0,40));
+  const resolve=(p,q,pos)=>{
+    if(!p)return "";
+    if(inPdf(p,q))return senOf(p,q)||q;          // the quote is really on that page
+    const line=(()=>{const a=txt.lastIndexOf("\n",pos-1)+1,b=txt.indexOf("\n",pos)<0?txt.length:txt.indexOf("\n",pos);return txt.slice(a,b)})();
+    // a quote that is nowhere in the PDF is the model inventing: use the page's own sentence
+    return bestOnPage(p,line)||firstOnPage(p)||""};
   const plain=(s,off)=>{const re=/\bp{1,2}\.\s*(\d{1,4})\b/g;let j=0,x;
     while((x=re.exec(s))){const n=at(x[1]);
       if(!n){box.append(s.slice(j,re.lastIndex));j=re.lastIndex;continue}  // a number we cannot place stays plain text, not a red chip
       box.append(s.slice(j,x.index));j=re.lastIndex;
-      const q=near(off+x.index),b=document.createElement("button");b.type="button";b.className="aicite";b.textContent="p."+n;
+      const q=resolve(n,near(off+x.index),off+x.index),b=document.createElement("button");b.type="button";b.className="aicite";b.textContent="p."+n;
       b.title=q?"Show the sentence on page "+n:"Go to page "+n;b.dataset.q=q||"";b.onclick=()=>aiGo(D.id,n,q,D);box.append(b)}
     box.append(s.slice(j))};
   const re=/\[p\.\s*(\d+)\s*:\s*["\u201c](.+?)["\u201d]\s*\]|\[p\.\s*(\d+)\s*\]/g;let i=0,m;
   while((m=re.exec(txt))){plain(txt.slice(i,m.index),i);i=re.lastIndex;
-    if(m[3]){const pg=at(m[3]),q=near(m.index),b=document.createElement("button");
+    if(m[3]){const pg=at(m[3]),q=resolve(pg,near(m.index),m.index),b=document.createElement("button");
       b.type="button";b.className="aicite"+(pg?"":" bad");b.textContent=pg?"p."+pg:"p.?";b.title=pg?(q?"Show the sentence on page "+pg:"Go to page "+pg):"This page is not in the PDF";
       if(pg){b.dataset.q=q||"";b.onclick=()=>aiGo(D.id,pg,q,D)}box.append(b);continue}
-    const q=m[2],k=nk(q),h=[k,k.slice(0,40)],on=p=>k.length>=12&&h.some(x=>(D.k[p-1]||"").includes(x));
-    let n=at(m[1]);if(!on(n))n=on(1)?1:D.k.findIndex((_,j)=>on(j+1))+1;
+    const q0=m[2],k=nk(q0),h=[k,k.slice(0,40)],on=p=>k.length>=12&&h.some(x=>(D.k[p-1]||"").includes(x));
+    let n=at(m[1]);
+    if(!on(n)){const found=on(1)?1:D.k.findIndex((_,j)=>on(j+1))+1;
+      if(found>0)n=found}  // the quote is real but on another page: follow the quote
+    const q=resolve(n,on(n)?q0:near(m.index),m.index);  // an invented quote is never used
     const b=document.createElement("button");b.type="button";b.className="aicite"+(n?"":" bad");b.textContent=n?"p."+n:"p.?";
     b.title=n?"Show this sentence in the PDF":"This sentence is not in the PDF. Do not trust it.";if(n){b.dataset.q=q;b.onclick=()=>aiGo(D.id,n,q,D)}box.append(b)}
   plain(txt.slice(i),i)};
+// A chip per page, built from the PDF alone. Used when the model gives no usable citation, so the
+// page chips exist whatever the model does.
+const aiPages=(D,note,box)=>{
+  const target=box||aiLine("bot","");
+  if(note)target.append(note+" ");
+  const N=Math.min(D&&D.k?D.k.length:0,12);  // the opening pages: enough to get oriented
+  for(let n=1;n<=N;n++){
+    const P=(D.k[n-1]||"");
+    const first=(P.split(/(?<=[.!?])\s+/).map(x=>x.trim()).find(x=>x.split(/\s+/).length>=6))||"";
+    const b=document.createElement("button");b.type="button";b.className="aicite";b.textContent="p."+n;
+    b.title=first?"Show a sentence on page "+n:"Go to page "+n;
+    b.dataset.q=first;b.onclick=()=>aiGo(D.id,n,first,D);target.append(b);
+    target.append(" ");
+  }
+  return target};
 const aiSend=async text=>{text=String(text||"").trim();if(!text||AI.busy)return;
   if(!(window.pywebview&&pywebview.api&&pywebview.api.ai_chat)){aiLine("err","The chat needs the app window.");return}
   const id0=aiId();if(!id0){aiLine("err","Pick a reading in the PDF tab first, or click a reading on the left.");return}
@@ -2854,18 +2920,26 @@ const aiSend=async text=>{text=String(text||"").trim();if(!text||AI.busy)return;
     const me={role:"user",content:text};  // joins the history only when the answer arrives
     const sys="You help a political science researcher read \u201c"+aiTitle(id0)+"\u201d. That PDF is loaded here and its full text comes inside <pdf> tags in the latest user message, one block per PDF page, each block starting with [p.N]. Never say that no PDF is attached: the text in the <pdf> tags is the PDF, and it is the only source you may use. Answer in plain English in short paragraphs. If a passage is quoted, say what it means, what work it does in the argument, and define any term a newcomer would miss. Ground every claim in the text: right after it, cite the supporting sentence as [p.N: \"sentence\"], where N is the number of the block it came from and the sentence is copied word for word from that block (at most 30 words, no quotation marks inside). For example: The state is hidden from political debate [p.3: \"the developmental state is hidden\"]. Always name the page in the prose as well, as p.N, so the reader can turn to it, and use the block number (the PDF page, counting from 1), never a printed page number from the document's own header. Write that citation marker every single time you state something from the text; an answer with no marker is a failed answer. Do not use markdown bold or headings. Say plainly when the text does not settle the question, and cite nothing then.";
     const withPdf={role:"user",content:"<pdf title=\""+aiTitle(id0)+"\">\n"+D.text+"</pdf>\n\n"+text};  // the text rides in the user turn: the model reads it there more reliably than in the system role
-    const model=($("aimodel")&&$("aimodel").value)||"";
+    // only ever send a model the picker actually offers; a stale saved id (deepseek-chat) made the
+    // gateway answer "Model ... tidak didukung" and the answer never arrived, so no citation chips
+    const sel=$("aimodel");
+    const opts=sel?[...sel.options].map(o=>o.value):[];
+    const model=(sel&&opts.includes(sel.value))?sel.value:(opts[0]||"");
     const r=await pywebview.api.ai_chat(JSON.stringify([{role:"system",content:sys}].concat(AI.hist.slice(-10),withPdf)),model);
     wait.remove();
     if(aiId()!==id0){}  // the reading changed while the reply was pending: drop it, it belongs to another document
-    else if(r&&r.ok){aiCite(aiLine("bot",""),r.text,D);AI.hist.push(me,{role:"assistant",content:r.text})}
-    else aiLine("err","AI error: "+((r&&r.error)||"no answer"));
-  }catch(e){wait.remove();aiLine("err","AI error: "+((e&&e.message)||e))}
+    else if(r&&r.ok){const box=aiLine("bot","");aiCite(box,r.text,D);
+      // no marker in the answer: still give the reader a way into the document
+      if(!box.querySelector(".aicite"))aiPages(D,"",box);
+      AI.hist.push(me,{role:"assistant",content:r.text})}
+    else{aiLine("err","AI error: "+((r&&r.error)||"no answer"));aiPages(D,"The model did not answer, so here are the pages themselves:")}
+  }catch(e){wait.remove();aiLine("err","AI error: "+((e&&e.message)||e));try{const D=await aiLoad();if(D)aiPages(D,"The model did not answer, so here are the pages themselves:")}catch(_){}}
   AI.busy=false;$("aisend").disabled=false};
 const aiAsk=(q,pg)=>{rtab("ai");aiSend("Explain this passage"+(pg?" from page "+pg:"")+":\n\n\u201c"+q+"\u201d")};
 const aiClear=()=>{const L=$("ailog");if(L)L.innerHTML="";AI.hist=[];aiClearBtn()};
 const aiClearBtn=()=>{const b=$("aiclear");if(b)b.hidden=!($("ailog")&&$("ailog").children.length)};
 window.__aiClearBtn=aiClearBtn;window.__aiLine=aiLine;window.__aiClear=aiClear;
+window.__aiLoad=aiLoad;window.__aiCite=aiCite;window.__aiPages=aiPages;window.__aiGo=aiGo;
 document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest(".rtabs [data-rt]");if(b)rtab(b.dataset.rt);
   if(e.target.id==="aiclear"){aiClear();return}
   if(e.target.id==="aiconf"){const box=$("aikeybox");box.hidden=false;e.target.hidden=true;$("aikey").value="";$("aikey").focus();
