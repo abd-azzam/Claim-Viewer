@@ -2224,11 +2224,13 @@ const citeOf=(id,style)=>{
   return citeClean(raw)};
 const citeRaw=(id,style)=>{
   const m=meta(id),it=LIB.items[id]||{},st=style||CITE_STYLE;
-  const ns=citeNames(m.author),yr=m.year||"n.d.",ti=(m.title||it.title||"").trim();
+  const ns=citeNames(m.author),yr=m.year||"n.d";  // "n.d" without a stop: each style adds its own
+  const ti=(m.title||it.title||"").trim().replace(/\.+$/,"");  // the style adds its own stop
   const place=m.city||"",pub=m.publisher||"",j=m.journal||"",vol=m.volume||"",iss=m.issue||"",
         pg=m.pages||"",doi=(m.doi||"").replace(/^https?:\/\/(dx\.)?doi\.org\//i,""),
         typ=m.type||"book";
   const T=(a,b)=>[a,b].filter(Boolean).join("");
+  const ed=String(m.edition||"").replace(/\s*ed\.?\s*$/i,"").trim();  // "3rd ed." -> "3rd"
   if(st==="mla"){
     const au=auTrim(nameListMLA(ns));
     if(typ==="article")return `${au}. \u201c${ti}.\u201d ${j}${vol?", vol. "+vol:""}${iss?", no. "+iss:""}${pg?", pp. "+pg:""}${yr?", "+yr:""}.`;
@@ -2246,15 +2248,15 @@ const citeRaw=(id,style)=>{
   }
   if(st==="chicago"){
     const au=auTrim(nameList(ns));
-    if(typ==="article")return `${au}. ${yr}. \u201c${ti}.\u201d ${j} ${vol}${iss?" ("+iss+")":""}${pg?": "+pg:""}.${doi?" https://doi.org/"+doi:""}`;
-    if(typ==="chapter")return `${au}. ${yr}. \u201c${ti}.\u201d In ${m.booktitle||""}${m.editors?", edited by "+m.editors:""}${pg?", "+pg:""}. ${place?place+": ":""}${pub}.`;
-    return `${au}. ${yr}. ${ti}.${place?" "+place+":":""} ${pub}${m.edition?" "+m.edition+" ed.":""}.`;
+    if(typ==="article")return `${au}. ${auTrim(yr)}. \u201c${ti}.\u201d ${j} ${vol}${iss?" ("+iss+")":""}${pg?": "+pg:""}.${doi?" https://doi.org/"+doi:""}`;
+    if(typ==="chapter")return `${au}. ${auTrim(yr)}. \u201c${ti}.\u201d In ${m.booktitle||""}${m.editors?", edited by "+m.editors:""}${pg?", "+pg:""}. ${place?place+": ":""}${pub}.`;
+    return `${au}. ${auTrim(yr)}. ${ti}.${place?" "+place+":":""} ${pub}${ed?" "+ed+" ed":""}.`;
   }
   if(st==="asa"){
     const au=auTrim(nameList(ns));
-    if(typ==="article")return `${au}. ${yr}. \u201c${ti}.\u201d ${j} ${vol}${iss?"("+iss+")":""}${pg?": "+pg:""}.`;
-    if(typ==="chapter")return `${au}. ${yr}. \u201c${ti}.\u201d Pp. ${pg||"?"} in ${m.booktitle||""}${m.editors?", edited by "+m.editors:""}. ${place?place+": ":""}${pub}.`;
-    return `${au}. ${yr}. ${ti}. ${place?place+": ":""}${pub}.`;
+    if(typ==="article")return `${au}. ${auTrim(yr)}. \u201c${ti}.\u201d ${j} ${vol}${iss?"("+iss+")":""}${pg?": "+pg:""}.`;
+    if(typ==="chapter")return `${au}. ${auTrim(yr)}. \u201c${ti}.\u201d Pp. ${pg||"?"} in ${m.booktitle||""}${m.editors?", edited by "+m.editors:""}. ${place?place+": ":""}${pub}.`;
+    return `${au}. ${auTrim(yr)}. ${ti}. ${place?place+": ":""}${pub}.`;
   }
   if(st==="harvard"){
     const au=auTrim(nameList(ns,"and"));
@@ -2265,16 +2267,16 @@ const citeRaw=(id,style)=>{
   if(st==="apsa"){
     // APSA: like APA, but two authors join with "and" (not "&") and the DOI is a bare URL
     const au=auTrim(nameList(ns,"and"));
-    if(typ==="article")return `${auDot(au)} (${yr}). ${ti}. ${j}${vol?" "+vol:""}${iss?"("+iss+")":""}${pg?", "+pg:""}.${doi?" https://doi.org/"+doi:""}`;
-    if(typ==="chapter")return `${auDot(au)} (${yr}). ${ti}. In ${m.editors||""}${m.editors?", ":""}${m.booktitle||""}${pg?", "+pg:""}. ${place?place+": ":""}${pub}.`;
-    if(typ==="report")return `${auDot(au)} (${yr}). ${ti}. ${place?place+": ":""}${pub}${pg?", "+pg:""}.`;
-    return `${auDot(au)} (${yr}). ${ti}${m.edition?", "+m.edition+" ed.":""}. ${place?place+": ":""}${pub}.`;
+    if(typ==="article")return `${auDot(au)} (${yr==="n.d"?"n.d.":yr}). ${ti}. ${j}${vol?" "+vol:""}${iss?"("+iss+")":""}${pg?", "+pg:""}.${doi?" https://doi.org/"+doi:""}`;
+    if(typ==="chapter")return `${auDot(au)} (${yr==="n.d"?"n.d.":yr}). ${ti}. In ${m.editors||""}${m.editors?", ":""}${m.booktitle||""}${pg?", "+pg:""}. ${place?place+": ":""}${pub}.`;
+    if(typ==="report")return `${auDot(au)} (${yr==="n.d"?"n.d.":yr}). ${ti}. ${place?place+": ":""}${pub}${pg?", "+pg:""}.`;
+    return `${auDot(au)} (${yr==="n.d"?"n.d.":yr}). ${ti}${ed?", "+ed+" ed":""}. ${place?place+": ":""}${pub}.`;
   }
   // APA 7
   const au=auTrim(nameList(ns));
-  if(typ==="article")return `${auDot(au)} (${yr}). ${ti}. ${j}${vol?" "+vol:""}${iss?"("+iss+")":""}${pg?", "+pg:""}.${doi?" https://doi.org/"+doi:""}`;
-  if(typ==="chapter")return `${auDot(au)} (${yr}). ${ti}. In ${m.editors||""}${m.editors?" (Ed.), ":""}${m.booktitle||""}${pg?" (pp. "+pg+")":""}. ${place?place+": ":""}${pub}.`;
-  return `${auDot(au)} (${yr}). ${ti}${m.edition?" ("+m.edition+" ed.)":""}. ${place?place+": ":""}${pub}.`;
+  if(typ==="article")return `${auDot(au)} (${yr==="n.d"?"n.d.":yr}). ${ti}. ${j}${vol?" "+vol:""}${iss?"("+iss+")":""}${pg?", "+pg:""}.${doi?" https://doi.org/"+doi:""}`;
+  if(typ==="chapter")return `${auDot(au)} (${yr==="n.d"?"n.d.":yr}). ${ti}. In ${m.editors||""}${m.editors?" (Ed.), ":""}${m.booktitle||""}${pg?" (pp. "+pg+")":""}. ${place?place+": ":""}${pub}.`;
+  return `${auDot(au)} (${yr==="n.d"?"n.d.":yr}). ${ti}${ed?" ("+ed+" ed.)":""}. ${place?place+": ":""}${pub}.`;
 };
 // every style funnels through this: a name ending in "." must not meet another ".", and "ed.." is a typo
 const citeClean=t=>String(t)
