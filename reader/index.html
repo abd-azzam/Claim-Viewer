@@ -170,6 +170,10 @@ body:has(dialog[open]) #hl,body:has(dialog[open]) #hr{display:none!important}  /
 #citepop button{display:block;width:100%;text-align:left;background:none;border:0;border-radius:6px;
   padding:7px 9px;font:inherit;font-size:12.5px;color:var(--ink);cursor:pointer}
 #citepop button:hover{background:color-mix(in srgb,var(--acc) 12%,transparent)}
+#citepop .cstyle{display:flex;align-items:center;gap:6px;padding:4px 6px 6px}
+#citepop .cstyle label{font-size:11.5px;color:var(--mute)}
+#citepop .cstyle select{flex:1;font:inherit;font-size:12px;color:var(--ink);background:var(--bg);
+  border:1px solid var(--ctl);border-radius:5px;padding:4px 6px;cursor:pointer}
 #citepop .csep{border-top:1px solid var(--line);margin:5px 0}
 #citepop .cprev{border-top:1px solid var(--line);margin-top:5px;padding:7px 9px 3px;font-size:11.5px;
   color:var(--mute);line-height:1.45;max-height:110px;overflow:auto}
@@ -2181,13 +2185,96 @@ const meta=id=>{const it=LIB.items[id]||{},m=it.meta||{},g=metaGuessed(id),out={
 const metaSet=(id,k,v)=>{const it=LIB.items[id]||(LIB.items[id]={});it.meta=it.meta||{};
   if(v)it.meta[k]=v;else delete it.meta[k]};
 // one citation string in a plain, paste-into-Word shape. Chicago-ish, which is what the thesis uses.
-const citeOf=id=>{const m=meta(id),it=LIB.items[id]||{};
-  const au=(m.author||"Unknown").trim(),yr=m.year?m.year:"n.d.",ti=(m.title||it.title||"").trim();
-  const place=[m.city,m.publisher].filter(Boolean).join(": ");
-  if(m.type==="article")return `${au}. ${yr}. \u201c${ti}.\u201d ${m.journal||""}${m.volume?" "+m.volume:""}${m.issue?" ("+m.issue+")":""}${m.pages?": "+m.pages:""}.${m.doi?" https://doi.org/"+m.doi.replace(/^https?:\/\/(dx\.)?doi\.org\//i,""):""}`.replace(/\s+([.,])/g,"$1");
-  if(m.type==="chapter")return `${au}. ${yr}. \u201c${ti}.\u201d${m.booktitle?" In "+m.booktitle+",":""}${m.editors?" edited by "+m.editors+",":""}${m.pages?" "+m.pages+".":""}${place?" "+place+".":""}`.replace(/\s+([.,])/g,"$1");
-  if(m.type==="report")return `${au}. ${yr}. ${ti}.${place?" "+place+".":""}${m.pages?" "+m.pages+".":""}`.replace(/\s+([.,])/g,"$1");
-  return `${au}. ${yr}. ${ti}.${place?" "+place+".":""}${m.edition?" "+m.edition+" ed.":""}`.replace(/\s+([.,])/g,"$1")};
+// Citation styles. Each one formats an article, a book, a chapter and a report differently,
+// because that is what makes a pasted citation usable in the style the reader writes in.
+const CITE_STYLES=[["apa","APA 7"],["mla","MLA 9"],["chicago","Chicago"],
+  ["apsa","APSA"],["asa","ASA"],["ieee","IEEE"],["harvard","Harvard"]];
+let CITE_STYLE=(()=>{try{return store.get("cv:citestyle")||"apa"}catch(e){return "apa"}});
+const citeSetStyle=v=>{CITE_STYLE=v;try{store.set("cv:citestyle",v)}catch(e){}};
+// "Alami, Ilias; Smith, John" -> [["Alami","Ilias"],["Smith","John"]]
+const citeNames=au=>String(au||"").split(/[;]/).map(x=>x.trim()).filter(Boolean).map(x=>{
+  const i=x.indexOf(",");
+  return i<0?[x,""]:[x.slice(0,i).trim(),x.slice(i+1).trim()]});
+// APA/APSA/ASA/Harvard want "Surname, I., & Surname, J."
+const nameList=(ns,and="&")=>{
+  if(!ns.length)return "Unknown";
+  const f=ns.map(([s,g])=>g?`${s}, ${g.split(/\s+/).map(w=>w[0]+".").join(" ")}`:s);
+  if(f.length===1)return f[0];
+  if(f.length===2)return `${f[0]}, ${and} ${f[1]}`;
+  return f.slice(0,-1).join(", ")+`, ${and} `+f[f.length-1]};
+// MLA: "Surname, First, and First Surname"
+const nameListMLA=ns=>{
+  if(!ns.length)return "Unknown";
+  if(ns.length===1)return ns[0][1]?`${ns[0][0]}, ${ns[0][1]}`:ns[0][0];
+  const first=ns[0][1]?`${ns[0][0]}, ${ns[0][1]}`:ns[0][0];
+  const rest=ns.slice(1).map(([s,g])=>g?`${g} ${s}`:s);
+  if(rest.length===1)return `${first}, and ${rest[0]}`;
+  return `${first}, ${rest.slice(0,-1).join(", ")}, and ${rest[rest.length-1]}`};
+// IEEE: "I. Alami and J. Smith"
+const nameListIEEE=ns=>{
+  if(!ns.length)return "Unknown";
+  const f=ns.map(([s,g])=>g?`${g.split(/\s+/).map(w=>w[0]+".").join(" ")} ${s}`:s);
+  if(f.length===1)return f[0];
+  if(f.length===2)return `${f[0]} and ${f[1]}`;
+  return f.slice(0,-1).join(", ")+", and "+f[f.length-1]};
+const citeOf=(id,style)=>{
+  const raw=citeRaw(id,style);
+  return citeClean(raw)};
+const citeRaw=(id,style)=>{
+  const m=meta(id),it=LIB.items[id]||{},st=style||CITE_STYLE;
+  const ns=citeNames(m.author),yr=m.year||"n.d.",ti=(m.title||it.title||"").trim();
+  const place=m.city||"",pub=m.publisher||"",j=m.journal||"",vol=m.volume||"",iss=m.issue||"",
+        pg=m.pages||"",doi=(m.doi||"").replace(/^https?:\/\/(dx\.)?doi\.org\//i,""),
+        typ=m.type||"book";
+  const T=(a,b)=>[a,b].filter(Boolean).join("");
+  if(st==="mla"){
+    const au=nameListMLA(ns);
+    if(typ==="article")return `${au}. \u201c${ti}.\u201d ${j}${vol?", vol. "+vol:""}${iss?", no. "+iss:""}${pg?", pp. "+pg:""}${yr?", "+yr:""}.`;
+    if(typ==="chapter")return `${au}. \u201c${ti}.\u201d ${T(m.booktitle||"", m.booktitle?".":"")}${m.editors?" Ed. "+m.editors+".":""} ${place?place+": ":""}${pub}${yr?", "+yr:""}${pg?". "+pg:""}.`;
+    return `${au}. ${ti}.${place?" "+place+":":""}${pub?" "+pub+",":""} ${yr}.`;
+  }
+  if(st==="ieee"){
+    const au=nameListIEEE(ns);
+    if(typ==="article")return `${au}, \u201c${ti},\u201d ${j}${vol?", vol. "+vol:""}${iss?", no. "+iss:""}${pg?", pp. "+pg:""}, ${yr}${doi?", doi: "+doi:""}.`;
+    if(typ==="chapter")return `${au}, \u201c${ti},\u201d in ${m.booktitle||""}${m.editors?", "+m.editors+", Ed.":""} ${place?place+": ":""}${pub}, ${yr}, pp. ${pg}.`;
+    return `${au}, ${ti}.${place?" "+place+":":""} ${pub}, ${yr}.`;
+  }
+  if(st==="mla"||st==="chicago"){
+    /* handled above */
+  }
+  if(st==="chicago"){
+    const au=nameList(ns);
+    if(typ==="article")return `${au}. ${yr}. \u201c${ti}.\u201d ${j} ${vol}${iss?" ("+iss+")":""}${pg?": "+pg:""}.${doi?" https://doi.org/"+doi:""}`;
+    if(typ==="chapter")return `${au}. ${yr}. \u201c${ti}.\u201d In ${m.booktitle||""}${m.editors?", edited by "+m.editors:""}${pg?", "+pg:""}. ${place?place+": ":""}${pub}.`;
+    return `${au}. ${yr}. ${ti}.${place?" "+place+":":""} ${pub}${m.edition?" "+m.edition+" ed.":""}.`;
+  }
+  if(st==="asa"){
+    const au=nameList(ns);
+    if(typ==="article")return `${au}. ${yr}. \u201c${ti}.\u201d ${j} ${vol}${iss?"("+iss+")":""}${pg?": "+pg:""}.`;
+    if(typ==="chapter")return `${au}. ${yr}. \u201c${ti}.\u201d Pp. ${pg||"?"} in ${m.booktitle||""}${m.editors?", edited by "+m.editors:""}. ${place?place+": ":""}${pub}.`;
+    return `${au}. ${yr}. ${ti}. ${place?place+": ":""}${pub}.`;
+  }
+  if(st==="harvard"){
+    const au=nameList(ns,"and");
+    if(typ==="article")return `${au} ${yr}, \u201c${ti}\u201d, ${j}, vol. ${vol}${iss?", no. "+iss:""}${pg?", pp. "+pg:""}.`;
+    if(typ==="chapter")return `${au} ${yr}, \u201c${ti}\u201d, in ${m.booktitle||""}${m.editors?", "+m.editors+", ed.":""} ${place?place+": ":""}${pub}${pg?", pp. "+pg:""}.`;
+    return `${au} ${yr}, ${ti}. ${place?place+": ":""}${pub}.`;
+  }
+  // APA 7 (and APSA, which follows it closely with a year-first in-text habit)
+  const au=nameList(ns);
+  const sep=st==="apsa"?" ":" ";
+  if(typ==="article")return `${au}. (${yr}). ${ti}. ${j}${vol?" "+vol:""}${iss?"("+iss+")":""}${pg?", "+pg:""}.${doi?" https://doi.org/"+doi:""}`;
+  if(typ==="chapter")return `${au}. (${yr}). ${ti}. In ${m.editors||""}${m.editors?" (Ed.), ":""}${m.booktitle||""}${pg?" (pp. "+pg+")":""}. ${place?place+": ":""}${pub}.`;
+  return `${au}. (${yr}). ${ti}${m.edition?" ("+m.edition+" ed.)":""}. ${place?place+": ":""}${pub}.`;
+};
+// every style funnels through this: a name ending in "." must not meet another ".", and "ed.." is a typo
+const citeClean=t=>String(t)
+  .replace(/\.\./g,".")                       // "I.." -> "I."
+  .replace(/\.\s*\./g,".")
+  .replace(/\s+([,.;:])/g,"$1")                // no space before punctuation
+  .replace(/\s{2,}/g," ")
+  .replace(/\.\s*$/,".")
+  .trim();
 // every save carries the library.json version we last saw, so a stale in-memory copy is refused
 // instead of silently overwriting a newer file
 // LIBMT is the library.json version this page is based on. It is seeded from the file on load,
@@ -2247,7 +2334,7 @@ function drawLibTable(){
   if(!shown.length){box.innerHTML='<div class="ltempty">'+(col?"No readings in this folder yet. Add a PDF from the folder list on the left.":"The library is empty. Add a PDF from a folder on the left.")+'</div>';return}
   const gaps=shown.filter(id=>{const m=meta(id);return !m.author||!m.year||!m.title}).length;
   const types=new Set(shown.map(id=>meta(id).type));
-  const cols=["type","author","year","pdf","title"];
+  const cols=["type","pdf","title","year","author"];
   [...types].forEach(t=>(TYPE_COLS[t]||[]).forEach(k=>{if(!cols.includes(k))cols.push(k)}));
   box.innerHTML='<div class="lthead"><b>'+shown.length+' reading'+(shown.length===1?"":"s")+'</b>'
     +(gaps?'<button type="button" id="metafill" title="New PDFs fill themselves on import; press this to retry the '+gaps+' that came back empty">Retry '+gaps+' empty</button>':'')
@@ -2356,7 +2443,9 @@ let citeBox=null;
 function citeMenu(id,x,y){
   if(citeBox)citeBox.remove();
   const b=document.createElement("div");b.id="citepop";
-  b.innerHTML='<button type="button" data-a="copy">Copy citation</button>'
+  b.innerHTML='<div class="cstyle"><label for="cst">Citation style</label>'
+    +'<select id="cst">'+CITE_STYLES.map(([v,n])=>`<option value="${v}"${v===CITE_STYLE?" selected":""}>${esc(n)}</option>`).join("")+'</select></div>'
+    +'<button type="button" data-a="copy">Copy citation</button>'
     +'<button type="button" data-a="text">Copy as plain text</button>'
     +'<div class="csep"></div>'
     +'<button type="button" data-a="fill">Fill metadata from the web</button>'
@@ -2365,7 +2454,11 @@ function citeMenu(id,x,y){
     +(LIB.items[id]&&LIB.items[id]._metaBefore?'<button type="button" data-a="undo">Undo the last metadata replace</button>':'')
     +'<div class="cprev"></div>';
   document.body.append(b);citeBox=b;
-  b.querySelector(".cprev").textContent=citeOf(id);
+  const prev=b.querySelector(".cprev");
+  const draw=()=>{prev.textContent=citeOf(id)};
+  const sel=b.querySelector("#cst");
+  if(sel)sel.addEventListener("change",()=>{citeSetStyle(sel.value);draw()});
+  draw();
   const r=b.getBoundingClientRect();
   b.style.left=Math.min(x,innerWidth-r.width-8)+"px";
   b.style.top=Math.min(y,innerHeight-r.height-8)+"px";
@@ -2379,8 +2472,11 @@ function citeMenu(id,x,y){
       if(it._metaBefore){it.meta=Object.assign({},it._metaBefore);delete it._metaBefore;
         libSave();drawLibTable();toast("Metadata restored",1,4000)}
       return}
-    const txt=a==="text"?citeOf(id).replace(/\u201c|\u201d/g,'"'):citeOf(id);
-    copyText(txt);toast(a==="text"?"Citation copied as plain text":"Citation copied");b.remove();citeBox=null});
+    const raw=citeOf(id);
+    const txt=a==="text"?raw.replace(/[\u201c\u201d]/g,'"').replace(/\u2019/g,"'"):raw;
+    copyText(txt);
+    toast("Citation copied \u00b7 "+(CITE_STYLES.find(x=>x[0]===CITE_STYLE)||["",""])[1],1,4000);
+    b.remove();citeBox=null});
   setTimeout(()=>document.addEventListener("click",function once(ev){
     if(citeBox&&!citeBox.contains(ev.target)){citeBox.remove();citeBox=null}
     document.removeEventListener("click",once)}),0);
