@@ -2183,18 +2183,49 @@ const citeOf=id=>{const m=meta(id),it=LIB.items[id]||{};
   return `${au}. ${yr}. ${ti}.${place?" "+place+".":""}${m.edition?" "+m.edition+" ed.":""}`.replace(/\s+([.,])/g,"$1")};
 // every save carries the library.json version we last saw, so a stale in-memory copy is refused
 // instead of silently overwriting a newer file
-let LIBMT=0;
+// LIBMT is the library.json version this page is based on. It is seeded from the file on load,
+// because a token of 0 meant the FIRST save of every session skipped the guard entirely.
+let LIBMT=0,LIBSEED=false;
+const libSeed=async()=>{
+  if(LIBSEED)return;
+  try{
+    if(window.pywebview&&pywebview.api&&pywebview.api.library_version){
+      const v=await pywebview.api.library_version();
+      if(v&&v.ok){LIBMT=v.mtime||0;LIBSEED=true}
+    }
+  }catch(e){}
+};
+// arm it at load: the first save of a session used to run unguarded
+window.addEventListener("pywebviewready",()=>{libSeed()});
+setTimeout(()=>{libSeed()},300);
+// merge the in-memory library onto the file's copy, so a concurrent change is kept AND our edit lands
+const libMerge=(mine,fresh)=>{
+  const out=JSON.parse(JSON.stringify(fresh));
+  out.collections=mine.collections||out.collections;
+  Object.keys(mine.items||{}).forEach(k=>{out.items[k]=mine.items[k]});
+  return out;
+};
 const libSave=async()=>{
+  await libSeed();
   const j=JSON.stringify(LIB);
   if(!(window.pywebview&&pywebview.api&&pywebview.api.save_library)){store.set("cv:lib",j);return {ok:true}}
   let r=null;
   try{r=await pywebview.api.save_library(j,LIBMT)}catch(e){r={ok:false,error:String(e)}}
   if(r&&r.ok){LIBMT=r.mtime||LIBMT;return r}
   if(r&&r.error==="stale"){
-    toast("Another change was saved first; reloading the library",1,4000);
-    try{const fresh=await fetch("library.json?t="+Date.now()).then(x=>x.json());
-      if(fresh&&fresh.items){Object.keys(LIB).forEach(k=>delete LIB[k]);Object.assign(LIB,fresh);
-        LIBMT=0;relib();drawLibTable()}}catch(e){}
+    // someone wrote first: adopt their file, put OUR change back on top, and save again
+    try{
+      const fresh=await fetch("library.json?t="+Date.now()).then(x=>x.json());
+      if(fresh&&fresh.items){
+        const merged=libMerge(LIB,fresh);
+        Object.keys(LIB).forEach(k=>delete LIB[k]);Object.assign(LIB,merged);
+        LIBMT=(r.mtime||0);
+        const again=await pywebview.api.save_library(JSON.stringify(LIB),LIBMT);
+        if(again&&again.ok){LIBMT=again.mtime||LIBMT;toast("Merged with a change saved elsewhere",1,4000)}
+        else toast("Another window is editing the library; your change is not saved yet",1,6000);
+        relib();drawLibTable();
+      }
+    }catch(e){}
     return r;
   }
   if(r&&r.error)toast("Could not save the library: "+r.error,1,5000);
@@ -2270,6 +2301,16 @@ const metaFillOne=async(id,force)=>{
   if(!r||!r.ok){return toast("No match found online for this reading",1,5000)}
   const m=it.meta||(it.meta={});
   const KEYS=["type","title","author","year","journal","volume","issue","pages","doi","publisher","city","isbn"];
+  const changed=KEYS.filter(k=>r[k]&&m[k]&&m[k]!==r[k]);
+  // force=true replaces fields the web disagrees with, which is what you need when a result was
+  // wrong -- but show exactly what it will overwrite first, and keep the old values for one undo.
+  if(force&&changed.length){
+    const ok=await nask("Replace "+changed.length+" field"+(changed.length===1?"":"s")+" with the online record?\n\n"
+      +changed.map(k=>k+": "+String(m[k]).slice(0,60)+"  \u2192  "+String(r[k]).slice(0,60)).join("\n")
+      +"\n\nSource: "+r.source,"Replace metadata");
+    if(!ok)return;
+  }
+  it._metaBefore=Object.assign({},m);
   let n=0;
   KEYS.forEach(k=>{if(!r[k])return;if(force||!m[k]){if(m[k]!==r[k])n++;m[k]=r[k]}});
   await libSave();drawLibTable();
@@ -2314,6 +2355,7 @@ function citeMenu(id,x,y){
     +'<button type="button" data-a="fill">Fill metadata from the web</button>'
     +'<button type="button" data-a="refill">Replace all fields from the web</button>'
     +'<button type="button" data-a="open">Open this PDF</button>'
+    +(LIB.items[id]&&LIB.items[id]._metaBefore?'<button type="button" data-a="undo">Undo the last metadata replace</button>':'')
     +'<div class="cprev"></div>';
   document.body.append(b);citeBox=b;
   b.querySelector(".cprev").textContent=citeOf(id);
@@ -2325,6 +2367,11 @@ function citeMenu(id,x,y){
     if(!a)return;
     if(a==="fill"||a==="refill"){b.remove();citeBox=null;return metaFillOne(id,a==="refill")}
     if(a==="open"){b.remove();citeBox=null;return openInReader(id)}
+    if(a==="undo"){b.remove();citeBox=null;
+      const it=LIB.items[id]||{};
+      if(it._metaBefore){it.meta=Object.assign({},it._metaBefore);delete it._metaBefore;
+        libSave();drawLibTable();toast("Metadata restored",1,4000)}
+      return}
     const txt=a==="text"?citeOf(id).replace(/\u201c|\u201d/g,'"'):citeOf(id);
     copyText(txt);toast(a==="text"?"Citation copied as plain text":"Citation copied");b.remove();citeBox=null});
   setTimeout(()=>document.addEventListener("click",function once(ev){

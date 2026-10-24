@@ -330,6 +330,9 @@ class Api:
         except Exception:
             return {}
 
+    def library_version(self):  # the page seeds LIBMT from this, so its very first save is guarded
+        return {"ok": True, "mtime": _lib_mtime()}
+
     def save_library(self, text, base_mtime=0):
         try:
             lib = json.loads(text)
@@ -418,8 +421,6 @@ class Api:
                               "pages", "doi", "publisher", "city", "isbn"):
                         if not m.get(k) and got.get(k):
                             m[k] = got[k]
-                    if not lib["items"][i].get("title") or lib["items"][i]["title"] == i:
-                        lib["items"][i]["title"] = got.get("title") or i
                     filled += 1
             except Exception:
                 pass
@@ -694,12 +695,42 @@ class Api:
             s = html.unescape(str(s or ""))  # Crossref sends "Politics &amp; Society"
             return re.sub(r"\s+", " ", s).strip()
 
+        STOP = {"the", "and", "for", "with", "from", "that", "this", "their", "state", "states",
+                "new", "how", "why", "into", "over", "under", "its", "his", "her", "our", "not",
+                "book", "paper", "article", "review", "edited", "press", "university"}
+
+        def _words(t):
+            return [x for x in re.findall(r"[a-z]{3,}", (t or "").lower()) if x not in STOP]
+
         def alike(a, b):  # is the hit really the thing we asked for?
-            w = [x for x in re.findall(r"[a-z]{4,}", (a or "").lower())]
-            if not w:
+            # Compare the query against the hit's MAIN title (the part before a colon or dash),
+            # because that is what identifies the work. "Swimming Against the Current" then passes
+            # while "Going with the flow or swimming against the current?" does not, even though
+            # they share four words. A different work fails; when in doubt we refuse, since an
+            # empty field beats a confidently wrong citation.
+            qw = _words(a)
+            main = re.split(r"[:;?]|\s[\u2013\u2014-]\s", b or "")[0]
+            tw = _words(main)
+            if len(qw) < 2 or len(tw) < 2:
                 return False
-            hay = (b or "").lower()
-            return sum(1 for x in w if x in hay) >= max(2, len(w) // 3)
+            q = " " + " ".join(qw) + " "
+            best = 0
+            for i in range(len(tw)):
+                for j in range(i + 2, len(tw) + 1):
+                    if (" " + " ".join(tw[i:j]) + " ") in q:
+                        best = max(best, j - i)
+                    else:
+                        break
+            return best >= max(2, int(len(tw) * 0.75))
+
+        def is_review(ttl, pages):
+            # a review names the book in its own title; refuse those and single-page blurbs
+            t = (ttl or "").lower()
+            if len(t) > 200:
+                return True
+            if re.search(r"\breview\b|\breviewed by\b|\bby [A-Z]", ttl or ""):
+                return True
+            return bool(re.fullmatch(r"\d+-\d+", (pages or "").strip())) and (pages or "").split("-")[0] == (pages or "").split("-")[-1]
 
         # --- Crossref: the best source for a DOI, journal, volume, issue and pages
         try:
@@ -713,8 +744,12 @@ class Api:
             ttl = clean((it.get("title") or [""])[0])
             if not ttl:
                 continue
-            au = "; ".join(clean((a.get("family") or "") + (", " + a.get("given") if a.get("given") else ""))
-                           for a in (it.get("author") or []) if a.get("family"))
+            names = [clean((a.get("family") or "") + (", " + a.get("given") if a.get("given") else ""))
+                     for a in (it.get("author") or []) if a.get("family")]
+            # a review record lists the reviewer first and the reviewed book's author second
+            qn = set(re.findall(r"[a-z]{3,}", (q or "").lower()))
+            named = [n for n in names if set(re.findall(r"[a-z]{3,}", n.lower())) & qn]
+            au = "; ".join(named or names)
             yr = ""
             try:
                 yr = str((it.get("issued") or {}).get("date-parts", [[""]])[0][0] or "")
@@ -722,7 +757,7 @@ class Api:
                 pass
             typ = {"journal-article": "article", "book": "book", "book-chapter": "chapter",
                    "proceedings-article": "chapter", "report": "report"}.get(it.get("type") or "", "book")
-            if not alike(q, ttl + " " + au + " " + str(yr)):
+            if is_review(ttl, clean(it.get("page"))) or not alike(q, ttl):
                 continue  # a wrong citation is worse than an empty one
             out = {"ok": True, "source": "crossref", "type": typ, "title": ttl, "author": au, "year": yr,
                    "journal": clean((it.get("container-title") or [""])[0]),
@@ -741,7 +776,7 @@ class Api:
                     continue
                 au = "; ".join(clean(a.get("author", {}).get("display_name"))
                                for a in (it.get("authorships") or [])[:6])
-                if not alike(q, ttl + " " + au + " " + str(it.get("publication_year") or "")):
+                if not alike(q, ttl):
                     continue
                 host = ((it.get("primary_location") or {}).get("source") or {})
                 out = {"ok": True, "source": "openalex", "type": "article" if it.get("doi") else "book",
@@ -764,7 +799,7 @@ class Api:
             for it in (j.get("items") or []):
                 v = it.get("volumeInfo") or {}
                 ttl = clean(v.get("title"))
-                if not ttl or not alike(q, ttl + " " + clean(" ".join(v.get("authors") or [])) + " " + str(v.get("publishedDate") or "")):
+                if not ttl or not alike(q, ttl):
                     continue
                 return {"ok": True, "source": "googlebooks", "type": "book", "title": ttl,
                         "author": clean("; ".join(v.get("authors") or [])),
