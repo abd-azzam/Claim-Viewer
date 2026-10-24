@@ -2389,6 +2389,12 @@ function drawLibTable(){
 const openInReader=id=>{
   const s=$("pdfsel");
   if(!s||![...s.options].some(o=>o.value===id))return toast("That reading has no PDF in the app");
+  // the right pane may be folded away (body.nor): un-fold it, or the PDF loads into a 0px column
+  if(document.body.classList.contains("nor")){
+    SIDES.r=false;
+    try{store.set("cv:sides",JSON.stringify(SIDES))}catch(e){}
+    sides();
+  }
   const tab=document.querySelector('.rtabs [data-rt="pdf"]');
   if(tab)tab.click();  // rtab() is block-scoped; the tab button is the public route
   s.value=id;
