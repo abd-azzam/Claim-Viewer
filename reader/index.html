@@ -2864,7 +2864,10 @@ const aiCite=(box,txt,D)=>{txt=aiDeSlop(String(txt||"")).replace(/\*\*(.+?)\*\*/
       const q=near(off+x.index),b=document.createElement("button");b.type="button";b.className="aicite";b.textContent="p."+n;
       b.title=q?"Show the sentence on page "+n:"Go to page "+n;b.dataset.q=q||"";b.onclick=()=>aiGo(D.id,n,q,D);box.append(b)}
     box.append(s.slice(j))};
-  const re=/\[p\.\s*(\d+)\s*:\s*["\u201c](.+?)["\u201d]\s*\]|\[p\.\s*(\d+)\s*\]/g;let i=0,m;
+  // A quote holding a newline, or an empty one, used to fail this pattern and fall through to
+  // plain(), which emitted a page chip carrying the answer's own text as the evidence. Both now
+  // parse, and the check below turns an empty or missing quote into p.?.
+  const re=/\[p\.\s*(\d+)\s*:\s*["\u201c]([\s\S]*?)["\u201d]\s*\]|\[p\.\s*(\d+)\s*\]/g;let i=0,m;
   while((m=re.exec(txt))){plain(txt.slice(i,m.index),i);i=re.lastIndex;
     if(m[3]){const pg=at(m[3]),q=near(m.index),b=document.createElement("button");
       b.type="button";b.className="aicite"+(pg?"":" bad");b.textContent=pg?"p."+pg:"p.?";b.title=pg?(q?"Show the sentence on page "+pg:"Go to page "+pg):"This page is not in the PDF";
