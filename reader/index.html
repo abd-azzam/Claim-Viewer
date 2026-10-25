@@ -2976,48 +2976,6 @@ const aiCite=(box,txt,D)=>{
       box.append(wrap);
     }
   }
-  // Model-independent pass: place a chip on sentences the model left uncited, by finding where
-  // they actually live in the PDF. A weak match gets no chip rather than a wrong page.
-  const STOPW=new Set("the and that with this from have been were which their there about into other more most such than then they them these those when where while would could should also because between under over after before during through being both each only very much many some any not but for are was has had its our your his her who whom whose what how why all one two three does did not you your".split(" "));
-  const wordsOf=t=>new Set((t.toLowerCase().match(/[a-z]{4,}/g)||[]).filter(w=>w.length>3&&!STOPW.has(w)));
-  for(const el of [...box.querySelectorAll(".aip")]){
-    if(el.querySelector(".aicite"))continue;      // the model already cited this block
-    const text=el.textContent||"";
-    if(text.replace(/\s+/g," ").trim().length<40)continue;
-    const lw=[...wordsOf(text)];
-    if(lw.length<4)continue;
-    let best=0,bestPg=0;
-    for(let pg=1;pg<=N;pg++){
-      const P=pageText(pg);if(!P)continue;
-      const pw=new Set((P.toLowerCase().match(/[a-z]{4,}/g)||[]));
-      let hit=0;for(const w of lw)if(pw.has(w))hit++;
-      const sc=hit/lw.length;
-      if(sc>best){best=sc;bestPg=pg}
-    }
-    // A paraphrase scores low and the runner-up is often close, so demand a clear winner:
-    // measured, the right page led by 0.15 on a findable block but by only 0.03 on two ambiguous
-    // ones, and a bare threshold put those two on the wrong page.
-    let second=0;
-    for(let pg=1;pg<=N;pg++){
-      if(pg===bestPg)continue;
-      const P=pageText(pg);if(!P)continue;
-      const pw=new Set((P.toLowerCase().match(/[a-z]{4,}/g)||[]));
-      let hit=0;for(const w of lw)if(pw.has(w))hit++;
-      const sc=hit/lw.length;
-      if(sc>second)second=sc;
-    }
-    if(bestPg&&best>=0.35&&best-second>=0.10){
-      const q=bestOnPage(bestPg,text)||firstOnPage(bestPg);
-      if(q){
-        const b=document.createElement("button");
-        b.type="button";b.className="aicite auto";
-        b.textContent="p."+bestPg;
-        b.title="Closest match in the PDF ("+Math.round(best*100)+"% of the key words)";
-        b.dataset.q=q;b.onclick=()=>aiGo(D.id,bestPg,q,D);
-        el.append(b);
-      }
-    }
-  }
   return box};
 
 // A chip must point at evidence, so a chip is only ever made from a citation the model wrote.
@@ -3070,18 +3028,26 @@ const aiSend=async text=>{text=String(text||"").trim();if(!text||AI.busy)return;
     wait.remove();
     if(aiId()!==id0){}  // the reading changed while the reply was pending: drop it, it belongs to another document
     else if(r&&r.ok){const box=aiLine("bot","");aiCite(box,r.text,D);
-      // Nothing usable in the answer: fall back to the passage the question quoted, whose page
-      // is found in the PDF. Only if the question quoted nothing do we leave the answer bare.
-      if(!box.querySelector(".aicite")){
-        const a=await aiAnchor(D,text);
-        if(a&&a.pg){
-          const b=document.createElement("button");
-          b.type="button";b.className="aicite";
-          b.textContent="p."+a.pg;
-          b.title="The passage you quoted, found in the PDF";
-          b.dataset.q=a.q||"";b.onclick=()=>aiGo(D.id,a.pg,a.q,D);
-          box.append(b);
+      // The passage the user quoted is the primary evidence, so it always gets a chip, placed on
+      // the block that actually discusses it. Gating this on "the answer has no chip at all" let a
+      // few scattered auto chips suppress it, and the passage asked about got nothing.
+      const a=await aiAnchor(D,text);
+      if(a&&a.pg){
+        const b=document.createElement("button");
+        b.type="button";b.className="aicite anchor";
+        b.textContent="p."+a.pg;
+        b.title="The passage you quoted, found in the PDF";
+        b.dataset.q=a.q||"";b.onclick=()=>aiGo(D.id,a.pg,a.q,D);
+        // the block that overlaps the quoted sentence most, else the first block
+        const blocks=[...box.querySelectorAll(".aip")];
+        const want=new Set((a.q||"").toLowerCase().match(/[a-z]{4,}/g)||[]);
+        let host=null,hostScore=-1;
+        for(const el of blocks){
+          const have=new Set((el.textContent||"").toLowerCase().match(/[a-z]{4,}/g)||[]);
+          let n=0;want.forEach(w=>{if(have.has(w))n++});
+          if(n>hostScore){hostScore=n;host=el}
         }
+        (host||box).append(b);
       }
       AI.hist.push(me,{role:"assistant",content:r.text})}
     else{aiLine("err","AI error: "+((r&&r.error)||"no answer"));aiPages(D,"The model did not answer, so here are the pages themselves:")}
