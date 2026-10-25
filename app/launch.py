@@ -44,6 +44,9 @@ _LOCKS = {}
 _LOCK_GUARD = threading.Lock()
 _VOICE_CACHE = None  # the voice list is fetched once per run: it costs a network round trip
 _AI_DEFAULT_MODEL = "deepseek-v4.1-flash-1017"  # the only id this account is entitled to; deepseek-chat is rejected
+# The third-party gateway serves a reasoning model, so reasoning_content and content share this
+# budget. Measured: 300 was consumed entirely by reasoning and content came back empty.
+_AI_MAX_TOKENS = 8000
 
 
 def _lock_for(path):
@@ -549,7 +552,7 @@ class Api:
         if not re.match(r"^[A-Za-z0-9._:\-]{1,64}$", want):  # only a plain id reaches the request body
             want = c.get("model") or _AI_DEFAULT_MODEL
         body = json.dumps({"model": want, "messages": msgs[-14:],
-                           "temperature": 0.3, "max_tokens": 1200, "stream": False}).encode("utf-8")
+                           "temperature": 0.3, "max_tokens": _AI_MAX_TOKENS, "stream": False}).encode("utf-8")
         req = urllib.request.Request(
             url, data=body,
             headers={"Content-Type": "application/json", "Authorization": "Bearer " + key})
@@ -576,7 +579,14 @@ class Api:
             if isinstance(txt, str) and txt.strip():
                 break
             txt = ""
-        if not txt:  # reasoning models can answer with content null
+        if not txt:
+            _fin = ""
+            try:
+                _fin = str((j.get("choices") or [{}])[0].get("finish_reason") or "")
+            except Exception:
+                pass
+            if _fin == "length":
+                return {"ok": False, "error": "the model used its whole token budget on reasoning and never wrote an answer. Try a shorter question."}
             return {"ok": False, "error": "the model sent an empty reply twice: try again or pick another model"}
         return {"ok": True, "text": txt, "model": j.get("model") or ""}
 
