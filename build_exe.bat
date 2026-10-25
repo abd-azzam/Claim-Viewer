@@ -45,6 +45,10 @@ if exist build rmdir /s /q build
 if not exist "%APP%\release" mkdir "%APP%\release"
 copy /y release\ClaimViewer-Setup-2.1.0.exe "%APP%\release\" >nul 2>&1
 echo Installed: %APP%\ClaimViewer.exe
+rem The Start Menu shortcut is what he actually clicks. A test install in a scratch folder once
+rem registered itself as the app and left this shortcut pointing at a blank copy, so the real
+rem install looked like lost data. Point the shortcut at the real folder on every build.
+powershell -NoProfile -Command "$s=New-Object -ComObject WScript.Shell; $l=Join-Path $env:APPDATA 'Microsoft\Windows\Start Menu\Programs\Claim Viewer.lnk'; if(Test-Path $l){$t=$s.CreateShortcut($l); $want='%APP%\ClaimViewer.exe'; if($t.TargetPath -ne $want){$t.TargetPath=$want; $t.WorkingDirectory='%APP%'; $t.Save(); Write-Host ('Shortcut repaired: '+$want)} else {Write-Host ('Shortcut ok: '+$t.TargetPath)}} else {Write-Host 'No Start Menu shortcut to check'}"
 rem both hashes must match: the installed app and the one the installer carries
 certutil -hashfile dist\ClaimViewer.exe SHA256 | findstr /r /v "hash CertUtil"
 certutil -hashfile "%APP%\ClaimViewer.exe" SHA256 | findstr /r /v "hash CertUtil"
