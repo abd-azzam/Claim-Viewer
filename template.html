@@ -2849,6 +2849,26 @@ const aiDeSlop=t=>String(t||"")
   .replace(/[ \t]{2,}/g," ")
   .replace(/ ,/g,",")
   .replace(/\n{3,}/g,"\n\n");
+// A quote is often cut by a page break, a JSTOR stamp or a running head, so the whole sentence
+// can sit on no single page. Name the page that carries the longest prefix, and keep only that
+// prefix as the evidence, so the chip's sentence really is on the page it names.
+const fitQuote=(quoted,D,prefer)=>{
+  const full=nk(quoted);if(full.length<12)return null;
+  const lens=[];
+  for(let p=1;p<=D.k.length;p++){
+    const P=D.k[p-1]||"";
+    let lo=0,hi=full.length;
+    while(lo<hi){const mid=(lo+hi+1)>>1;if(P.includes(full.slice(0,mid)))lo=mid;else hi=mid-1}
+    lens[p]=lo;
+  }
+  let pg=0,len=0;
+  for(let p=1;p<=D.k.length;p++)if(lens[p]>len){len=lens[p];pg=p}
+  if(prefer&&lens[prefer]===len&&prefer<=D.k.length)pg=prefer;  // the page the model named wins a tie
+  if(!pg||len<Math.min(40,full.length))return null;  // too little of it on any page to stand as evidence
+  const words=String(quoted).split(/\s+/);let n=0;const out=[];
+  for(const w of words){out.push(w);n+=nk(w).length;if(n>=len)break}
+  return {pg,q:out.join(" ")};
+};
 const aiCite=(box,txt,D)=>{txt=aiDeSlop(String(txt||"")).replace(/\*\*(.+?)\*\*/g,"$1").replace(/^#{1,6}\s*/gm,"");  // the model still reaches for markdown: strip it, the chip carries the citation
   const N=D.k.length;
   const at=v=>{const n=+v;if(n>=1&&n<=N)return n;const m=(D.lbl||{})[n];return m||0};  // printed page number -> PDF page
@@ -2889,11 +2909,10 @@ const aiCite=(box,txt,D)=>{txt=aiDeSlop(String(txt||"")).replace(/\*\*(.+?)\*\*/
       const b=document.createElement("button");
       b.type="button";b.className="aicite";b.textContent="p."+pg;b.title=q?"Show the sentence on page "+pg:"Go to page "+pg;
       b.dataset.q=q||"";b.onclick=()=>aiGo(D.id,pg,q,D);box.append(b);continue}
-    const q=m[2],k=nk(q),on=p=>k.length>=12&&(D.k[p-1]||"").includes(k);
-    let n=at(m[1]);if(!on(n))n=on(1)?1:D.k.findIndex((_,j)=>on(j+1))+1;
-    if(!n)continue;  // the sentence is on no page: no chip, the prose already says it
-    const b=document.createElement("button");b.type="button";b.className="aicite";b.textContent="p."+n;
-    b.title="Show this sentence in the PDF";b.dataset.q=q;b.onclick=()=>aiGo(D.id,n,q,D);box.append(b)}
+    const q=m[2],f=fitQuote(q,D,at(m[1]));
+    if(!f)continue;  // no page carries enough of this sentence: no chip at all
+    const b=document.createElement("button");b.type="button";b.className="aicite";b.textContent="p."+f.pg;
+    b.title="Show this sentence in the PDF";b.dataset.q=f.q;b.onclick=()=>aiGo(D.id,f.pg,f.q,D);box.append(b)}
   plain(txt.slice(i),i)};
 // Every point must be traceable. A point is a paragraph, or a single bullet/numbered line.
 // Any point the model left uncited is sent to the model to be matched to a sentence, the quote is
@@ -2976,19 +2995,12 @@ const aiTrace=async(text,D)=>{
     // a sentence supports a point is meaning, not shared words, so it is the model's judgement and
     // the reader's, not a ratio. Only the page claim is mechanical, and it is checked below.
     const claimed=+m[1];
-    // Verify the WHOLE quote on the page it names. Checking only the first 40 characters let a
-    // quote that is stitched across a page break pass: the head sat on the cited page and the tail
-    // on the next, so the chip named a page that does not contain the sentence it claims.
-    const fullKey=norm(quoted);
-    const onPage=p=>{
-      const mm=raw.match(new RegExp("\\[p\\."+p+"\\]\\s*([\\s\\S]*?)(?=\\[p\\.|$)"));
-      return !!mm&&norm(mm[1]).includes(fullKey);
-    };
-    let pg=onPage(claimed)?claimed:0;
-    if(!pg){for(let p=1;p<=D.k.length;p++)if(onPage(p)){pg=p;break}}
-    // if no single page holds the whole quote, the tail is on another page: no chip rather than
-    // a page that only carries part of it
-    return pg?("[p."+pg+": \""+quoted+"\"]"):"";
+    // The whole sentence often sits on no single page: a page break, a JSTOR stamp or a running
+    // head cuts it. Name the page carrying the longest prefix and keep only that prefix, so the
+    // chip's quote really is on the page it names. Requiring the whole quote made the chip vanish
+    // on ordinary quotes, which is what the user saw as "the page chips are gone again".
+    const f=fitQuote(quoted,D,claimed);
+    return f?("[p."+f.pg+": \""+f.q+"\"]"):"";
   };
   const markers=[];
   for(let i=0;i<miss.length;i+=3){
