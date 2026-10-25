@@ -469,6 +469,11 @@ body.rtai .rtop,body.rtai #rt,body.rtai #pdf,body.rtai #rd,body.rtai #phint,body
 body.rtai #aipane{display:flex}
 #ailog{flex:1;min-height:0;overflow:auto;display:flex;flex-direction:column;gap:8px}
 .aim{max-width:92%;padding:8px 10px;border-radius:10px;line-height:1.55;white-space:normal;overflow-wrap:anywhere;font-size:13px}
+#ailog .aip{margin:0 0 8px}
+#ailog .aip:last-child{margin-bottom:0}
+#ailog .aili{padding-left:14px;text-indent:-14px}
+#ailog .aih{font-weight:600;margin-top:10px;color:var(--ink)}
+#ailog .aih:first-child{margin-top:0}
 .aim.me{align-self:flex-end;background:color-mix(in srgb,var(--acc) 16%,var(--bg));border:1px solid color-mix(in srgb,var(--acc) 35%,var(--line))}
 .aim.bot{align-self:flex-start;background:var(--panel);border:1px solid var(--line)}
 .aim.sys{align-self:center;max-width:100%;background:none;border:0;color:var(--mute);font-size:11.5px;text-align:center}
@@ -2852,13 +2857,18 @@ const aiCite=(box,txt,D)=>{
     return score>=0.25?best:""};
   const firstOnPage=p=>{
     const P=pageText(p);if(!P)return "";
-    return P.split(/(?<=[.!?])\s+/).map(x=>x.trim()).find(good)||""};
+    // a title line has no full stop and is not evidence: require a sentence that ends properly
+    return P.split(/(?<=[.!?])\s+/).map(x=>x.trim())
+      .find(x=>good(x)&&/[.!?]$/.test(x)&&!/^[A-Z0-9 ,&'-]{6,}$/.test(x))||""};
   const inPdf=(p,q)=>!!q&&good(q)&&pageText(p).toLowerCase().replace(/[^a-z0-9]/g,"")
     .includes(q.toLowerCase().replace(/[^a-z0-9]/g,"").slice(0,40));
   const resolve=(p,q,line)=>{
     if(!p)return "";
     if(inPdf(p,q))return senOf(p,q)||q;
     return bestOnPage(p,line)||firstOnPage(p)||""};
+  // Does this citation have any evidence behind it? The quote is on the page, or the answer's own
+  // sentence matches something on it. A bare page number with neither is the model guessing.
+  const grounded=(p,q,line)=>!!p&&(inPdf(p,q)||!!bestOnPage(p,line));
   // Find where a sentence of the ANSWER actually lives in the PDF. The model's page number is
   // often the journal's printed page ("p. 173" in a 38 page file), so the text decides, not the
   // number. Returns {pg, q} only when a page really contains the sentence.
@@ -2893,7 +2903,8 @@ const aiCite=(box,txt,D)=>{
       // the model's number is only a hint: if the quote or the sentence is really elsewhere, follow it
       const found=locate(q0||sentence);
       const use=found?found.pg:pg;
-      out.push({pg:use,q:use?resolve(use,q0,sentence):""});
+      if(!use||!grounded(use,q0,sentence))continue;  // no evidence on that page: no chip
+      out.push({pg:use,q:resolve(use,q0,sentence)});
     }
     if(!out.length){  // prose "p. N" only when the sentence carried no explicit marker
       let p2;PROSE.lastIndex=0;
@@ -2901,7 +2912,8 @@ const aiCite=(box,txt,D)=>{
         const pg=at(p2[1]);
         const found=locate(sentence);
         const use=found?found.pg:pg;
-        if(use)out.push({pg:use,q:resolve(use,"",sentence)});
+        if(!use||!grounded(use,"",sentence))continue;  // a bare page number is not evidence
+        out.push({pg:use,q:resolve(use,"",sentence)});
       }
     }
     const seen=new Set();
@@ -2916,36 +2928,130 @@ const aiCite=(box,txt,D)=>{
   const PROT=/(?:\b[A-Za-z]{1,3}\.){2,}|\b(?:pp?|vol|no|ch|sec|fig|ed|eds|e\.g|i\.e|cf|vs|al)\./gi;
   const guard=t=>t.replace(PROT,m=>m.replace(/\./g,"\u0001"));
   const unguard=t=>t.replace(/\u0001/g,".");
-  const SENT=/(?<=[.!?])\s+(?=[A-Z\u201c"(\d])|\n{2,}|\n(?=\s*(?:\d+[.)]|[-*\u2022]))/;
-  for(const raw of guard(txt).split(SENT)){
-    const part=unguard(raw);
-    if(!part||!part.trim())continue;
-    const body=strip(part).trim();
-    const chips=markersIn(part);
-    if(body)box.append(body+" ");
-    for(const c of chips){
-      const b=document.createElement("button");
-      b.type="button";b.className="aicite"+(c.pg?"":" bad");
-      b.textContent=c.pg?"p."+c.pg:"p.?";
-      b.title=c.pg?(c.q?"Show this sentence in the PDF":"Go to page "+c.pg)
-                  :"This page is not in the PDF. Do not trust it.";
-      if(c.pg){b.dataset.q=c.q||"";b.onclick=()=>aiGo(D.id,c.pg,c.q,D)}
-      box.append(b);box.append(" ");
+  // A blank line is a paragraph break, and a line that opens with "-", "*", a bullet or "1." is a
+  // list item. Both keep their own block, so a structured answer stays structured.
+  const BLOCK=/\n\s*\n/;
+  const ITEM=/^\s*(?:[-*\u2022]|\d+[.)])\s+/;
+  const put=(text)=>{
+    if(!text.trim())return;
+    const el=document.createElement("div");
+    el.className="aip";
+    if(ITEM.test(text))el.className+=" aili";
+    el.textContent=text.trim();
+    box.append(el);
+  };
+  const chip=(c)=>{
+    const b=document.createElement("button");
+    b.type="button";b.className="aicite"+(c.pg?"":" bad");
+    b.textContent=c.pg?"p."+c.pg:"p.?";
+    b.title=c.pg?(c.q?"Show this sentence in the PDF":"Go to page "+c.pg)
+                :"This page is not in the PDF. Do not trust it.";
+    if(c.pg){b.dataset.q=c.q||"";b.onclick=()=>aiGo(D.id,c.pg,c.q,D)}
+    return b};
+  const SENT=/(?<=[.!?])\s+(?=[A-Z\u201c"(\d])/;
+  for(const para of txt.split(BLOCK)){
+    if(!para.trim())continue;
+    // a list item or a heading is its own block, even without a blank line after it
+    const lines=para.split(/\n/);
+    for(const line of lines){
+      if(!line.trim())continue;
+      const isHead=/^\s*#{1,6}\s/.test(line)||(/^[^.!?]{3,80}$/.test(line.trim())&&!/[.!?]$/.test(line.trim()));
+      if(ITEM.test(line)||isHead){
+        const el=document.createElement("div");
+        el.className=ITEM.test(line)?"aip aili":"aip aih";
+        el.textContent=strip(line).trim();
+        for(const c of markersIn(line))el.append(chip(c));
+        box.append(el);
+        continue;
+      }
+      const wrap=document.createElement("div");wrap.className="aip";
+      for(const raw of guard(line).split(SENT)){
+        const part=unguard(raw);
+        if(!part.trim())continue;
+        const body=strip(part).trim();
+        const chips=markersIn(part);
+        if(body)wrap.append(body+" ");
+        for(const c of chips){wrap.append(chip(c));wrap.append(" ")}
+      }
+      box.append(wrap);
+    }
+  }
+  // Model-independent pass: place a chip on sentences the model left uncited, by finding where
+  // they actually live in the PDF. A weak match gets no chip rather than a wrong page.
+  const STOPW=new Set("the and that with this from have been were which their there about into other more most such than then they them these those when where while would could should also because between under over after before during through being both each only very much many some any not but for are was has had its our your his her who whom whose what how why all one two three does did not you your".split(" "));
+  const wordsOf=t=>new Set((t.toLowerCase().match(/[a-z]{4,}/g)||[]).filter(w=>w.length>3&&!STOPW.has(w)));
+  for(const el of [...box.querySelectorAll(".aip")]){
+    if(el.querySelector(".aicite"))continue;      // the model already cited this block
+    const text=el.textContent||"";
+    if(text.replace(/\s+/g," ").trim().length<40)continue;
+    const lw=[...wordsOf(text)];
+    if(lw.length<4)continue;
+    let best=0,bestPg=0;
+    for(let pg=1;pg<=N;pg++){
+      const P=pageText(pg);if(!P)continue;
+      const pw=new Set((P.toLowerCase().match(/[a-z]{4,}/g)||[]));
+      let hit=0;for(const w of lw)if(pw.has(w))hit++;
+      const sc=hit/lw.length;
+      if(sc>best){best=sc;bestPg=pg}
+    }
+    // A paraphrase scores low and the runner-up is often close, so demand a clear winner:
+    // measured, the right page led by 0.15 on a findable block but by only 0.03 on two ambiguous
+    // ones, and a bare threshold put those two on the wrong page.
+    let second=0;
+    for(let pg=1;pg<=N;pg++){
+      if(pg===bestPg)continue;
+      const P=pageText(pg);if(!P)continue;
+      const pw=new Set((P.toLowerCase().match(/[a-z]{4,}/g)||[]));
+      let hit=0;for(const w of lw)if(pw.has(w))hit++;
+      const sc=hit/lw.length;
+      if(sc>second)second=sc;
+    }
+    if(bestPg&&best>=0.35&&best-second>=0.10){
+      const q=bestOnPage(bestPg,text)||firstOnPage(bestPg);
+      if(q){
+        const b=document.createElement("button");
+        b.type="button";b.className="aicite auto";
+        b.textContent="p."+bestPg;
+        b.title="Closest match in the PDF ("+Math.round(best*100)+"% of the key words)";
+        b.dataset.q=q;b.onclick=()=>aiGo(D.id,bestPg,q,D);
+        el.append(b);
+      }
     }
   }
   return box};
 
-// One chip for the reading's opening page, and only when the answer cited nothing at all. The
-// reader does not want a page index: a chip must sit after the sentence it supports.
+// A chip must point at evidence, so a chip is only ever made from a citation the model wrote.
+// This used to add a p.1 chip whenever an answer carried no marker, which pointed the reader at the
+// title page and implied support that was not there. It now writes a plain note and no chip.
 const aiPages=(D,note,box)=>{
   const target=box||aiLine("bot","");
   if(note)target.append(note+" ");
-  const P=((D&&D.k&&D.k[0])||"");
-  const first=(P.split(/(?<=[.!?])\s+/).map(x=>x.trim()).find(x=>x.split(/\s+/).length>=6))||"";
-  const b=document.createElement("button");b.type="button";b.className="aicite";b.textContent="p.1";
-  b.title=first?"Show a sentence on page 1":"Go to page 1";
-  b.dataset.q=first;b.onclick=()=>aiGo(D.id,1,first,D);target.append(b);
   return target};
+// The page of a passage the user quoted, found in the PDF itself. The question usually names or
+// quotes the sentence of interest, which is far better evidence than anything the model says.
+const aiAnchor=async(D,text)=>{
+  const qs=[...String(text||"").matchAll(/[\u201c"]([^\u201d"\n]{25,400})[\u201d"]/g)].map(m=>m[1].trim());
+  for(const q of qs){
+    const k=nk(q);if(k.length<20)continue;
+    for(let pg=1;pg<=D.k.length;pg++){
+      const P=D.k[pg-1]||"";
+      if(!P.includes(k.slice(0,40)))continue;
+      // the full sentence on that page, so the outline covers the whole thing
+      const t=String(D.text||"");
+      const m=t.match(new RegExp("\\[p\\."+pg+"\\]\\s*([\\s\\S]*?)(?=\\[p\\.|$)"));
+      const body=(m&&m[1].trim())||P;
+      const hit=body.toLowerCase().replace(/[^a-z0-9]/g,"").indexOf(k.slice(0,40));
+      let sen=q;
+      if(hit>=0){
+        const raw=body.toLowerCase().replace(/[^a-z0-9]/g,"");
+        const sents=body.split(/(?<=[.!?])\s+/);
+        const found=sents.find(x=>x.toLowerCase().replace(/[^a-z0-9]/g,"").includes(k.slice(0,40)));
+        if(found)sen=found.trim();
+      }
+      return {pg,q:sen};
+    }
+  }
+  return null};
 const aiSend=async text=>{text=String(text||"").trim();if(!text||AI.busy)return;
   if(!(window.pywebview&&pywebview.api&&pywebview.api.ai_chat)){aiLine("err","The chat needs the app window.");return}
   const id0=aiId();if(!id0){aiLine("err","Pick a reading in the PDF tab first, or click a reading on the left.");return}
@@ -2953,7 +3059,7 @@ const aiSend=async text=>{text=String(text||"").trim();if(!text||AI.busy)return;
   const wait=aiLine("bot","Thinking\u2026");
   try{const D=await aiLoad();if(!D){if(aiId()!==id0){wait.remove();AI.busy=false;$("aisend").disabled=false;return}throw new Error("could not read that PDF")}  // the reading changed during the read: end quietly
     const me={role:"user",content:text};  // joins the history only when the answer arrives
-    const sys="You help a political science researcher read \u201c"+aiTitle(id0)+"\u201d. That PDF is loaded here and its full text comes inside <pdf> tags in the latest user message, one block per PDF page, each block starting with [p.N]. Never say that no PDF is attached: the text in the <pdf> tags is the PDF, and it is the only source you may use. Answer in plain English in short paragraphs. If a passage is quoted, say what it means, what work it does in the argument, and define any term a newcomer would miss. Ground every claim in the text: right after it, cite the supporting sentence as [p.N: \"sentence\"], where N is the number of the block it came from and the sentence is copied word for word from that block (at most 30 words, no quotation marks inside). For example: The state is hidden from political debate [p.3: \"the developmental state is hidden\"]. Always name the page in the prose as well, as p.N, so the reader can turn to it, and use the block number (the PDF page, counting from 1), never a printed page number from the document's own header. Write that citation marker every single time you state something from the text; an answer with no marker is a failed answer. Do not use markdown bold or headings. Say plainly when the text does not settle the question, and cite nothing then.";
+    const sys="You help a political science researcher read \u201c"+aiTitle(id0)+"\u201d. That PDF is loaded here and its full text comes inside <pdf> tags in the latest user message, one block per PDF page, each block starting with [p.N]. Never say that no PDF is attached: the text in the <pdf> tags is the PDF, and it is the only source you may use. Answer in plain English in short paragraphs. If a passage is quoted, say what it means, what work it does in the argument, and define any term a newcomer would miss. Ground every claim in the text: right after it, cite the supporting sentence as [p.N: \"sentence\"], where N is the number of the block it came from and the sentence is copied word for word from that block (at most 30 words, no quotation marks inside). For example: The state is hidden from political debate [p.3: \"the developmental state is hidden\"]. Always name the page in the prose as well, as p.N, so the reader can turn to it, and use the block number (the PDF page, counting from 1), never a printed page number from the document's own header. The number must be the block you copied that sentence from, so quote a sentence that is really on the page you name. Write that citation marker every single time you state something from the text; an answer with no marker is a failed answer. Structure the answer so it is easy to scan: a one line summary first, then short paragraphs, and a numbered or dashed list when you are giving several points. Use a plain-text heading line where a section starts. Do not use markdown bold or asterisks. Say plainly when the text does not settle the question, and cite nothing then.";
     const withPdf={role:"user",content:"<pdf title=\""+aiTitle(id0)+"\">\n"+D.text+"</pdf>\n\n"+text};  // the text rides in the user turn: the model reads it there more reliably than in the system role
     // only ever send a model the picker actually offers; a stale saved id (deepseek-chat) made the
     // gateway answer "Model ... tidak didukung" and the answer never arrived, so no citation chips
@@ -2964,8 +3070,19 @@ const aiSend=async text=>{text=String(text||"").trim();if(!text||AI.busy)return;
     wait.remove();
     if(aiId()!==id0){}  // the reading changed while the reply was pending: drop it, it belongs to another document
     else if(r&&r.ok){const box=aiLine("bot","");aiCite(box,r.text,D);
-      // no marker in the answer: still give the reader a way into the document
-      if(!box.querySelector(".aicite"))aiPages(D,"",box);
+      // Nothing usable in the answer: fall back to the passage the question quoted, whose page
+      // is found in the PDF. Only if the question quoted nothing do we leave the answer bare.
+      if(!box.querySelector(".aicite")){
+        const a=await aiAnchor(D,text);
+        if(a&&a.pg){
+          const b=document.createElement("button");
+          b.type="button";b.className="aicite";
+          b.textContent="p."+a.pg;
+          b.title="The passage you quoted, found in the PDF";
+          b.dataset.q=a.q||"";b.onclick=()=>aiGo(D.id,a.pg,a.q,D);
+          box.append(b);
+        }
+      }
       AI.hist.push(me,{role:"assistant",content:r.text})}
     else{aiLine("err","AI error: "+((r&&r.error)||"no answer"));aiPages(D,"The model did not answer, so here are the pages themselves:")}
   }catch(e){wait.remove();aiLine("err","AI error: "+((e&&e.message)||e));try{const D=await aiLoad();if(D)aiPages(D,"The model did not answer, so here are the pages themselves:")}catch(_){}}
@@ -2975,6 +3092,7 @@ const aiClear=()=>{const L=$("ailog");if(L)L.innerHTML="";AI.hist=[];aiClearBtn(
 const aiClearBtn=()=>{const b=$("aiclear");if(b)b.hidden=!($("ailog")&&$("ailog").children.length)};
 window.__aiClearBtn=aiClearBtn;window.__aiLine=aiLine;window.__aiClear=aiClear;
 window.__aiLoad=aiLoad;window.__aiCite=aiCite;window.__aiPages=aiPages;window.__aiGo=aiGo;
+window.__aiHist=()=>AI.hist;
 window.__chipEnd=null;
 document.addEventListener("click",e=>{const b=e.target.closest&&e.target.closest(".rtabs [data-rt]");if(b)rtab(b.dataset.rt);
   if(e.target.id==="aiclear"){aiClear();return}
