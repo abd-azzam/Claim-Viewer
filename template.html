@@ -2952,7 +2952,10 @@ const aiTrace=async(text,D)=>{
     // point's own words, so a mismatch reports p.? instead of a confident wrong page.
     const wordsOf=t=>new Set((String(t||"").toLowerCase().match(/[a-z]{4,}/g)||[]).filter(w=>w.length>4));
     const want=wordsOf(point&&point.text);
-    if(want.size){
+    // A point made only of short words ("- It rose.") leaves want empty, which would skip the
+    // check and let ANY quote pass. With nothing to compare, the honest answer is p.?.
+    if(!want.size)return "[p.0]";
+    {
       const have=wordsOf(quoted);
       let hit=0;want.forEach(w=>{if(have.has(w))hit++});
       if(hit/Math.min(want.size,8)<0.25)return "[p.0]";
