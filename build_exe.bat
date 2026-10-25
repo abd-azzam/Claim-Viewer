@@ -31,8 +31,17 @@ if exist "%APP%\ClaimViewer.exe" (
   taskkill /IM ClaimViewer.exe /F >nul 2>&1
   ping -n 3 127.0.0.1 >nul
 )
-copy /y dist\ClaimViewer.exe "%APP%\ClaimViewer.exe" >nul || (
-  echo Could not install the exe. Is ClaimViewer still running?
+rem A single copy right after taskkill can still fail: Windows holds the image for a moment after
+rem the process dies, and one transient lock used to fail the whole build. Retry before giving up.
+set "COPIED="
+for /l %%I in (1,1,10) do (
+  if not defined COPIED (
+    copy /y dist\ClaimViewer.exe "%APP%\ClaimViewer.exe" >nul 2>&1 && set "COPIED=1"
+    if not defined COPIED ping -n 2 127.0.0.1 >nul
+  )
+)
+if not defined COPIED (
+  echo Could not install the exe after 10 tries. Is ClaimViewer still running?
   exit /b 1
 )
 if exist "%APP%\dist" rmdir /s /q "%APP%\dist"

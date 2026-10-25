@@ -330,6 +330,52 @@ class Api:
         except Exception:
             return {}
 
+    # OCR text per reading, kept beside the library. localStorage holds about 5 MB and a dense
+    # page of boxes is 32 KB, so a long book overflowed it and the write failed silently; this
+    # file has no quota and survives a wiped WebView2 profile.
+    def save_ocr(self, rid, text):
+        try:
+            d = json.loads(text)
+            if not isinstance(d, dict):
+                return {"ok": False, "error": "not an ocr map"}
+            clean = {}
+            for k, v in d.items():
+                try:
+                    n = int(k)
+                except Exception:
+                    continue
+                if isinstance(v, str) and v.strip() and n > 0:
+                    clean[str(n)] = v
+            if not clean:
+                return {"ok": False, "error": "nothing to save"}
+            path = os.path.join(ROOT, "ocr.json")
+            # _atomic takes _lock_for(path) itself; wrapping it in the same lock deadlocked,
+            # because threading.Lock is not reentrant. Serialise the read-modify-write on a
+            # separate lock keyed to the same path.
+            lock = _lock_for(path + ".__ocr_rmw")
+            with lock:
+                try:
+                    with open(path, encoding="utf-8") as fh:
+                        allm = json.load(fh)
+                    if not isinstance(allm, dict):
+                        allm = {}
+                except Exception:
+                    allm = {}
+                allm[str(rid)] = clean
+                _atomic(path, json.dumps(allm, ensure_ascii=False))
+            return {"ok": True, "pages": len(clean)}
+        except Exception as e:
+            return {"ok": False, "error": str(e)}
+
+    def load_ocr(self, rid):
+        try:
+            with open(os.path.join(ROOT, "ocr.json"), encoding="utf-8") as fh:
+                allm = json.load(fh)
+            d = allm.get(str(rid)) if isinstance(allm, dict) else None
+            return d if isinstance(d, dict) else {}
+        except Exception:
+            return {}
+
     def library_version(self):  # the page seeds LIBMT from this, so its very first save is guarded
         return {"ok": True, "mtime": _lib_mtime()}
 
