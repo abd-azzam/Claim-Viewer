@@ -2859,6 +2859,10 @@ const aiCite=(box,txt,D)=>{txt=aiDeSlop(String(txt||"")).replace(/\*\*(.+?)\*\*/
     return good(sen)?sen:""};  // nothing quotable on this line: the chip just turns the page
   const plain=(s,off)=>{const re=/\bp{1,2}\.\s*(\d{1,4})\b/g;let j=0,x;
     while((x=re.exec(s))){const n=at(x[1]);
+      // A truncated marker the model cut short ("[p.2: "text with no closing quote") left its
+      // raw text in the prose, and this loop then drew a page chip from the "p.2" inside it.
+      // The text is not evidence, so skip a number that sits right after an open marker bracket.
+      if(s[x.index-1]==="["){box.append(s.slice(j,re.lastIndex));j=re.lastIndex;continue}
       if(!n){box.append(s.slice(j,re.lastIndex));j=re.lastIndex;continue}  // a number we cannot place stays plain text, not a red chip
       box.append(s.slice(j,x.index));j=re.lastIndex;
       const q=near(off+x.index),b=document.createElement("button");b.type="button";b.className="aicite";b.textContent="p."+n;
