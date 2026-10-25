@@ -2961,7 +2961,18 @@ const aiTrace=async(text,D)=>{
       if(hit/Math.min(want.size,8)<0.25)return "[p.0]";
     }
     const claimed=+m[1];
-    const pg=pageHas(claimed,key)?claimed:pageOf(key);
+    // Verify the WHOLE quote on the page it names. Checking only the first 40 characters let a
+    // quote that is stitched across a page break pass: the head sat on the cited page and the tail
+    // on the next, so the chip named a page that does not contain the sentence it claims.
+    const fullKey=norm(quoted);
+    const onPage=p=>{
+      const mm=raw.match(new RegExp("\\[p\\."+p+"\\]\\s*([\\s\\S]*?)(?=\\[p\\.|$)"));
+      return !!mm&&norm(mm[1]).includes(fullKey);
+    };
+    let pg=onPage(claimed)?claimed:0;
+    if(!pg){for(let p=1;p<=D.k.length;p++)if(onPage(p)){pg=p;break}}
+    // if no single page holds the whole quote, the tail is on another page: report p.? rather than
+    // a page that only carries part of it
     return pg?("[p."+pg+": \""+quoted+"\"]"):"[p.0]";
   };
   const markers=[];
