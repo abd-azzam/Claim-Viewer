@@ -2896,7 +2896,9 @@ const aiTrace=async(text,D)=>{
   }
   flush();
 
-  const miss=pts.filter(p=>p.text.trim().length>25&&!cited(p.text));
+  const isLead=s=>/[:;]\s*$/.test(s.trim())||/^\s*(?:here|these|the following|what follows)\b/i.test(s.trim());
+  const miss=pts.filter(p=>!cited(p.text)&&p.text.trim().length>25);
+  const tiny=pts.filter(p=>!cited(p.text)&&p.text.trim().length<=25);
   if(!miss.length)return src;
 
   // One ask for all points came back empty from the gateway every time (11 points), while a
@@ -2951,8 +2953,15 @@ const aiTrace=async(text,D)=>{
     }
   }
 
-  // rebuild from the end so earlier offsets stay valid
+  // rebuild from the end so earlier offsets stay valid: short points first, then the lookups,
+  // because each insertion shifts nothing before its own offset
   let out=src;
+  const tinyMarks=tiny.map(p=>({p, m:isLead(p.text)?"[p.0]":null}));
+  for(let n=tinyMarks.length-1;n>=0;n--){
+    const t=tinyMarks[n];
+    if(!t.m)continue;
+    out=out.slice(0,t.p.b)+" "+t.m+out.slice(t.p.b);
+  }
   for(let n=miss.length-1;n>=0;n--){
     const p=miss[n];
     out=out.slice(0,p.b)+" "+markers[n]+out.slice(p.b);
