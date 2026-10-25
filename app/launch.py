@@ -354,13 +354,24 @@ class Api:
             # separate lock keyed to the same path.
             lock = _lock_for(path + ".__ocr_rmw")
             with lock:
+                allm = {}
                 try:
                     with open(path, encoding="utf-8") as fh:
-                        allm = json.load(fh)
-                    if not isinstance(allm, dict):
-                        allm = {}
+                        loaded = json.load(fh)
+                    if isinstance(loaded, dict):
+                        allm = loaded
+                    else:
+                        raise ValueError("not a dict")
+                except FileNotFoundError:
+                    pass
                 except Exception:
-                    allm = {}
+                    # A corrupt file must never be silently replaced: that dropped every other
+                    # reading's text on the next save. Move it aside so it can be inspected.
+                    try:
+                        if os.path.exists(path):
+                            os.replace(path, path + ".bad")
+                    except OSError:
+                        pass
                 allm[str(rid)] = clean
                 _atomic(path, json.dumps(allm, ensure_ascii=False))
             return {"ok": True, "pages": len(clean)}
