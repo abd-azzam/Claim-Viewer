@@ -2865,10 +2865,19 @@ const fitQuote=(quoted,D,prefer)=>{
   for(let p=1;p<=D.k.length;p++)if(lens[p]>len){len=lens[p];pg=p}
   if(prefer&&lens[prefer]===len&&prefer<=D.k.length)pg=prefer;  // the page the model named wins a tie
   if(!pg||len<Math.min(40,full.length))return null;  // too little of it on any page to stand as evidence
+  // Stop BEFORE the word that would cross the verified length. Pushing whole words until the count
+  // reached `len` overshot it, so the stored quote could end mid-word in characters the page does
+  // not contain ("within the society" against a page reading "within the socialsciences").
   const words=String(quoted).split(/\s+/);let n=0;const out=[];
-  for(const w of words){out.push(w);n+=nk(w).length;if(n>=len)break}
+  for(const w of words){const add=nk(w).length;if(n+add>len)break;out.push(w);n+=add}
+  if(!out.length)return null;
   return {pg,q:out.join(" ")};
 };
+// The picker is the only place a model name is known to be valid. Sending "" made the backend fall
+// back to a stale saved id, which the gateway rejected with HTTP 400, and a bare catch hid it: the
+// tracer then produced no markers and an answer with no inline markers rendered with no chips.
+const aiModelPick=()=>{const sel=$("aimodel");const opts=sel?[...sel.options].map(o=>o.value):[];
+  return (sel&&opts.includes(sel.value))?sel.value:(opts[0]||"")};
 const aiCite=(box,txt,D)=>{txt=aiDeSlop(String(txt||"")).replace(/\*\*(.+?)\*\*/g,"$1").replace(/^#{1,6}\s*/gm,"");  // the model still reaches for markdown: strip it, the chip carries the citation
   const N=D.k.length;
   const at=v=>{const n=+v;if(n>=1&&n<=N)return n;const m=(D.lbl||{})[n];return m||0};  // printed page number -> PDF page
@@ -2968,9 +2977,10 @@ const aiTrace=async(text,D)=>{
       try{
         const r=await pywebview.api.ai_chat(JSON.stringify([
           {role:"system",content:"You quote the document exactly."},
-          {role:"user",content:"<pdf>\n"+String(D.text||"")+"</pdf>\n\n"+askFor(g)}]),"");
+          {role:"user",content:"<pdf>\n"+String(D.text||"")+"</pdf>\n\n"+askFor(g)}]),aiModelPick());
         if(r&&r.ok&&String(r.text||"").trim()){got=String(r.text).trim();break}
-      }catch(e){}
+        if(r&&!r.ok)try{console.warn("aiTrace: "+(r.error||"no reply"))}catch(_){}
+      }catch(e){try{console.warn("aiTrace: "+(e&&e.message||e))}catch(_){}}
     }
     batchReplies.push(got);
   }
