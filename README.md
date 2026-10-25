@@ -91,10 +91,12 @@ The same views in the light theme; the toggle sits next to the title.
 
 ### Ask AI
 
-The right pane has two tabs: **PDF** and **Ask AI**. The chat talks to the DeepSeek API (`deepseek-chat`) through the app, not the page, so no key ever appears in the HTML.
+The right pane has two tabs: **PDF** and **Ask AI**. The chat talks to the DeepSeek API through the app, not the page, so no key ever appears in the HTML.
 
 - Paste your key once in the **Ask AI** tab and press **Save**. An optional **Base URL** lets you point the chat at another OpenAI-compatible endpoint; left empty it uses `https://api.deepseek.com`. Both live in `ai.json` next to the app, which is git-ignored and never leaves the machine except as the `Authorization` header of one request. After saving, the section folds into a small **API key** button in the corner of the tab.
 - Select a sentence in the PDF, right-click, and choose **Ask AI**: the passage and its page go to the chat with a plain-language request. You can also type your own question and press **Send** (Ctrl+Enter).
+- **Every point carries a page chip.** A paragraph, or each bullet on its own, ends with a chip such as `p.3`. Click it and the reader opens that page and outlines the sentence. The chip's quote is checked against the page text before the chip is made, so a chip never names a page that does not contain its sentence. When no sentence in the reading supports a point, the chip reads `p.?` instead of guessing.
+- **Choosing a model.** The **model** list is filled from the endpoint, and the model saved in `ai.json` is listed first and preselected. Not every advertised model is in every package: a rejected id fails with a message saying so. One caution with third-party gateways that serve a *reasoning* model: the reasoning and the answer share the `max_tokens` budget, so a small budget is spent entirely on reasoning and the answer comes back empty. The app uses a budget large enough for both and says so when a reply is cut off.
 - The reply is not saved; the chat lives for the session. Nothing is sent anywhere else, and the rest of the app still works offline.
 
 ## Use it without installing anything
