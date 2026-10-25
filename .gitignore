@@ -18,6 +18,8 @@ dist/
 /library.json
 # per-user reading positions, written by the app
 last-pages.json
+# OCR text per reading, written by the app
+ocr.json
 
 # DeepSeek key for the Ask AI tab
 ai.json

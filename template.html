@@ -2741,7 +2741,7 @@ $("phint")&&($("phint").hidden=true);const my=++tok;let buf=null,rErr=null;try{i
  lpn.className="";lpn.textContent="Select text in the PDF, then right-click to add a claim";if(cur===id&&!rd.hidden)return scroll(pg);
  cur=id;f.hidden=true;rd.hidden=false;rd.innerHTML="";
  try{const doc=await pdfjsLib.getDocument({data:new Uint8Array(buf.slice(0))}).promise;if(my!==tok)return;
-  docC=doc;curBuf=buf;Z=1;pg=Math.max(1,Math.min(+pg||1,doc.numPages));lastPg=pg;lastPgId=id;savePage();await build(pg);showPage();rt.hidden=false;if(document.body.classList.contains("rtai"))aiLoad()}
+  docC=doc;curBuf=buf;Z=1;pg=Math.max(1,Math.min(+pg||1,doc.numPages));lastPg=pg;lastPgId=id;savePage();await ocrHydrate(id);await build(pg);showPage();rt.hidden=false;if(document.body.classList.contains("rtai"))aiLoad()}
  catch(e){if(my!==tok)return;lpn.className="warn";lpn.textContent="The reader could not open this PDF"+(/worker/i.test(String(e&&e.message))?" (lib/pdf.worker.min.js is missing)":"")+". It is open in a plain frame instead.";fallback(id,pg)}};
 window.cvIdle=()=>{tok++;cur="";lastPgId="";rt.hidden=true;rd.hidden=true;f.hidden=true;f.removeAttribute("src");$("phint")&&($("phint").hidden=false)};  // leave the pane empty instead of parsing a new PDF
 const toast=(m,top,ms)=>{let t=$("toast");if(!t){t=document.createElement("div");t.id="toast";t.setAttribute("aria-live","polite");document.body.append(t)}(document.fullscreenElement||document.body).append(t);t.textContent=m;t.classList.toggle('top',!!top);t.hidden=false;clearTimeout(t._h);t._h=setTimeout(()=>{t.hidden=true},ms||3500)};
@@ -3232,7 +3232,23 @@ $("rastop").onclick=raStop;
 const OCR={by:{},busy:false};
 const ocrKey=id=>"cv:ocr:"+id;
 const ocrLoad=id=>{if(OCR.by[id])return OCR.by[id];try{const s=store.get(ocrKey(id));if(s){const d=JSON.parse(s);if(d&&typeof d==="object")return OCR.by[id]=d}}catch(e){}return null};
-const ocrSave=id=>{try{store.set(ocrKey(id),JSON.stringify(OCR.by[id]||{}))}catch(e){}};
+// Persist the TEXT only: a page of boxes is 32 KB and localStorage holds about 5 MB, so a long
+// book overflowed it and the write failed silently. Text is about 2.6 KB a page and lives in
+// ocr.json beside the library, which has no quota and survives a wiped profile.
+const ocrSave=async id=>{
+  const d=OCR.by[id]||{};
+  const txt={};for(const n in d)if(d[n]&&d[n].text)txt[n]=d[n].text;
+  if(!Object.keys(txt).length)return;
+  try{
+    if(window.pywebview&&pywebview.api&&pywebview.api.save_ocr){
+      const r=await pywebview.api.save_ocr(id,JSON.stringify(txt));
+      if(r&&r.ok)return;
+      // the file failed: keep the session copy and say so, rather than losing it without a word
+      if(r&&r.error)console.warn("OCR cache not saved:",r.error);
+    }
+  }catch(e){console.warn("OCR cache not saved:",e&&e.message)}
+  try{store.set(ocrKey(id),JSON.stringify(txt))}catch(e){}  // small fallback copy
+};
 // render the page with pdf.js at 2x, then let Tesseract read those pixels
 const ocrScan=async(id,pages,quiet)=>{  // pages: 1-based; quiet skips the per-page toast in a batch
   if(!(window.pywebview&&pywebview.api&&pywebview.api.ocr_image)){toast("OCR needs the app window");return null}
@@ -3259,7 +3275,7 @@ const ocrScan=async(id,pages,quiet)=>{  // pages: 1-based; quiet skips the per-p
         got++;
       }catch(e){bad++;if(!quiet)toast("OCR page "+n+": "+((e&&e.message)||"could not render this page"))}
     }
-    if(got)ocrSave(id);
+    if(got)await ocrSave(id);
     if(!got){toast("OCR read nothing on "+(want.length>1?want.length+" pages":"this page")+(bad?" \u00b7 "+bad+" failed":""),1);return null}
     if(bad)toast(bad+" of "+want.length+" pages could not be read",1);
     const d=got?OCR.by[id][want[0]]:null;
@@ -3268,6 +3284,28 @@ const ocrScan=async(id,pages,quiet)=>{  // pages: 1-based; quiet skips the per-p
     return got?OCR.by[id]:null
   }catch(e){toast("OCR failed: "+((e&&e.message)||e));return null}
   finally{OCR.busy=false}};
+// Bring saved OCR text back into memory for this reading. Only the text is stored, so the page
+// entry carries no word boxes; the toast count and sentence text work from it unchanged.
+const ocrHydrate=async id=>{
+  if(!id||(OCR.by[id]&&Object.keys(OCR.by[id]).length))return OCR.by[id]||null;
+  let saved=null;
+  try{
+    if(window.pywebview&&pywebview.api&&pywebview.api.load_ocr)saved=await pywebview.api.load_ocr(id);
+  }catch(e){}
+  if(!saved||!Object.keys(saved).length){
+    try{const t=store.get(ocrKey(id));if(t)saved=JSON.parse(t)}catch(e){}
+  }
+  if(!saved||typeof saved!=="object")return null;
+  const m={};
+  for(const n in saved){
+    const v=saved[n];
+    if(typeof v==="string"&&v.trim())m[n]={text:v,words:[],S:2};
+    else if(v&&typeof v==="object"&&v.text)m[n]=v;  // an older session-shaped entry
+  }
+  if(!Object.keys(m).length)return null;
+  return OCR.by[id]=m;
+};
+window.__ocrHydrate=ocrHydrate;
 const ocrText=(id,n)=>{const d=ocrLoad(id);return (d&&d[n]&&d[n].text)||""};
 window.__ocr={OCR,ocrScan,ocrText,ocrLoad};
 window.flashHL=flash;
