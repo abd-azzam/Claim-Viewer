@@ -2904,8 +2904,9 @@ const aiTrace=async(text,D)=>{
   flush();
 
   const isLead=s=>/[:;]\s*$/.test(s.trim())||/^\s*(?:here|these|the following|what follows)\b/i.test(s.trim());
-  const miss=pts.filter(p=>!cited(p.text)&&p.text.trim().length>25);
-  const tiny=pts.filter(p=>!cited(p.text)&&p.text.trim().length<=25);
+  const lead=p=>isLead(p.text);
+  const miss=pts.filter(p=>!cited(p.text)&&!lead(p));
+  const tiny=pts.filter(p=>!cited(p.text)&&lead(p));
   if(!miss.length&&!tiny.length)return src;
 
   // One ask for all points came back empty from the gateway every time (11 points), while a
@@ -2939,13 +2940,23 @@ const aiTrace=async(text,D)=>{
 
   // replies restart their numbering at 1 in every batch, so walk them in the same groups
 
-  const markerOf=(line)=>{
+  const markerOf=(line,point)=>{
     if(!line)return "[p.0]";
     const m=line.match(/\[p\.\s*(\d+)\s*:\s*(?:"|\u201c)(.+?)(?:"|\u201d)\s*\]/);
     if(!m)return "[p.0]";
     const quoted=m[2].trim().replace(/["\[\]]/g,"");
     const key=norm(quoted).slice(0,40);
     if(key.length<12)return "[p.0]";
+    // A sentence can sit on the page and still say nothing about the point: "Coercion decided it."
+    // was paired with a passage about disciplinary views. Require the quote to carry a share of the
+    // point's own words, so a mismatch reports p.? instead of a confident wrong page.
+    const wordsOf=t=>new Set((String(t||"").toLowerCase().match(/[a-z]{4,}/g)||[]).filter(w=>w.length>4));
+    const want=wordsOf(point&&point.text);
+    if(want.size){
+      const have=wordsOf(quoted);
+      let hit=0;want.forEach(w=>{if(have.has(w))hit++});
+      if(hit/Math.min(want.size,8)<0.25)return "[p.0]";
+    }
     const claimed=+m[1];
     const pg=pageHas(claimed,key)?claimed:pageOf(key);
     return pg?("[p."+pg+": \""+quoted+"\"]"):"[p.0]";
@@ -2956,7 +2967,7 @@ const aiTrace=async(text,D)=>{
     const g=miss.slice(i,i+3);
     for(let k=0;k<g.length;k++){
       const line=batch.find(l=>new RegExp("^\\s*"+(k+1)+"[.)]\\s").test(l));
-      markers.push(markerOf(line));
+      markers.push(markerOf(line,g[k]));
     }
   }
 
@@ -2964,7 +2975,7 @@ const aiTrace=async(text,D)=>{
   // back to front: two separate loops broke this, because inserting a short point's marker shifted
   // the offsets of every miss point after it, and the marker landed mid-word ("across re [p.2...]gions").
   const inserts=[];
-  tiny.forEach(p=>{if(isLead(p.text))inserts.push({b:p.b,m:"[p.0]"})});
+  tiny.forEach(p=>inserts.push({b:p.b,m:"[p.0]"}));
   miss.forEach((p,n)=>inserts.push({b:p.b,m:markers[n]}));
   inserts.sort((x,y)=>y.b-x.b);
   let out=src;
