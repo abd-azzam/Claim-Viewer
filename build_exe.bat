@@ -48,7 +48,13 @@ echo Installed: %APP%\ClaimViewer.exe
 rem The Start Menu shortcut is what he actually clicks. A test install in a scratch folder once
 rem registered itself as the app and left this shortcut pointing at a blank copy, so the real
 rem install looked like lost data. Point the shortcut at the real folder on every build.
-powershell -NoProfile -Command "$s=New-Object -ComObject WScript.Shell; $l=Join-Path $env:APPDATA 'Microsoft\Windows\Start Menu\Programs\Claim Viewer.lnk'; if(Test-Path $l){$t=$s.CreateShortcut($l); $want='%APP%\ClaimViewer.exe'; if($t.TargetPath -ne $want){$t.TargetPath=$want; $t.WorkingDirectory='%APP%'; $t.Save(); Write-Host ('Shortcut repaired: '+$want)} else {Write-Host ('Shortcut ok: '+$t.TargetPath)}} else {Write-Host 'No Start Menu shortcut to check'}"
+rem Save() can throw (a locked .lnk) and the old version still printed "repaired", so the target
+rem is read back and the build fails loudly when it did not take.
+powershell -NoProfile -Command "$s=New-Object -ComObject WScript.Shell; $l=Join-Path $env:APPDATA 'Microsoft\Windows\Start Menu\Programs\Claim Viewer.lnk'; $want='%APP%\ClaimViewer.exe'; if(Test-Path $l){$t=$s.CreateShortcut($l); if($t.TargetPath -ne $want){try{$t.TargetPath=$want; $t.WorkingDirectory='%APP%'; $t.Save()}catch{}; $now=$s.CreateShortcut($l).TargetPath; if($now -eq $want){Write-Host ('Shortcut repaired: '+$now)}else{Write-Host ('SHORTCUT STILL WRONG: '+$now); exit 1}} else {Write-Host ('Shortcut ok: '+$t.TargetPath)}} else {Write-Host 'No Start Menu shortcut to check'}"
+if errorlevel 1 (
+  echo The Start Menu shortcut still points somewhere else. Close Claim Viewer and rebuild.
+  exit /b 1
+)
 rem both hashes must match: the installed app and the one the installer carries
 certutil -hashfile dist\ClaimViewer.exe SHA256 | findstr /r /v "hash CertUtil"
 certutil -hashfile "%APP%\ClaimViewer.exe" SHA256 | findstr /r /v "hash CertUtil"
