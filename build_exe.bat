@@ -8,6 +8,9 @@ rem refuses instead of racing.
 set "LOCK=%TEMP%\claimviewer-build.lock"
 mkdir "%LOCK%" 2>nul || (
   echo Another build is already running. Wait for it to finish, then rebuild.
+  rem A killed build (Ctrl+C, taskkill) skips the rmdir below, because batch has no finally,
+  rem and every later build then refuses. Say how to clear it rather than leaving a dead end.
+  echo If no build is actually running, the previous one was killed. Delete "%LOCK%" and run again.
   exit /b 1
 )
 rem release the lock on every exit path

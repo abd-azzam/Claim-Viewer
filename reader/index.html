@@ -2869,7 +2869,7 @@ const aiCite=(box,txt,D)=>{txt=aiDeSlop(String(txt||"")).replace(/\*\*(.+?)\*\*/
     if(m[3]){const pg=at(m[3]),q=near(m.index),b=document.createElement("button");
       b.type="button";b.className="aicite"+(pg?"":" bad");b.textContent=pg?"p."+pg:"p.?";b.title=pg?(q?"Show the sentence on page "+pg:"Go to page "+pg):"This page is not in the PDF";
       if(pg){b.dataset.q=q||"";b.onclick=()=>aiGo(D.id,pg,q,D)}box.append(b);continue}
-    const q=m[2],k=nk(q),h=[k,k.slice(0,40)],on=p=>k.length>=12&&h.some(x=>(D.k[p-1]||"").includes(x));
+    const q=m[2],k=nk(q),on=p=>k.length>=12&&(D.k[p-1]||"").includes(k);
     let n=at(m[1]);if(!on(n))n=on(1)?1:D.k.findIndex((_,j)=>on(j+1))+1;
     const b=document.createElement("button");b.type="button";b.className="aicite"+(n?"":" bad");b.textContent=n?"p."+n:"p.?";
     b.title=n?"Show this sentence in the PDF":"This sentence is not in the PDF. Do not trust it.";if(n){b.dataset.q=q;b.onclick=()=>aiGo(D.id,n,q,D)}box.append(b)}
