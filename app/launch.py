@@ -43,6 +43,7 @@ def stop(msg):
 _LOCKS = {}
 _LOCK_GUARD = threading.Lock()
 _VOICE_CACHE = None  # the voice list is fetched once per run: it costs a network round trip
+_AI_DEFAULT_MODEL = "deepseek-v4.1-flash-1017"  # the only id this account is entitled to; deepseek-chat is rejected
 
 
 def _lock_for(path):
@@ -544,31 +545,39 @@ class Api:
             return {"ok": False, "error": "bad messages: %s" % e}
         base = (c.get("base") or "https://api.deepseek.com").rstrip("/")
         url = base if base.endswith("/chat/completions") else base + "/chat/completions"
-        want = (model or "").strip() or (c.get("model") or "deepseek-v4-flash")
+        want = (model or "").strip() or (c.get("model") or _AI_DEFAULT_MODEL)
         if not re.match(r"^[A-Za-z0-9._:\-]{1,64}$", want):  # only a plain id reaches the request body
-            want = c.get("model") or "deepseek-v4-flash"
+            want = c.get("model") or _AI_DEFAULT_MODEL
         body = json.dumps({"model": want, "messages": msgs[-14:],
                            "temperature": 0.3, "max_tokens": 1200, "stream": False}).encode("utf-8")
         req = urllib.request.Request(
             url, data=body,
             headers={"Content-Type": "application/json", "Authorization": "Bearer " + key})
-        try:
-            with urllib.request.urlopen(req, timeout=120) as r:
-                j = json.loads(r.read().decode("utf-8"))
-        except urllib.error.HTTPError as e:
+        # The gateway sometimes returns HTTP 200 with an empty message: measured on the same
+        # question, caps of 6k, 12k and 27k chars came back empty while 20k answered. One silent
+        # retry turns a dead answer into a real one without the caller ever seeing the failure.
+        txt = ""
+        for _attempt in (1, 2):
             try:
-                msg = json.loads(e.read().decode("utf-8")).get("error", {}).get("message") or str(e)
+                with urllib.request.urlopen(req, timeout=120) as r:
+                    j = json.loads(r.read().decode("utf-8"))
+            except urllib.error.HTTPError as e:
+                try:
+                    msg = json.loads(e.read().decode("utf-8")).get("error", {}).get("message") or str(e)
+                except Exception:
+                    msg = str(e)
+                return {"ok": False, "error": "%s (HTTP %s)" % (msg[:300], e.code)}
+            except Exception as e:
+                return {"ok": False, "error": str(e)[:300]}
+            try:
+                txt = j["choices"][0]["message"]["content"]
             except Exception:
-                msg = str(e)
-            return {"ok": False, "error": "%s (HTTP %s)" % (msg[:300], e.code)}
-        except Exception as e:
-            return {"ok": False, "error": str(e)[:300]}
-        try:
-            txt = j["choices"][0]["message"]["content"]
-        except Exception:
-            return {"ok": False, "error": "unexpected reply: " + json.dumps(j)[:200]}
-        if not isinstance(txt, str) or not txt.strip():  # reasoning models can answer with content null
-            return {"ok": False, "error": "the model sent an empty reply: try again or pick another model"}
+                return {"ok": False, "error": "unexpected reply: " + json.dumps(j)[:200]}
+            if isinstance(txt, str) and txt.strip():
+                break
+            txt = ""
+        if not txt:  # reasoning models can answer with content null
+            return {"ok": False, "error": "the model sent an empty reply twice: try again or pick another model"}
         return {"ok": True, "text": txt, "model": j.get("model") or ""}
 
     def ai_speak(self, text, voice=""):  # natural neural voice; the browser's own voice is robotic

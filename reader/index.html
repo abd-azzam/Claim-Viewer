@@ -2785,18 +2785,21 @@ const rtab=name=>{const ai=name==="ai";document.body.classList.toggle("rtai",ai)
 const aiModels=async()=>{const sel=$("aimodel");if(!sel||!(window.pywebview&&pywebview.api&&pywebview.api.ai_models))return;
   let r=null;try{r=await pywebview.api.ai_models()}catch(e){return}
   const ids=(r&&r.ok&&Array.isArray(r.models))?r.models:[];if(!ids.length)return;
-  const find=re=>ids.find(i=>re.test(i));
-  const pro=find(/pro/i),flash=find(/flash/i)||find(/chat/i);
+  // the model saved in ai.json is the one known to work for this account: show it first
+  let cfgModel="";
+  try{const st=await pywebview.api.ai_status();cfgModel=(st&&st.model)||""}catch(e){}
   const out=[];
-  if(pro)out.push([pro,"V4-Pro"]);
-  if(flash)out.push([flash,"Flash"]);
-  ids.filter(i=>i!==pro&&i!==flash).slice(0,6).forEach(i=>out.push([i,i]));
+  if(cfgModel&&ids.includes(cfgModel))out.push([cfgModel,cfgModel+" (saved)"]);
+  const find=re=>ids.find(i=>re.test(i));
+  const flash=find(/flash/i)||find(/chat/i);
+  if(flash&&flash!==cfgModel)out.push([flash,flash]);
+  ids.filter(i=>i!==cfgModel&&i!==flash).slice(0,8).forEach(i=>out.push([i,i]));
   const cur=store.get("cv:aimodel")||sel.value;
   sel.innerHTML=out.map(([v,l])=>`<option value="${esc(v)}">${esc(l)}</option>`).join("");
-  // prefer what was saved, but only if the endpoint still serves it; otherwise take the first real one
-  const saved=cur&&ids.includes(cur)?cur:null;
-  sel.value=saved||flash||pro||out[0][0];
-  try{store.set("cv:aimodel",sel.value)}catch(e){}  // so the next send cannot use a dead name
+  // prefer the saved model, then what the user last picked, then the first offered
+  const saved=(cfgModel&&ids.includes(cfgModel))?cfgModel:(cur&&ids.includes(cur)?cur:null);
+  sel.value=saved||out[0][0];
+  try{store.set("cv:aimodel",sel.value)}catch(e){}
 };
 // The open reading is the context: every page's text, tagged [p.N], goes in the user turn and the answer cites it back.
 const aiRead=async id=>{const doc=await aiDoc(id),N=doc.numPages,pg=[],note=aiLine("sys","Reading the PDF\u2026");
@@ -2871,6 +2874,76 @@ const aiCite=(box,txt,D)=>{txt=aiDeSlop(String(txt||"")).replace(/\*\*(.+?)\*\*/
     const b=document.createElement("button");b.type="button";b.className="aicite"+(n?"":" bad");b.textContent=n?"p."+n:"p.?";
     b.title=n?"Show this sentence in the PDF":"This sentence is not in the PDF. Do not trust it.";if(n){b.dataset.q=q;b.onclick=()=>aiGo(D.id,n,q,D)}box.append(b)}
   plain(txt.slice(i),i)};
+// Every point must be traceable. A point is a paragraph, or a single bullet/numbered line.
+// Any point the model left uncited is sent to the model to be matched to a sentence, the quote is
+// verified against the page text, and only then does it become a marker. A point the text does not
+// support gets a visible "p.?" chip rather than silently carrying no evidence.
+const aiTrace=async(text,D)=>{
+  const src=String(text||"");
+  if(!src.trim())return src;
+  const cited=s=>/\[p\.\s*\d+/.test(s)||/(?:^|[^a-z])pp?\.\s*\d/i.test(s);
+  const LIST=/^\s*(?:[-*\u2022]|\d+[.)])\s+/;
+
+  // Cut the answer into points, keeping their exact offsets so the text can be rebuilt byte for byte.
+  const lines=[];{let i=0;while(i<=src.length){const j=src.indexOf("\n",i);const end=j<0?src.length:j;lines.push({a:i,b:end,t:src.slice(i,end)});if(j<0)break;i=j+1}}
+  const pts=[];let buf=null;
+  const flush=()=>{if(buf&&buf.b>buf.a&&src.slice(buf.a,buf.b).trim())pts.push({a:buf.a,b:buf.b,text:src.slice(buf.a,buf.b)});buf=null};
+  for(const L of lines){
+    const blank=!L.t.trim();
+    if(blank){flush();continue}
+    if(LIST.test(L.t)){flush();pts.push({a:L.a,b:L.b,text:L.t});continue}
+    if(!buf)buf={a:L.a,b:L.b};else buf.b=L.b;
+  }
+  flush();
+
+  const miss=pts.filter(p=>p.text.trim().length>25&&!cited(p.text));
+  if(!miss.length)return src;
+
+  const list=miss.map((p,n)=>(n+1)+". "+p.text.replace(/\s+/g," ").trim().slice(0,380)).join("\n");
+  const ask="Here are numbered points from an answer about this PDF. For each point, quote the ONE sentence in the document that best supports it.\n\n"
+    +list
+    +"\n\nReply with exactly one line per point and nothing else, in this form:\nN. [p.K: \"exact sentence copied from the document\"]\n"
+    +"If no sentence in the document supports a point, reply:\nN. NONE";
+
+  let reply="";
+  for(let attempt=0;attempt<2;attempt++){          // the gateway sometimes returns an empty reply
+    try{
+      const r=await pywebview.api.ai_chat(JSON.stringify([
+        {role:"system",content:"You quote the document exactly. You never invent a page number or a sentence that is not in it."},
+        {role:"user",content:"<pdf>\n"+String(D.text||"")+"</pdf>\n\n"+ask}]),"");
+      if(r&&r.ok&&String(r.text||"").trim()){reply=String(r.text);break}
+    }catch(e){}
+  }
+
+  const norm=s=>String(s||"").toLowerCase().replace(/[^a-z0-9]/g,"");
+  const raw=String(D.text||"");
+  const pageHas=(p,key)=>{
+    const m=raw.match(new RegExp("\\[p\\."+p+"\\]\\s*([\\s\\S]*?)(?=\\[p\\.|$)"));
+    return !!m&&norm(m[1]).includes(key);
+  };
+  const pageOf=key=>{for(let p=1;p<=D.k.length;p++)if(pageHas(p,key))return p;return 0};
+
+  const markers=miss.map((p,n)=>{
+    const line=(reply||"").split(/\n/).find(l=>new RegExp("^\\s*"+(n+1)+"[.)]\\s").test(l))||"";
+    const m=line.match(/\[p\.\s*(\d+)\s*:\s*["\u201c](.+?)["\u201d]\s*\]/);
+    if(!m)return "[p.0]";                              // renders as a visible p.? chip
+    const quoted=m[2].trim().replace(/["\[\]]/g,"");
+    const key=norm(quoted).slice(0,40);
+    if(key.length<12)return "[p.0]";
+    const claimed=+m[1];
+    const pg=pageHas(claimed,key)?claimed:pageOf(key);
+    return pg?("[p."+pg+": \""+quoted+"\"]"):"[p.0]";
+  });
+
+  // rebuild from the end so earlier offsets stay valid
+  let out=src;
+  for(let n=miss.length-1;n>=0;n--){
+    const p=miss[n];
+    out=out.slice(0,p.b)+" "+markers[n]+out.slice(p.b);
+  }
+  return out;
+};
+window.__aiTrace=aiTrace;
 const aiSend=async text=>{text=String(text||"").trim();if(!text||AI.busy)return;
   if(!(window.pywebview&&pywebview.api&&pywebview.api.ai_chat)){aiLine("err","The chat needs the app window.");return}
   const id0=aiId();if(!id0){aiLine("err","Pick a reading in the PDF tab first, or click a reading on the left.");return}
@@ -2888,7 +2961,13 @@ const aiSend=async text=>{text=String(text||"").trim();if(!text||AI.busy)return;
     const r=await pywebview.api.ai_chat(JSON.stringify([{role:"system",content:sys}].concat(AI.hist.slice(-10),withPdf)),model);
     wait.remove();
     if(aiId()!==id0){}  // the reading changed while the reply was pending: drop it, it belongs to another document
-    else if(r&&r.ok){aiCite(aiLine("bot",""),r.text,D);AI.hist.push(me,{role:"assistant",content:r.text})}
+    else if(r&&r.ok){
+      let text2=r.text||"";
+      // every point must be traceable, so any paragraph the model left uncited gets a verified
+      // marker before rendering. This runs after the answer, so the gateway cannot drop it.
+      try{text2=await aiTrace(text2,D)}catch(e2){}
+      if(aiId()!==id0){} else {aiCite(aiLine("bot",""),text2,D);AI.hist.push(me,{role:"assistant",content:text2})}
+    }
     else aiLine("err","AI error: "+((r&&r.error)||"no answer"));
   }catch(e){wait.remove();aiLine("err","AI error: "+((e&&e.message)||e))}
   AI.busy=false;$("aisend").disabled=false};
