@@ -3280,7 +3280,9 @@ const ocrScan=async(id,pages,quiet)=>{  // pages: 1-based; quiet skips the per-p
     if(bad)toast(bad+" of "+want.length+" pages could not be read",1);
     const d=got?OCR.by[id][want[0]]:null;
     if(quiet)return got?OCR.by[id]:null;
-    toast(got?("OCR read page "+want[0]+": "+(d.text||"").replace(/\s+/g," ").slice(0,80)+" \u00b7 "+((d.words||[]).length)+" words"):"OCR found no text on that page",1,6000);
+    // a rehydrated page has text but no boxes, so claiming "0 words" would be wrong
+    const wc=(d.words||[]).length;
+    toast(got?("OCR read page "+want[0]+": "+(d.text||"").replace(/\s+/g," ").slice(0,80)+(wc?" \u00b7 "+wc+" words":"")):"OCR found no text on that page",1,6000);
     return got?OCR.by[id]:null
   }catch(e){toast("OCR failed: "+((e&&e.message)||e));return null}
   finally{OCR.busy=false}};
