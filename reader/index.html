@@ -2535,7 +2535,7 @@ $("col").onchange=()=>{const v=$("col").value;
   opts($("src"),"All readings",srcs().map(s=>s.id));
   fillReads();fillEd();
   setVocab();rebuildVocabUI();pickPdf();refresh();zkSync()};
-$("pdfsel").addEventListener("change",()=>drawLib());  // the tick list follows the chosen reading
+$("pdfsel").addEventListener("change",()=>{drawLib();if(document.body.classList.contains("rtai"))aiLogSync()});  // the tick list and the chat both follow the chosen reading
 {const F=$("flt");let _t;  // choosing a filter must redraw the list AND the graph, at once
  F.addEventListener("change",()=>{clearTimeout(_t);refresh()});
  F.addEventListener("input",()=>{clearTimeout(_t);_t=setTimeout(refresh,150)})}
@@ -2756,7 +2756,7 @@ const capture=(q,pg,rs,hg)=>{if(rs&&rs[0]&&!rs[0].t)rs[0].t=q;q=(q||"").replace(
  if(!_it||!inCol(_it.col,_cc)){window.toast("That reading is outside the category you selected.");return}
  const c={id:"u"+Date.now(),src,srcTitle:DATA.sources.find(x=>x.id===src).title,quote:q,gist:"",role:"OTHER",pathway:[],direction:"",status:"user",own_claim:true};norm(c);if(pg){c.pdf_page=[pg];c.cite_page=String(pg)}if(hg)c.hg=hg;else if(rs&&rs.length&&cur===src)c.hg=mark("y",rs);all.push(c);ED.a.push(c);sel=src+c.id;saveED();if(!pass(c))showNewClaim(c);else refresh();const e=[...document.querySelectorAll("#list .card")].find(z=>z.dataset.k===kc(c));if(e)e.scrollIntoView({block:"center"});toast("Claim added"+(pg?" (p."+pg+")":"")+": "+q.slice(0,60));if(hg&&pg)window.healClaim(c,pg)};
 // ---- right pane: PDF or the DeepSeek chat. The chat is fed by the PDF's right-click menu.
-const AI={busy:false,hist:[],docs:{}};
+const AI={busy:false,hist:{},docs:{}};
 // The chat reads the reading on its own: it does not need the PDF tab to have rendered it first.
 const aiId=()=>(($("pdfsel")&&$("pdfsel").value)||cur||"");  // the dropdown is the truth: `cur` lags while the AI tab is open
 const aiTitle=id=>((DATA.sources||[]).find(s=>s.id===(id||aiId()))||{}).title||"";
@@ -2778,10 +2778,16 @@ const aiStatus=async()=>{const box=$("aikeybox");if(!box)return;
     if($("aikeyms"))$("aikeyms").textContent=s.has_key?"":"no key yet";
     if(s.has_key)aiModels();  // refresh from the endpoint every time the tab opens
   }catch(e){}};
+const aiLogSync=async()=>{const id=aiId();if(!id||AI.logId===id)return;AI.logId=id;
+  const L=$("ailog");if(L)L.innerHTML="";
+  const H=histOf(id);if(!H.length){aiClearBtn();return}
+  const D=await aiLoad();
+  for(const m of H){if(m.role==="user")aiLine("me",m.content);else if(D)aiCite(aiLine("bot",""),m.content,D)}
+  aiClearBtn()};  // each PDF shows its own conversation
 const rtab=name=>{const ai=name==="ai";document.body.classList.toggle("rtai",ai);
   document.querySelectorAll(".rtabs [data-rt]").forEach(b=>{const on=b.dataset.rt===name;b.classList.toggle("on",on);b.setAttribute("aria-selected",on)});
   try{store.set("cv:rtab",name)}catch(e){}
-  if(ai){aiStatus();aiLoad();aiClearBtn()}else if(cur&&!docC)showPdf(cur)};  // back on the PDF tab: a reading picked inside the chat still needs rendering
+  if(ai){aiStatus();aiLoad().then(()=>aiLogSync());aiClearBtn()}else if(cur&&!docC)showPdf(cur)};  // back on the PDF tab: a reading picked inside the chat still needs rendering
 const aiModels=async()=>{const sel=$("aimodel");if(!sel||!(window.pywebview&&pywebview.api&&pywebview.api.ai_models))return;
   let r=null;try{r=await pywebview.api.ai_models()}catch(e){return}
   const ids=(r&&r.ok&&Array.isArray(r.models))?r.models:[];if(!ids.length)return;
@@ -2810,8 +2816,9 @@ const aiRead=async id=>{const doc=await aiDoc(id),N=doc.numPages,pg=[],note=aiLi
   let lbl={};try{const ls=await doc.getPageLabels();if(Array.isArray(ls))ls.forEach((L,n)=>{const m=String(L||"").match(/\d+/);
     if(m&&!(+m[0] in lbl))lbl[+m[0]]=n+1})}catch(e){}  // printed page 169 -> PDF page 1
   return {id,k:pg.map(nk),text,lbl}};
+const histOf=id=>{const k=id||aiId();if(!k)return [];return AI.hist[k]||(AI.hist[k]=[])};  // each PDF keeps its own chat
 const aiLoad=()=>{const id=aiId();if(!id)return Promise.resolve(null);
-  if(!AI.L||AI.L.id!==id){AI.hist=[];const L=AI.L={id,p:aiRead(id)};
+  if(!AI.L||AI.L.id!==id){const L=AI.L={id,p:aiRead(id)};
     const drop=()=>{if(AI.L===L)AI.L=null};L.p.then(r=>{if(!r)drop()},drop)}  // a failed or abandoned read must not stay cached
   return AI.L.p};
 const aiGo=async(id,n,q,D)=>{rtab("pdf");await window.showPdf(id,n);if(!q)return;
@@ -2871,21 +2878,23 @@ const aiCite=(box,txt,D)=>{txt=aiDeSlop(String(txt||"")).replace(/\*\*(.+?)\*\*/
     box.append(s.slice(j))};
   // A quote holding a newline, or an empty one, used to fail this pattern and fall through to
   // plain(), which emitted a page chip carrying the answer's own text as the evidence. Both now
-  // parse, and the check below turns an empty or missing quote into p.?.
+  // parse, and the check below drops a chip for an empty or missing quote.
   const re=/\[p\.\s*(\d+)\s*:\s*["\u201c]([\s\S]*?)["\u201d]\s*\]|\[p\.\s*(\d+)\s*\]/g;let i=0,m;
   while((m=re.exec(txt))){plain(txt.slice(i,m.index),i);i=re.lastIndex;
-    if(m[3]){const pg=at(m[3]),q=near(m.index),b=document.createElement("button");
-      b.type="button";b.className="aicite"+(pg?"":" bad");b.textContent=pg?"p."+pg:"p.?";b.title=pg?(q?"Show the sentence on page "+pg:"Go to page "+pg):"This page is not in the PDF";
-      if(pg){b.dataset.q=q||"";b.onclick=()=>aiGo(D.id,pg,q,D)}box.append(b);continue}
+    if(m[3]){const pg=at(m[3]),q=near(m.index);if(!pg)continue;  // a page the PDF does not have: show nothing rather than a p.? chip
+      const b=document.createElement("button");
+      b.type="button";b.className="aicite";b.textContent="p."+pg;b.title=q?"Show the sentence on page "+pg:"Go to page "+pg;
+      b.dataset.q=q||"";b.onclick=()=>aiGo(D.id,pg,q,D);box.append(b);continue}
     const q=m[2],k=nk(q),on=p=>k.length>=12&&(D.k[p-1]||"").includes(k);
     let n=at(m[1]);if(!on(n))n=on(1)?1:D.k.findIndex((_,j)=>on(j+1))+1;
-    const b=document.createElement("button");b.type="button";b.className="aicite"+(n?"":" bad");b.textContent=n?"p."+n:"p.?";
-    b.title=n?"Show this sentence in the PDF":"This sentence is not in the PDF. Do not trust it.";if(n){b.dataset.q=q;b.onclick=()=>aiGo(D.id,n,q,D)}box.append(b)}
+    if(!n)continue;  // the sentence is on no page: no chip, the prose already says it
+    const b=document.createElement("button");b.type="button";b.className="aicite";b.textContent="p."+n;
+    b.title="Show this sentence in the PDF";b.dataset.q=q;b.onclick=()=>aiGo(D.id,n,q,D);box.append(b)}
   plain(txt.slice(i),i)};
 // Every point must be traceable. A point is a paragraph, or a single bullet/numbered line.
 // Any point the model left uncited is sent to the model to be matched to a sentence, the quote is
 // verified against the page text, and only then does it become a marker. A point the text does not
-// support gets a visible "p.?" chip rather than silently carrying no evidence.
+// support gets no chip at all: the prose stands on its own.
 const aiTrace=async(text,D)=>{
   const src=String(text||"");
   if(!src.trim())return src;
@@ -2952,12 +2961,12 @@ const aiTrace=async(text,D)=>{
   // replies restart their numbering at 1 in every batch, so walk them in the same groups
 
   const markerOf=(line,point)=>{
-    if(!line)return "[p.0]";
+    if(!line)return "";
     const m=line.match(/\[p\.\s*(\d+)\s*:\s*(?:"|\u201c)(.+?)(?:"|\u201d)\s*\]/);
-    if(!m)return "[p.0]";
+    if(!m)return "";
     const quoted=m[2].trim().replace(/["\[\]]/g,"");
     const key=norm(quoted).slice(0,40);
-    if(key.length<12)return "[p.0]";
+    if(key.length<12)return "";
     // A word-overlap gate sat here and was removed: measured, it accepted a quote saying the
     // opposite of its point (0.60 on shared vocabulary) and rejected a true match (0.00). Whether
     // a sentence supports a point is meaning, not shared words, so it is the model's judgement and
@@ -2973,9 +2982,9 @@ const aiTrace=async(text,D)=>{
     };
     let pg=onPage(claimed)?claimed:0;
     if(!pg){for(let p=1;p<=D.k.length;p++)if(onPage(p)){pg=p;break}}
-    // if no single page holds the whole quote, the tail is on another page: report p.? rather than
+    // if no single page holds the whole quote, the tail is on another page: no chip rather than
     // a page that only carries part of it
-    return pg?("[p."+pg+": \""+quoted+"\"]"):"[p.0]";
+    return pg?("[p."+pg+": \""+quoted+"\"]"):"";
   };
   const markers=[];
   for(let i=0;i<miss.length;i+=3){
@@ -2991,7 +3000,7 @@ const aiTrace=async(text,D)=>{
   // back to front: two separate loops broke this, because inserting a short point's marker shifted
   // the offsets of every miss point after it, and the marker landed mid-word ("across re [p.2...]gions").
   const inserts=[];
-  tiny.forEach(p=>inserts.push({b:p.b,m:"[p.0]"}));
+  tiny.forEach(p=>inserts.push({b:p.b,m:""}));
   miss.forEach((p,n)=>inserts.push({b:p.b,m:markers[n]}));
   inserts.sort((x,y)=>y.b-x.b);
   let out=src;
@@ -3016,21 +3025,23 @@ const aiSend=async text=>{text=String(text||"").trim();if(!text||AI.busy)return;
     const sel=$("aimodel");
     const opts=sel?[...sel.options].map(o=>o.value):[];
     const model=(sel&&opts.includes(sel.value))?sel.value:(opts[0]||"");
-    const r=await pywebview.api.ai_chat(JSON.stringify([{role:"system",content:sys}].concat(AI.hist.slice(-10),withPdf)),model);
-    wait.remove();
-    if(aiId()!==id0){}  // the reading changed while the reply was pending: drop it, it belongs to another document
+    const r=await pywebview.api.ai_chat(JSON.stringify([{role:"system",content:sys}].concat(histOf(id0).slice(-10),withPdf)),model);
+    // the reply is here, but the answer is not ready: aiTrace asks the model again for every
+    // uncited point. Clearing the indicator here left the pane blank for that whole stretch, so
+    // it stays up until the rendered answer replaces it.
+    if(aiId()!==id0){wait.remove()}  // the reading changed while the reply was pending: drop it
     else if(r&&r.ok){
       let text2=r.text||"";
-      // every point must be traceable, so any paragraph the model left uncited gets a verified
-      // marker before rendering. This runs after the answer, so the gateway cannot drop it.
+      if(wait.isConnected)wait.textContent="Writing\u2026";
       try{text2=await aiTrace(text2,D)}catch(e2){}
-      if(aiId()!==id0){} else {aiCite(aiLine("bot",""),text2,D);AI.hist.push(me,{role:"assistant",content:text2})}
+      wait.remove();
+      if(aiId()!==id0){} else {aiCite(aiLine("bot",""),text2,D);const H=histOf(id0);H.push(me,{role:"assistant",content:text2})}
     }
-    else aiLine("err","AI error: "+((r&&r.error)||"no answer"));
+    else{wait.remove();aiLine("err","AI error: "+((r&&r.error)||"no answer"))}
   }catch(e){wait.remove();aiLine("err","AI error: "+((e&&e.message)||e))}
   AI.busy=false;$("aisend").disabled=false};
 const aiAsk=(q,pg)=>{rtab("ai");aiSend("Explain this passage"+(pg?" from page "+pg:"")+":\n\n\u201c"+q+"\u201d")};
-const aiClear=()=>{const L=$("ailog");if(L)L.innerHTML="";AI.hist=[];aiClearBtn()};
+const aiClear=()=>{const L=$("ailog");if(L)L.innerHTML="";AI.hist[aiId()]=[];aiClearBtn()};  // clears only this PDF's chat
 const aiClearBtn=()=>{const b=$("aiclear");if(b)b.hidden=!($("ailog")&&$("ailog").children.length)};
 window.__aiClearBtn=aiClearBtn;window.__aiLine=aiLine;window.__aiClear=aiClear;
 window.__aiLoad=aiLoad;window.__aiCite=aiCite;window.__aiGo=aiGo;window.__aiHist=()=>AI.hist;window.__aiDeSlop=aiDeSlop;
