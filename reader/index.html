@@ -2896,7 +2896,9 @@ const aiTrace=async(text,D)=>{
   }
   flush();
 
-  const miss=pts.filter(p=>p.text.trim().length>25&&!cited(p.text));
+  const isLead=s=>/[:;]\s*$/.test(s.trim())||/^\s*(?:here|these|the following|what follows)\b/i.test(s.trim());
+  const miss=pts.filter(p=>!cited(p.text)&&p.text.trim().length>25);
+  const tiny=pts.filter(p=>!cited(p.text)&&p.text.trim().length<=25);
   if(!miss.length)return src;
 
   // One ask for all points came back empty from the gateway every time (11 points), while a
@@ -2905,17 +2907,21 @@ const aiTrace=async(text,D)=>{
   const askFor=g=>"Quote the one document sentence supporting each point. One line per point, nothing else.\n"
     +g.map((p,n)=>(n+1)+". "+p.text.replace(/\s+/g," ").trim().slice(0,140)).join("\n")
     +"\n\nFormat: N. [p.K: \"exact sentence\"]  or  N. NONE";
-  let reply="";
+  // One reply per batch. Concatenating them lost every batch after the first: the numbering
+  // restarts at 1 each time, and a blank-line split merged all of one batch into a single block.
+  const batchReplies=[];
   for(let i=0;i<miss.length;i+=3){
     const g=miss.slice(i,i+3);
+    let got="";
     for(let attempt=0;attempt<3;attempt++){
       try{
         const r=await pywebview.api.ai_chat(JSON.stringify([
           {role:"system",content:"You quote the document exactly."},
           {role:"user",content:"<pdf>\n"+String(D.text||"")+"</pdf>\n\n"+askFor(g)}]),"");
-        if(r&&r.ok&&String(r.text||"").trim()){reply+=String(r.text).trim()+"\n";break}
+        if(r&&r.ok&&String(r.text||"").trim()){got=String(r.text).trim();break}
       }catch(e){}
     }
+    batchReplies.push(got);
   }
   const raw=String(D.text||"");
   const pageHas=(p,key)=>{
@@ -2925,7 +2931,7 @@ const aiTrace=async(text,D)=>{
   const pageOf=key=>{for(let p=1;p<=D.k.length;p++)if(pageHas(p,key))return p;return 0};
 
   // replies restart their numbering at 1 in every batch, so walk them in the same groups
-  const replyLines=(reply||"").split(/\n\n+/).map(b=>b.split(/\n/).filter(Boolean));
+
   const markerOf=(line)=>{
     if(!line)return "[p.0]";
     const m=line.match(/\[p\.\s*(\d+)\s*:\s*(?:"|\u201c)(.+?)(?:"|\u201d)\s*\]/);
@@ -2939,7 +2945,7 @@ const aiTrace=async(text,D)=>{
   };
   const markers=[];
   for(let i=0;i<miss.length;i+=3){
-    const batch=replyLines[Math.floor(i/3)]||[];
+    const batch=(batchReplies[Math.floor(i/3)]||"").split(/\n/).filter(l=>l.trim());
     const g=miss.slice(i,i+3);
     for(let k=0;k<g.length;k++){
       const line=batch.find(l=>new RegExp("^\\s*"+(k+1)+"[.)]\\s").test(l));
@@ -2947,8 +2953,15 @@ const aiTrace=async(text,D)=>{
     }
   }
 
-  // rebuild from the end so earlier offsets stay valid
+  // rebuild from the end so earlier offsets stay valid: short points first, then the lookups,
+  // because each insertion shifts nothing before its own offset
   let out=src;
+  const tinyMarks=tiny.map(p=>({p, m:isLead(p.text)?"[p.0]":null}));
+  for(let n=tinyMarks.length-1;n>=0;n--){
+    const t=tinyMarks[n];
+    if(!t.m)continue;
+    out=out.slice(0,t.p.b)+" "+t.m+out.slice(t.p.b);
+  }
   for(let n=miss.length-1;n>=0;n--){
     const p=miss[n];
     out=out.slice(0,p.b)+" "+markers[n]+out.slice(p.b);

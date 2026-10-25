@@ -2887,11 +2887,18 @@ const aiTrace=async(text,D)=>{
   // Cut the answer into points, keeping their exact offsets so the text can be rebuilt byte for byte.
   const lines=[];{let i=0;while(i<=src.length){const j=src.indexOf("\n",i);const end=j<0?src.length:j;lines.push({a:i,b:end,t:src.slice(i,end)});if(j<0)break;i=j+1}}
   const pts=[];let buf=null;
-  const flush=()=>{if(buf&&buf.b>buf.a&&src.slice(buf.a,buf.b).trim())pts.push({a:buf.a,b:buf.b,text:src.slice(buf.a,buf.b)});buf=null};
+  // a point ends at its own last visible character, never at the start of the next line
+  const trimEnd=a=>{let b=a;while(b>0&&/\s/.test(src[b-1]))b--;return b};
+  const flush=()=>{
+    if(buf&&buf.b>buf.a){
+      const t=src.slice(buf.a,buf.b);
+      if(t.trim())pts.push({a:buf.a,b:trimEnd(buf.b),text:t});
+    }
+    buf=null};
   for(const L of lines){
     const blank=!L.t.trim();
     if(blank){flush();continue}
-    if(LIST.test(L.t)){flush();pts.push({a:L.a,b:L.b,text:L.t});continue}
+    if(LIST.test(L.t)){flush();pts.push({a:L.a,b:trimEnd(L.b),text:L.t});continue}
     if(!buf)buf={a:L.a,b:L.b};else buf.b=L.b;
   }
   flush();
@@ -2899,7 +2906,7 @@ const aiTrace=async(text,D)=>{
   const isLead=s=>/[:;]\s*$/.test(s.trim())||/^\s*(?:here|these|the following|what follows)\b/i.test(s.trim());
   const miss=pts.filter(p=>!cited(p.text)&&p.text.trim().length>25);
   const tiny=pts.filter(p=>!cited(p.text)&&p.text.trim().length<=25);
-  if(!miss.length)return src;
+  if(!miss.length&&!tiny.length)return src;
 
   // One ask for all points came back empty from the gateway every time (11 points), while a
   // 2-point ask answered. So ask in small batches and keep whatever answers.
@@ -2953,18 +2960,17 @@ const aiTrace=async(text,D)=>{
     }
   }
 
-  // rebuild from the end so earlier offsets stay valid: short points first, then the lookups,
-  // because each insertion shifts nothing before its own offset
+  // Rebuild from the end. EVERY insertion must go into one list sorted by offset and applied
+  // back to front: two separate loops broke this, because inserting a short point's marker shifted
+  // the offsets of every miss point after it, and the marker landed mid-word ("across re [p.2...]gions").
+  const inserts=[];
+  tiny.forEach(p=>{if(isLead(p.text))inserts.push({b:p.b,m:"[p.0]"})});
+  miss.forEach((p,n)=>inserts.push({b:p.b,m:markers[n]}));
+  inserts.sort((x,y)=>y.b-x.b);
   let out=src;
-  const tinyMarks=tiny.map(p=>({p, m:isLead(p.text)?"[p.0]":null}));
-  for(let n=tinyMarks.length-1;n>=0;n--){
-    const t=tinyMarks[n];
-    if(!t.m)continue;
-    out=out.slice(0,t.p.b)+" "+t.m+out.slice(t.p.b);
-  }
-  for(let n=miss.length-1;n>=0;n--){
-    const p=miss[n];
-    out=out.slice(0,p.b)+" "+markers[n]+out.slice(p.b);
+  for(const ins of inserts){
+    if(!ins.m)continue;
+    out=out.slice(0,ins.b)+" "+ins.m+out.slice(ins.b);
   }
   return out;
 };
