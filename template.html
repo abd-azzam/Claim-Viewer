@@ -2912,8 +2912,11 @@ const aiTrace=async(text,D)=>{
   // One ask for all points came back empty from the gateway every time (11 points), while a
   // 2-point ask answered. So ask in small batches and keep whatever answers.
   const norm=s=>String(s||"").toLowerCase().replace(/[^a-z0-9]/g,"");
-  const askFor=g=>"Quote the one document sentence supporting each point. One line per point, nothing else.\n"
+  const askFor=g=>"For each point, quote the one document sentence that supports it. One line per point, nothing else.\n"
     +g.map((p,n)=>(n+1)+". "+p.text.replace(/\s+/g," ").trim().slice(0,140)).join("\n")
+    +"\n\nUse NONE unless the sentence really does support that point. A sentence that merely shares"
+    +" its vocabulary is not support, and a sentence saying the opposite is not support. If the point"
+    +" is background, a heading or a transition, use NONE."
     +"\n\nFormat: N. [p.K: \"exact sentence\"]  or  N. NONE";
   // One reply per batch. Concatenating them lost every batch after the first: the numbering
   // restarts at 1 each time, and a blank-line split merged all of one batch into a single block.
@@ -2947,19 +2950,10 @@ const aiTrace=async(text,D)=>{
     const quoted=m[2].trim().replace(/["\[\]]/g,"");
     const key=norm(quoted).slice(0,40);
     if(key.length<12)return "[p.0]";
-    // A sentence can sit on the page and still say nothing about the point: "Coercion decided it."
-    // was paired with a passage about disciplinary views. Require the quote to carry a share of the
-    // point's own words, so a mismatch reports p.? instead of a confident wrong page.
-    const wordsOf=t=>new Set((String(t||"").toLowerCase().match(/[a-z]{4,}/g)||[]).filter(w=>w.length>4));
-    const want=wordsOf(point&&point.text);
-    // A point made only of short words ("- It rose.") leaves want empty, which would skip the
-    // check and let ANY quote pass. With nothing to compare, the honest answer is p.?.
-    if(!want.size)return "[p.0]";
-    {
-      const have=wordsOf(quoted);
-      let hit=0;want.forEach(w=>{if(have.has(w))hit++});
-      if(hit/Math.min(want.size,8)<0.25)return "[p.0]";
-    }
+    // A word-overlap gate sat here and was removed: measured, it accepted a quote saying the
+    // opposite of its point (0.60 on shared vocabulary) and rejected a true match (0.00). Whether
+    // a sentence supports a point is meaning, not shared words, so it is the model's judgement and
+    // the reader's, not a ratio. Only the page claim is mechanical, and it is checked below.
     const claimed=+m[1];
     // Verify the WHOLE quote on the page it names. Checking only the first 40 characters let a
     // quote that is stitched across a page break pass: the head sat on the cited page and the tail

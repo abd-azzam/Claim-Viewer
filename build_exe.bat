@@ -1,6 +1,22 @@
 @echo off
 rem Builds dist\ClaimViewer.exe from scratch, stages the empty reader page and the pdf.js libs,
 rem then writes release\ClaimViewer-Setup-<version>.exe. Needs Inno Setup 6: winget install JRSoftware.InnoSetup
+rem ONE build at a time. Two overlapping runs both write dist\, release\ and the installed exe, so the
+rem last writer wins and an older binary can end up installed: a stale build once finished after a
+rem newer one and very nearly replaced it. A lock directory is atomic on Windows, so the second run
+rem refuses instead of racing.
+set "LOCK=%TEMP%\claimviewer-build.lock"
+mkdir "%LOCK%" 2>nul || (
+  echo Another build is already running. Wait for it to finish, then rebuild.
+  exit /b 1
+)
+rem release the lock on every exit path
+call :run %*
+set "RC=%ERRORLEVEL%"
+rmdir "%LOCK%" 2>nul
+exit /b %RC%
+
+:run
 rem pin the interpreter: an unpinned "python" picked a bare venv without PyInstaller and the build died
 set "PATH=C:\Users\HP\AppData\Local\hermes\hermes-agent\venv\Scripts;%PATH%"
 set "ISCC=%LOCALAPPDATA%\Programs\Inno Setup 6\ISCC.exe"
