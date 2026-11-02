@@ -144,7 +144,9 @@ The same views in a light palette; the scheme is chosen in Settings > Appearance
 
 Requirements: Windows 10 x64 (1809 or later) or Windows 11. Word integration is optional and requires desktop Word for Windows, Office 2016 or later, with bibliography styles installed.
 
-The installer carries an empty library, the offline PDF assets, the app and the Word component. It excludes the developer's PDFs, claims, conversations, API keys and local Word credentials. Reading and organizing work offline. AI, DOI lookup and online text-to-speech need their services; optional OCR needs Tesseract installed separately. The exe and the installer are unsigned, so Windows SmartScreen may warn. Compare the hash from `Get-FileHash .\ClaimViewer-Setup-2.6.1.exe -Algorithm SHA256` with the `.sha256` file supplied alongside it.
+The installer carries an empty library, the offline PDF assets, the app and the Word component. It excludes the developer's PDFs, claims, conversations, API keys and local Word credentials. Reading and organizing work offline. AI, DOI lookup and online text-to-speech need their services; optional OCR needs Tesseract installed separately. Compare the hash from `Get-FileHash .\ClaimViewer-Setup-2.6.1.exe -Algorithm SHA256` with the `.sha256` file supplied alongside it.
+
+**Windows SmartScreen.** The exe and the installer are unsigned, so the first run stops at *Windows protected your PC*. Only continue if the SHA256 matches: click **More info**, then **Run anyway**. Builds that you make yourself show the same prompt.
 
 ## Update and back up
 
@@ -170,7 +172,7 @@ Override `-ISCC` if needed. The script builds the Word component and the executa
 python -I -X utf8 build.py
 ```
 
-Git tracks only `release/ClaimViewer-Setup-*.exe` and its checksum. `dist/`, `index.html`, `library.json`, `sources.js` and `state.js` stay out, because a built page holds somebody's claims.
+Installers are published as release assets and are no longer tracked in git. `dist/`, `index.html`, `library.json`, `sources.js` and `state.js` stay out too, because a built page holds somebody's claims.
 
 ## Files
 
@@ -187,7 +189,7 @@ Git tracks only `release/ClaimViewer-Setup-*.exe` and its checksum. `dist/`, `in
 | `lib/` | Page scripts and styles, and the offline `pdf.js` / `pdf-lib` bundles. |
 | `word/` | Word add-in sources: ribbon, pane, manifest template and install scripts. |
 | `tools/` | Release pipeline (`build-release.ps1`, `stage-distribution.py`, `verify-distribution.py`) and the UI tests. |
-| `release/` | The prebuilt, unsigned installer with its SHA256, and the PyInstaller spec. |
+| `release/` | The PyInstaller spec. Built installers go to the [Releases page](https://github.com/abd-azzam/Claim-Viewer/releases), not into git. |
 | `docs/` | Screenshots used in this README, each in the dark and light theme. |
 
 ## Known limits
