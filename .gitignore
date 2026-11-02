@@ -1,10 +1,10 @@
 # Build output and staged distributions
 dist/
 build/
+
+# Installers are published on the Releases page, never tracked here
 release/*
 !release/ClaimViewer.spec
-!release/ClaimViewer-Setup-*.exe
-!release/ClaimViewer-Setup-*.exe.sha256
 
 # Local backups and the previous page kept by the updater
 *.bak
