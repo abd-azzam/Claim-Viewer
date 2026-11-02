@@ -130,7 +130,10 @@ class Providers:
                 labels[ident] = p['name'] + ' / ' + model
         return choices, labels, errors
 
-    def chat(self, ident, messages):
+    def stream(self, ident, messages, state):
+        return self.chat(ident, messages, state)
+
+    def chat(self, ident, messages, state=None):
         ident, _, selected = ident.partition(':')
         p = self.read().get(ident)
         if not p:
@@ -156,8 +159,43 @@ class Providers:
             body = {'model': model, 'messages': msgs, 'stream': False}
         base = p['base'].rstrip('/')
         url = base if base.endswith('/' + endpoint) else base + '/' + endpoint
+        if state is not None:
+            body['stream'] = True
         req = urllib.request.Request(url, data=json.dumps(body).encode(), headers=headers)
         with urllib.request.urlopen(req, timeout=180) as response:
+            if state is not None:
+                for raw in response:
+                    line = raw.decode('utf-8', 'replace').strip()
+                    if not line.startswith('data:'):
+                        continue
+                    data = line[5:].strip()
+                    if data == '[DONE]':
+                        break
+                    event = json.loads(data)
+                    if event.get('error') or event.get('type') == 'error':
+                        raise ValueError(str(event.get('error', 'Provider stream failed')))
+                    if protocol == 'anthropic':
+                        delta = event.get('delta') or {}
+                        state['r'] += delta.get('thinking', '')
+                        state['c'] += delta.get('text', '')
+                        if delta.get('stop_reason') == 'max_tokens':
+                            state['finish'] = 'length'
+                    elif protocol == 'responses':
+                        kind = event.get('type', '')
+                        if kind == 'response.output_text.delta':
+                            state['c'] += event.get('delta', '')
+                        elif kind in ('response.reasoning_summary_text.delta', 'response.reasoning_text.delta'):
+                            state['r'] += event.get('delta', '')
+                        elif kind in ('response.failed', 'response.incomplete'):
+                            raise ValueError('Provider response did not complete')
+                    else:
+                        for choice in event.get('choices', []):
+                            delta = choice.get('delta') or {}
+                            state['r'] += delta.get('reasoning_content') or delta.get('reasoning') or ''
+                            state['c'] += delta.get('content') or ''
+                            if choice.get('finish_reason'):
+                                state['finish'] = choice['finish_reason']
+                return
             result = json.load(response)
         if protocol == 'anthropic':
             text = '\n'.join(b.get('text', '') for b in result.get('content', []) if b.get('type') == 'text')

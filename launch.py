@@ -832,7 +832,25 @@ class Api:
 
     def ai_stream(self, messages_json, model=""):
         if model.startswith('profile:'):
-            return {'ok': False, 'error': 'This connection uses the complete-response API.'}
+            tok = os.urandom(8).hex()
+            st = {'r': '', 'c': '', 'done': False, 'error': '', 'model': model}
+            with _STREAM_LOCK:
+                _STREAM[tok] = st
+                if len(_STREAM) > 12:
+                    _STREAM.pop(next(iter(_STREAM)), None)
+
+            def profile_run():
+                try:
+                    _providers().stream(model[8:], json.loads(messages_json), st)
+                    if not st['c'].strip():
+                        st['error'] = 'The provider sent no answer text.'
+                except Exception as e:
+                    st['error'] = str(e)[:300]
+                finally:
+                    st['done'] = True
+
+            threading.Thread(target=profile_run, daemon=True).start()
+            return {'ok': True, 'token': tok, 'model': model}
         """Start a streamed reply and return a token the page polls.
 
         The page cannot hold an HTTP stream open through the bridge, so the request runs in a

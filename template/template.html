@@ -74,7 +74,7 @@ body.ra-on #rabar{display:flex}
   border:1.5px solid var(--ctl);border-radius:3px;cursor:pointer}
 #rt #hpop button:hover,#hpop button:hover{border-color:var(--acc);transform:none}
 #rabar #rav{height:28px;max-width:190px;min-width:0;border:1px solid var(--ctl);border-radius:6px;background:var(--bg);color:var(--ink);font:inherit;font-size:12px;padding:0 4px;cursor:pointer}#rd .pg{position:relative;margin:6px auto;background:#fff}#rd canvas{display:block}.textLayer{position:absolute;inset:0;overflow:hidden;line-height:1;z-index:2}
-#rd .pg{isolation:isolate}.hl{position:absolute;z-index:1;mix-blend-mode:multiply;background:var(--hc);pointer-events:none}.hl.on{outline:2px solid var(--acc);outline-offset:-2px}.qm{position:absolute;z-index:1;pointer-events:none;outline:1px solid color-mix(in srgb,var(--acc) 55%,transparent);outline-offset:2px;background:transparent}
+#rd .pg{isolation:isolate}.hl{position:absolute;z-index:1;mix-blend-mode:multiply;background:var(--hc);pointer-events:none}.hl.on{outline:2px solid var(--acc);outline-offset:-2px}.qm{position:absolute;z-index:1;pointer-events:none;outline:2px solid var(--acc);outline-offset:1px;background:rgba(255,140,0,.28)}
 #rt{display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:0 6px 6px}#rt[hidden]{display:none}
 #rt button{padding:4px 10px;border:1px solid var(--ctl);border-radius:4px;background:var(--bg);color:var(--ink);font:inherit;cursor:pointer}
 #hs{gap:4px}.sw{display:inline-flex;gap:6px;align-items:center}.sw button{width:22px;height:22px;padding:0;border:2px solid var(--ctl);border-radius:50%;cursor:pointer}#rt .sw button{width:14px;height:14px;min-width:14px;min-height:14px;padding:0;border-width:1.5px;box-sizing:border-box;border-radius:3px}
@@ -3585,7 +3585,7 @@ function paintReadingTabs(active){
 window.showPdf=async(id,pg)=>{if(!id)return;
  if(!readingTabs.includes(id))readingTabs.push(id);paintReadingTabs(id);  // the dropdown starts on "(pick a reading)"; loading pdf/.pdf only 404s
  try{store.set("cv:lastreading",id)}catch(e){}  // reopened at the next start
- if(s.value!==id){if(![...s.options].some(o=>o.value===id)){const x=DATA.sources.find(q=>q.id===id);s.insertAdjacentHTML("beforeend",`<option value="${esc(id)}">${esc(x?x.title:id)}</option>`)}s.value=id;drawLib()}  // a reading outside the chosen collection has no option: add one, or the dropdown keeps naming the old reading  // a card click opens the reading: the dropdown must name it (set directly: a change event would start a second load)
+ if(s.value!==id){if(![...s.options].some(o=>o.value===id)){const x=DATA.sources.find(q=>q.id===id);s.insertAdjacentHTML("beforeend",`<option value="${esc(id)}">${esc(x?x.title:id)}</option>`)}s.value=id;drawLib();if(document.body.classList.contains("rtai"))aiLogSync()}  // a reading outside the chosen collection has no option: add one, or the dropdown keeps naming the old reading  // a card click opens the reading: the dropdown must name it (set directly: a change event would start a second load)
  if(!window.pdfjsLib){lpn.className="warn";lpn.textContent="The reader files are missing: lib/pdf.min.js is not next to the page. The PDF opens in a plain frame until it is restored.";fallback(id,pg);return}  // no CDN to fall back on
  if(pg==null){try{pg=(JSON.parse(localStorage.getItem("cv:lastpg")||"{}"))[id]||null}catch(e){}}  // resume where the user left off
  if(pg!=null){pg=Math.max(1,+pg||1)}  // the clamp to numPages happens after the document loads
@@ -3606,7 +3606,7 @@ const capture=(q,pg,rs,hg)=>{if(rs&&rs[0]&&!rs[0].t)rs[0].t=q;q=(q||"").replace(
  if(!_it||!inCol(_it.col,_cc)){window.toast("That reading is outside the category you selected.");return}
  const c={id:"u"+Date.now(),src,srcTitle:DATA.sources.find(x=>x.id===src).title,quote:q,gist:"",role:"OTHER",pathway:[],direction:"",status:"user",own_claim:true};norm(c);if(pg){c.pdf_page=[pg];c.cite_page=String(pg)}if(hg)c.hg=hg;else if(rs&&rs.length&&cur===src)c.hg=mark("y",rs);all.push(c);ED.a.push(c);sel=src+c.id;saveED();if(!pass(c))showNewClaim(c);else refresh();const e=[...document.querySelectorAll("#list .card")].find(z=>z.dataset.k===kc(c));if(e)e.scrollIntoView({block:"center"});toast("Claim added"+(pg?" (p."+pg+")":"")+": "+q.slice(0,60));if(hg&&pg)window.healClaim(c,pg)};
 // ---- right pane: PDF or the DeepSeek chat. The chat is fed by the PDF's right-click menu.
-const AI={busy:false,hist:{},docs:{}};
+const AI={busy:false,hist:{},docs:{},logs:{}};
 // The chat is kept per reading, so closing the app no longer throws the conversation away. It is
 // capped so localStorage stays small: the last 20 messages per reading, the last 12 readings.
 // The chat is kept per reading, and the whole conversation is kept: the quotes and passages in it
@@ -3626,11 +3626,12 @@ const aiDoc=async id=>{if(AI.docs[id])return AI.docs[id];
   if(!await ready())throw new Error("the reader files are missing (lib/pdf.min.js)");
   const buf=await bytes(id);if(!buf)throw new Error("PDF not found in the pdf folder");
   const doc=await pdfjsLib.getDocument({data:new Uint8Array(buf.slice(0))}).promise;
-  for(const k in AI.docs)if(k!==id){try{AI.docs[k].destroy()}catch(e){}delete AI.docs[k]}  // one reading at a time: a cached book holds its pages in memory
+  for(const k in AI.docs)if(k!==id&&k!==AI.pendingId){try{AI.docs[k].destroy()}catch(e){}delete AI.docs[k]}  // one reading at a time: a cached book holds its pages in memory
   return AI.docs[id]=doc};
 const aiPageText=async(doc,n)=>{const tc=await(await doc.getPage(n)).getTextContent();
   return tc.items.map(i=>i.hasEOL&&/\w-$/.test(i.str)?i.str.slice(0,-1):i.str+(i.hasEOL?" ":"")).join("").replace(/\s+/g," ")};
-const aiLine=(cls,txt)=>{const d=document.createElement("div");d.className="aim "+cls;d.textContent=txt;const L=$("ailog");if(L){L.appendChild(d);L.scrollTop=L.scrollHeight}aiClearBtn();return d};
+const aiLine=(cls,txt,id=aiId())=>{const d=document.createElement("div");d.className="aim "+cls;d.textContent=txt;
+  const remove=d.remove.bind(d);d.remove=()=>{d._removed=true;remove()};(AI.logs[id]||(AI.logs[id]=[])).push(d);const L=$("ailog");if(L&&aiId()===id){L.appendChild(d);L.scrollTop=L.scrollHeight}aiClearBtn();return d};
 // Follow the newest content, but never yank the reader who scrolled up to re-read something.
 const aiPin=()=>{const L=$("ailog");if(!L)return;if(L.scrollHeight-L.scrollTop-L.clientHeight<140)L.scrollTop=L.scrollHeight};
 // Provider-supplied reasoning and visible request status, retained beside the answer.
@@ -3641,7 +3642,7 @@ const aiThinkNew=box=>{const det=document.createElement("details");det.className
   const dots=document.createElement("span");dots.className="aith-d";dots.innerHTML="<i>.</i><i>.</i><i>.</i>";
   const num=document.createElement("span");num.className="aith-n";
   sum.append(lab,dots,num);
-  const pre=document.createElement("div");pre.textContent="Waiting for the provider. Reasoning is shown when the model returns it.";det.append(sum,pre);box.append(det);
+  const pre=document.createElement("div");pre.textContent="Waiting for a response…";det.append(sum,pre);box.append(det);
   det._lab=lab;det._dots=dots;det._num=num;det._pre=pre;det._t0=performance.now();return det};
 const aiThinkTick=det=>{if(!det||det._done||!det._num)return;const s=Math.round((performance.now()-det._t0)/1000);
   if(det._secs!==s){det._secs=s;det._num.textContent=" "+s+"s"}};
@@ -3660,16 +3661,17 @@ const aiStatus=async()=>{const box=$("aikeybox");if(!box)return;
   try{const s=await pywebview.api.ai_status();box.hidden=!!s.has_key;if(s.has_key)aiModels()}catch(e){box.hidden=false;$("aikeyms").textContent=e.message}
 };
 const aiLogSync=async()=>{const id=aiId();if(!id||AI.logId===id)return;AI.logId=id;
-  const L=$("ailog");if(L)L.innerHTML="";
-  const H=histOf(id);if(!H.length){aiClearBtn();return}
-  const D=await aiLoad();
+  const L=$("ailog");if(L)L.replaceChildren(...(AI.logs[id]||[]).filter(d=>!d._removed));
+  if(AI.logs[id]){aiClearBtn();return}
+  AI.logs[id]=[];const H=histOf(id);if(!H.length){aiClearBtn();return}
+  const D=await aiLoad();if(aiId()!==id)return;
   for(const m of H){if(m.role==="user")aiLine("me",m.content);
     else if(D){const box=aiLine("bot","");aiThink(box,m.reasoning||"This model did not return a reasoning summary.",m.secs);aiCite(box,m.content,D);aiPin()}}
   aiClearBtn()};  // each PDF shows its own conversation
 const rtab=name=>{const ai=name==="ai";document.body.classList.toggle("rtai",ai);
   document.querySelectorAll(".rtabs [data-rt]").forEach(b=>{const on=b.dataset.rt===name;b.classList.toggle("on",on);b.setAttribute("aria-selected",on)});
   try{store.set("cv:rtab",name)}catch(e){}
-  if(ai){aiStatus();aiLoad().then(()=>aiLogSync());aiClearBtn()}else if(cur&&!docC)showPdf(cur)};  // back on the PDF tab: a reading picked inside the chat still needs rendering
+  if(ai){aiStatus();aiLogSync();aiClearBtn()}else if(cur&&!docC)showPdf(cur)};  // back on the PDF tab: a reading picked inside the chat still needs rendering
 const aiModels=async()=>{const sel=$("aimodel");if(!sel||!(window.pywebview&&pywebview.api&&pywebview.api.ai_models))return;
   let r=null;try{r=await pywebview.api.ai_models()}catch(e){return}
   const ids=(r&&r.ok&&Array.isArray(r.models))?r.models:[];if(!ids.length){if(sel.value.startsWith('profile:'))sel.replaceChildren();return}
@@ -3700,8 +3702,8 @@ const aiModels=async()=>{const sel=$("aimodel");if(!sel||!(window.pywebview&&pyw
   try{store.set("cv:aimodel",sel.value)}catch(e){}
 };
 // The open reading is the context: every page's text, tagged [p.N], goes in the user turn and the answer cites it back.
-const aiRead=async id=>{const doc=await aiDoc(id),N=doc.numPages,pg=[],note=aiLine("sys","Reading the PDF\u2026");
-  for(let n=1;n<=N;n++){pg.push(await aiPageText(doc,n));if(aiId()!==id){note.remove();return null}}
+const aiRead=async id=>{const doc=await aiDoc(id),N=doc.numPages,pg=[],note=aiLine("sys","Reading the PDF\u2026",id);
+  for(let n=1;n<=N;n++){pg.push(await aiPageText(doc,n));}
   note.remove();let text="",used=0;
   const sents=x=>{const out=[];const re=/[^.!?\n]+[.!?]+|\S[^.!?\n]*$/g;let m;while((m=re.exec(x))){const t=m[0].trim();if(t)out.push(t)}return out};
   for(;used<N;used++){const ss=sents(pg[used]);text+="[p."+(used+1)+"] "+ss.map((t,i)=>"(s."+(i+1)+") "+t).join(" ")+"\n\n"}  // every page, no cut: a long book is the point
@@ -3948,10 +3950,11 @@ window.__aiTrace=aiTrace;
 const aiSend=async text=>{text=String(text||"").trim();if(!text||AI.busy)return;
   if(!(window.pywebview&&pywebview.api&&pywebview.api.ai_chat)){aiLine("err","The chat needs the app window.");return}
   const id0=aiId();if(!id0){aiLine("err","Pick a reading in the PDF tab first, or click a reading on the left.");return}
-  AI.busy=true;$("aisend").disabled=true;aiLine("me",text);
-  const wait=aiLine("bot","Preparing PDF\u2026");let box=null;
+  AI.pendingId=id0;AI.logId=id0;const line=(cls,txt)=>aiLine(cls,txt,id0);
+  const me={role:"user",content:text};histOf(id0).push(me);aiSave();
+  AI.busy=true;$("aisend").disabled=true;line("me",text);
+  const wait=line("bot","Preparing PDF\u2026");let box=null;
   try{const D=await aiLoad();if(!D){if(aiId()!==id0){wait.remove();AI.busy=false;$("aisend").disabled=false;return}throw new Error("could not read that PDF")}  // the reading changed during the read: end quietly
-    const me={role:"user",content:text};  // joins the history only when the answer arrives
     let sys="You help a researcher understand the PDF supplied in <pdf> tags, with [p.N] page blocks. Answer the question directly in the first paragraph. Then explain the reasoning in short connected paragraphs, using a few descriptive headings only when helpful. Use lists for parallel examples or steps. Distinguish the author's argument from your interpretation. Explain unfamiliar terms and identify limitations or counterarguments supported by the text. Do not invent missing evidence. Cite each substantive source-based point immediately with [p.N: \"an exact excerpt from that page\"], at most 30 words. Use PDF page numbers starting at 1. Cite only pages supplied to you. Say when the supplied text cannot answer the question. Do not claim to have read pages absent from the context. Avoid repetitive summaries and artificial labels on every sentence.";
     // A long book does not fit in one prompt, and cutting the tail off means the answer can never cite
     // the pages that matter. Rank the [p.N] blocks by how much of the question they carry and send the
@@ -3979,7 +3982,7 @@ const aiSend=async text=>{text=String(text||"").trim();if(!text||AI.busy)return;
     const model=(sel&&opts.includes(sel.value))?sel.value:(opts[0]||"");
     // Streamed: the model's thinking shows while it works, then the answer is rendered as usual.
     // An older exe has no stream methods, so the one-shot call stays as the fallback.
-    const history=histOf(id0).slice(-10).map(({role,content})=>({role,content}));
+    const history=histOf(id0).slice(0,-1).slice(-10).map(({role,content})=>({role,content}));
     const msgs=JSON.stringify([{role:"system",content:sys}].concat(history,withPdf));
     let r=null;
     // A book too large for one request is answered in parts, then joined: every page is still read,
@@ -4008,15 +4011,16 @@ const aiSend=async text=>{text=String(text||"").trim();if(!text||AI.busy)return;
     if(!r&&pywebview.api.ai_stream&&pywebview.api.ai_stream_poll){
       const st=await pywebview.api.ai_stream(msgs,model);
       if(st&&st.ok&&st.token){
-        wait.remove();box=aiLine("bot","");
+        wait.remove();box=line("bot","");
         const det=aiThinkNew(box),pre=det._pre;
+        const draft=document.createElement("div");draft.style.whiteSpace="pre-wrap";box.append(draft);
         let think="",out="",err="";
         for(let n=0;n<3000;n++){
           const p=await pywebview.api.ai_stream_poll(st.token);
           if(!p||!p.ok){err=(p&&p.error)||"the stream stopped";break}
           if(p.r&&p.r!==think){think=p.r;pre.textContent=think;aiPin()}
           aiThinkTick(det);
-          if(p.c)out=p.c;
+          if(p.c){out=p.c;draft.textContent=out;det._lab.textContent="Writing";aiPin()}
           if(p.error)err=p.error;
           if(p.done)break;
           await new Promise(g=>setTimeout(g,150));
@@ -4055,12 +4059,12 @@ const aiSend=async text=>{text=String(text||"").trim();if(!text||AI.busy)return;
             if(t2)think=think?think+"\n\n"+t2:t2;
             aiThinkTick(det);
           }
-          pre.textContent=think||"This model did not return a reasoning summary.";
+          draft.remove();pre.textContent=think||"This model did not return a reasoning summary.";
           const secs=Math.max(1,Math.round((performance.now()-det._t0)/1000));r={ok:true,text:out,reasoning:think,secs};aiThinkDone(det,secs)
         }
       }
     }
-    if(!r){wait.remove();box=box||aiLine("bot","");const det=box.querySelector(".aithink")||aiThinkNew(box);
+    if(!r){wait.remove();box=box||line("bot","");const det=box.querySelector(".aithink")||aiThinkNew(box);
       const timer=setInterval(()=>aiThinkTick(det),1000);
       try{r=await pywebview.api.ai_chat(msgs,model);if(r)r.secs=Math.max(1,Math.round((performance.now()-det._t0)/1000));
         det._pre.textContent=r?.reasoning||"This model did not return a reasoning summary.";aiThinkDone(det,r?.secs||0)
@@ -4068,26 +4072,24 @@ const aiSend=async text=>{text=String(text||"").trim();if(!text||AI.busy)return;
     // the reply is here, but the answer is not ready: aiTrace asks the model again for every
     // uncited point. Clearing the indicator here left the pane blank for that whole stretch, so
     // it stays up until the rendered answer replaces it.
-    if(aiId()!==id0){(box||wait).remove()}  // the reading changed while the reply was pending: drop it
-    else if(r&&r.ok){
+    if(r&&r.ok){
       let text2=r.text||"";
-      if(wait.isConnected)wait.textContent="Writing\u2026";
+      if(box){const label=box.querySelector("summary span");if(label)label.textContent="Writing…"}else wait.textContent="Writing…";
       const checking=document.createElement("p");checking.textContent="Checking citations\u2026";if(box)box.append(checking);
       try{text2=await aiTrace(text2,D)}catch(e2){}
       checking.remove();
       wait.remove();
       // An empty answer is a failure: keep the thinking (it is real work), drop the empty bubble,
       // say what happened, and store nothing, so a follow-up cannot inherit an empty reply.
-      if(!String(text2||"").trim()){if(box)box.remove();aiLine("err","The model thought but wrote no answer ("+(r.reasoning?Math.round(r.reasoning.length/1000)+"k characters of reasoning":"no text")+"). Ask again, or ask about a shorter passage.")}
-      else if(aiId()!==id0){if(box)box.remove()}
-      else{const b=box||aiLine("bot","");if(!box)aiThink(b,r.reasoning||"This model did not return a reasoning summary.",r.secs);aiCite(b,text2,D);aiStrong(b);aiPin();
-        const H=histOf(id0);H.push(me,{role:"assistant",content:text2,reasoning:r.reasoning||"",secs:r.secs||0});aiSave()}
+      if(!String(text2||"").trim()){if(box)box.remove();line("err","The model thought but wrote no answer ("+(r.reasoning?Math.round(r.reasoning.length/1000)+"k characters of reasoning":"no text")+"). Ask again, or ask about a shorter passage.")}
+      else{const b=box||line("bot","");if(!box)aiThink(b,r.reasoning||"This model did not return a reasoning summary.",r.secs);aiCite(b,text2,D);const label=b.querySelector("summary span");if(label)label.textContent="Thinking";aiStrong(b);aiPin();
+        const H=histOf(id0);H.push({role:"assistant",content:text2,reasoning:r.reasoning||"",secs:r.secs||0});aiSave()}
     }
-    else{if(box)box.remove();wait.remove();aiLine("err","AI error: "+((r&&r.error)||"no answer"))}
-  }catch(e){if(box)box.remove();wait.remove();aiLine("err","AI error: "+((e&&e.message)||e))}
-  AI.busy=false;$("aisend").disabled=false};
+    else{if(box)box.remove();wait.remove();line("err","AI error: "+((r&&r.error)||"no answer"))}
+  }catch(e){if(box)box.remove();wait.remove();line("err","AI error: "+((e&&e.message)||e))}
+  AI.pendingId=null;AI.busy=false;$("aisend").disabled=false};
 const aiAsk=(q,pg)=>{rtab("ai");aiSend("Explain this passage"+(pg?" from page "+pg:"")+":\n\n\u201c"+q+"\u201d")};
-const aiClear=()=>{const L=$("ailog");if(L)L.innerHTML="";AI.hist[aiId()]=[];aiSave();aiClearBtn()};  // clears only this PDF's chat
+const aiClear=()=>{const L=$("ailog");if(L)L.innerHTML="";AI.hist[aiId()]=[];AI.logs[aiId()]=[];aiSave();aiClearBtn()};  // clears only this PDF's chat
 const aiClearBtn=()=>{const b=$("aiclear");if(b)b.hidden=!($("ailog")&&$("ailog").children.length)};
 window.__aiClearBtn=aiClearBtn;window.__aiLine=aiLine;window.__aiClear=aiClear;
 window.__aiLoad=aiLoad;window.__aiCite=aiCite;window.__aiGo=aiGo;window.__aiHist=()=>AI.hist;window.__aiDeSlop=aiDeSlop;

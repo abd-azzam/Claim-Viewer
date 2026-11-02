@@ -2,7 +2,7 @@
 ; Needs dist\ClaimViewer.exe, dist\index.html (the empty reader page) and dist\lib first.
 ; tools/build-release.ps1 builds, verifies and stages the distribution.
 #define AppName "Claim Viewer"
-#define AppVersion "2.6.0"
+#define AppVersion "2.6.1"
 ; A page holding someone's claims is ~6 MB; the empty reader page is ~200 KB.
 ; This refuses to package a page that big, whatever ran before ISCC.
 #if FileExists("dist\index.html")
