@@ -4,13 +4,19 @@ import fs from "node:fs";
 import path from "node:path";
 const [PORT, DIR] = process.argv.slice(2), QUICK = process.argv.includes("--quick");
 const sleep = ms => new Promise(r => setTimeout(r, ms));
-const out = (name, ok, detail = "", sev = "MED", skip = false) =>
+let lastCheck = "(none yet)";
+const out = (name, ok, detail = "", sev = "MED", skip = false) => {
+  lastCheck = name;
   console.log("CHK\t" + JSON.stringify({ name, ok, detail: String(detail).slice(0, 700), sev, skip }));
+};
 const SKIP = (name, why) => out(name, true, why, "", true);
 
 const page = (await (await fetch(`http://127.0.0.1:${PORT}/json`)).json()).find(t => t.type === "page" && t.url.startsWith("file:"));
 const ws = new WebSocket(page.webSocketDebuggerUrl);
 await new Promise(r => (ws.onopen = r));
+// an unplanned close (page or window crashed) would leave an await pending forever and node would exit with only a warning
+let planned = false;
+ws.onclose = () => { if (!planned) { out("app window stayed alive through the UI run", false, "the CDP socket closed before the last check: the window or its renderer died", "HIGH"); process.exit(0); } };
 let id = 0, errs = [];
 const pend = new Map(), reqs = new Map();
 ws.onmessage = m => {
@@ -24,6 +30,11 @@ ws.onmessage = m => {
 const send = (method, params = {}) => new Promise(r => { const i = ++id; pend.set(i, r); ws.send(JSON.stringify({ id: i, method, params })); });
 // run a real function inside the page; args are JSON
 const ev = async (fn, ...a) => {
+  // a step that never answers (page timers frozen, renderer stuck) is reported with the step's own text, not as a bare 7-minute timeout
+  const hung = setTimeout(() => { out("a UI step hung for 90 s", false, `after check "${lastCheck}", step: ${String(fn).replace(/\s+/g, " ").slice(0, 160)}`, "HIGH"); process.exit(0); }, 90000);
+  try { return await ev0(fn, ...a); } finally { clearTimeout(hung); }
+};
+const ev0 = async (fn, ...a) => {
   const r = await send("Runtime.evaluate", { expression: `(${fn})(...${JSON.stringify(a)})`, returnByValue: true, awaitPromise: true });
   if (r.error) throw new Error(r.error.message);
   const x = r.result.exceptionDetails;
@@ -55,6 +66,8 @@ const domCheck = async label => {
   out(`no undefined / NaN / [object Object] on screen (${label})`, !d.bad.length, d.bad.join(", "), "LOW");
 };
 const has = sel => ev(s => !!document.querySelector(s), sel);
+// a card outside the rendered chunk of the list cannot be clicked: open it through the same function the click calls
+const pick = k => ev(k => { const c = [...document.querySelectorAll(".card")].find(c => c.dataset.k === k); if (c) { c.scrollIntoView({ block: "center" }); c.click(); } else { const [s, i] = k.split("\u0001"); open_(s, i); } }, k);
 
 await Promise.all(["Runtime", "Log", "Network", "Page", "Performance"].map(d => send(d + ".enable")));
 const orig = fs.readFileSync(path.join(DIR, "library.json"), "utf8");
@@ -62,7 +75,7 @@ const orig = fs.readFileSync(path.join(DIR, "library.json"), "utf8");
 // ---- load
 const t0 = await reload();
 out("page shows claim cards and raises no errors on load", t0 > 0 && !take().length || false, t0 < 0 ? "no .card within 20 s" : "see below", t0 < 0 ? "HIGH" : "MED");
-if (t0 < 0) { ws.close(); process.exit(0); }
+if (t0 < 0) { planned = true; ws.close(); process.exit(0); }
 // the line above drained errs; re-run load once more to report their text
 { const t = await reload(); const e = take(); if (e.length) out("load errors (text)", false, e.join(" | ")); out("first card within 5 s", t <= 5000, `${t} ms`, "MED"); }
 const heap = (await send("Performance.getMetrics")).result.metrics.find(m => m.name === "JSHeapUsedSize").value / 1e6;
@@ -143,6 +156,48 @@ for (let i = 0; i < 25; i++) {
 out(`click ${keys.length} cards: one selected each, no errors`, keys.length >= 15 && !bad.length && !take().length, bad.join("; "));
 if (paneOk !== null) out("PDF pane builds page boxes after a card click", !!paneOk, "#rd .pg never appeared in 5 s");
 else SKIP("PDF pane", "#rd not found");
+// a click must show WHICH reading (dropdown) and WHERE in it (outline block on the quote), for readings from different sources
+if (paneOk) {
+  const seen = new Set(), dd = [], qm = [];
+  for (const k of keys) {
+    const s = k.split("\u0001")[0];
+    if (seen.has(s) || seen.size >= 4) continue;
+    seen.add(s);
+    await pick(k);
+    const r = await ev(async k => {
+      const [s, id] = k.split("\u0001"), c = all.find(x => x.src === s && x.id === id);
+      let ok = false, q = 0;
+      for (let w = 0; w < 40; w++) {
+        await new Promise(r => setTimeout(r, 150));
+        ok = document.getElementById("pdfsel").value === s; q = document.querySelectorAll("#rd .qm").length;
+        if (ok && (q || !(c && c.status === "exact" && !c.hg && c.pdf_page && c.pdf_page.length))) break;
+      }
+      return { ok, q, exact: !!(c && c.status === "exact" && !c.hg && c.pdf_page && c.pdf_page.length), have: document.getElementById("pdfsel").value };
+    }, k);
+    if (!r.ok) dd.push(`${s.slice(0, 20)} -> dropdown shows ${String(r.have).slice(0, 20)}`);
+    if (r.exact && !r.q) qm.push(s.slice(0, 20));
+  }
+  out("PDF dropdown names the clicked reading", seen.size > 0 && !dd.length, dd.join("; "));
+  out("an exact claim gets an outline block on its quote", !qm.length, "no .qm after 6 s for: " + qm.join(", "));
+}
+// regression: a collection filter hides the readings outside it from the dropdown, yet a claim from one of them must still name its reading
+if (await has("#col") && await has("#pdfsel")) {
+  const plan = await ev(() => { for (const v of [...document.getElementById("col").options].map(o => o.value).filter(Boolean))
+    for (const s of DATA.sources) { if (inCol(s.col, v)) continue; const c = all.find(x => x.src === s.id && !x.del && x.status === "exact" && x.pdf_page && x.pdf_page.length); if (c) return { v, s: s.id, t: s.title, id: c.id }; } return null; });
+  if (!plan) SKIP("out-of-collection claim names its reading", "no collection excludes a reading that has an exact claim");
+  else {
+    const r = await ev(async p => {
+      const col = document.getElementById("col"), sleep = ms => new Promise(r => setTimeout(r, ms));
+      col.value = p.v; col.dispatchEvent(new Event("change", { bubbles: true })); await sleep(900);
+      open_(p.s, p.id);
+      let v = "", t = "";
+      for (let w = 0; w < 30 && v !== p.s; w++) { await sleep(200); const s = document.getElementById("pdfsel"); v = s.value; t = s.options[s.selectedIndex]?.text || ""; }
+      col.value = ""; col.dispatchEvent(new Event("change", { bubbles: true })); await sleep(900);
+      return { v, t };
+    }, plan);
+    out("out-of-collection claim names its reading in the dropdown", r.v === plan.s && r.t === plan.t, `collection ${plan.v}, claim of ${plan.s}: dropdown shows "${String(r.v).slice(0, 30)}"`);
+  }
+}
 await ev(async ks => { for (const k of ks.slice(0, 15)) { const c = [...document.querySelectorAll(".card")].find(c => c.dataset.k === k); c?.click(); } }, keys); // no waits: stress the load-token logic
 await sleep(2500);
 out("15 rapid card clicks: one selected, no errors", (await ev(() => document.querySelectorAll(".card.sel").length)) === 1 && !take().length, "");
@@ -189,8 +244,8 @@ if (await has(".card.sel [data-g]")) {
   const g = await ev(() => ({ on: document.body.classList.contains("graph"), sz: [...document.querySelectorAll("#gv svg, #gv canvas, svg")].map(e => e.getBoundingClientRect().width * e.getBoundingClientRect().height).sort((a, b) => b - a)[0] || 0 }));
   await domCheck("graph");
   out("graph view opens and draws", g.on && g.sz > 1000 && !take().length, JSON.stringify(g), "HIGH");
-  if (await has("#gb")) { await ev(() => document.getElementById("gb").click()); await sleep(500); out("Back to list leaves the graph", !(await ev(() => document.body.classList.contains("graph"))), ""); }
-  else out("Back to list button exists in graph view", false, "#gb missing");
+  if (await has("[data-gb]")) { await ev(() => document.querySelector("[data-gb]").click()); await sleep(500); out("Back to list leaves the graph", !(await ev(() => document.body.classList.contains("graph"))), ""); }
+  else out("Back to list button exists in graph view", false, "[data-gb] missing");
 } else SKIP("graph", "no [data-g] on a selected card");
 
 // ---- widths
@@ -260,5 +315,6 @@ else {
   }
   await ev(() => localStorage.clear());
 }
+planned = true;
 ws.close();
 process.exit(0);

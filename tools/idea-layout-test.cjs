@@ -1,0 +1,11 @@
+const fs=require('fs'),vm=require('vm'),assert=require('assert/strict');
+const ctx=vm.createContext({console,Map,Math,Number,JSON});vm.runInContext(fs.readFileSync('C:/Apps/ClaimViewer/lib/idea-layout.js','utf8'),ctx);
+const groups=new Map(Array.from({length:16},(_,g)=>['group'+g,Array.from({length:12},(_,n)=>`${g}-${n}`)]));
+const links=[['0-0','1-0'],['0-1','0-2']];const t=performance.now(),p=ctx.layoutIdeas(groups,links,{}),b=ctx.ideaBounds(p,[...p.keys()]);
+assert.equal(p.size,192);assert.ok((b[2]-b[0])/(b[3]-b[1])<3,'Clusters wrap instead of extending in one row');
+assert.deepEqual([...p], [...ctx.layoutIdeas(groups,links,{})],'Stable initial layout');
+const saved=Object.fromEntries(p);saved['0-0']=[-40,555];const q=ctx.layoutIdeas(groups,links,saved);assert.deepEqual([...q.get('0-0')],[-40,555]);
+assert.deepEqual([...q], [...ctx.layoutIdeas(groups,links,saved)],'Saved positions stay fixed across redraw');
+const large=new Map(Array.from({length:20},(_,g)=>['g'+g,Array.from({length:50},(_,n)=>`${g}:${n}`)]));
+const largeStart=performance.now();assert.equal(ctx.layoutIdeas(large,[],{}).size,1000);
+console.log(`5 compact-layout checks passed; 1000-node settle ${Math.round(performance.now()-largeStart)} ms; total ${Math.round(performance.now()-t)} ms.`);

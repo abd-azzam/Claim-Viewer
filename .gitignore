@@ -1,25 +1,52 @@
+# Build output and staged distributions
+dist/
 build/
 release/*
+!release/ClaimViewer.spec
 !release/ClaimViewer-Setup-*.exe
-reader/pdf/*.pdf
-*.pyc
-# optional claims pipeline (verify.py, build.py): your research data and PDFs stay out of git
-/index.html
-/pdf/
-/papers/
-/claims/
-/sources.json
-/overrides.json
-/vocab.json
-# build output and local backups
-dist/
-*.bak
-/data/
-/library.json
-# per-user reading positions, written by the app
-last-pages.json
-# OCR text per reading, written by the app
-ocr.json
+!release/ClaimViewer-Setup-*.exe.sha256
 
-# DeepSeek key for the Ask AI tab
-ai.json
+# Local backups and the previous page kept by the updater
+*.bak
+*.bak-*
+*.before-*
+*.previous
+
+# The built page holds somebody's claims, so it stays out of git
+/index.html
+/index.html.previous
+
+# Account data written by the app
+/library.json
+/sources.js
+/state.js
+/state.json
+/ai.json
+/providers.json
+/last-pages.json
+/ocr.json
+/perf.log
+/pdf/
+/data/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Word component: credentials, logs and generated catalog state
+word/localhost*.pem
+word/localhost*.cer
+word/*.log
+word/catalog/
+word/catalog-config.json
+word/manifest.xml
+word/service-config.json
+word/manifest-acl-backup.txt
+word/coordination-status.txt
+word/verification.txt
+
+# Test artefacts
+tools/*.log
+tools/*-result*.json
+tools/*.txt

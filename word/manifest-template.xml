@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<OfficeApp xmlns="http://schemas.microsoft.com/office/appforoffice/1.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bt="http://schemas.microsoft.com/office/officeappbasictypes/1.0" xsi:type="TaskPaneApp">
+ <Id>b1a3d266-67e6-4232-a98b-7935cda2930c</Id><Version>1.0.0.0</Version><ProviderName>Claim Viewer</ProviderName><DefaultLocale>en-US</DefaultLocale>
+ <DisplayName DefaultValue="Claim Viewer citations"/><Description DefaultValue="Insert library citations, page locators and bibliographies directly in Word."/>
+ <IconUrl DefaultValue="https://localhost:38491/word/icon-32.png"/><SupportUrl DefaultValue="https://localhost:38491/health"/>
+ <AppDomains><AppDomain>https://localhost:38491</AppDomain></AppDomains><Hosts><Host Name="Document"/></Hosts>
+ <Requirements><Sets DefaultMinVersion="1.1"><Set Name="WordApi"/></Sets></Requirements>
+ <DefaultSettings><SourceLocation DefaultValue="https://localhost:38491/word/addin.html#token={{TOKEN}}"/></DefaultSettings><Permissions>ReadWriteDocument</Permissions>
+ <VersionOverrides xmlns="http://schemas.microsoft.com/office/taskpaneappversionoverrides" xsi:type="VersionOverridesV1_0">
+  <Hosts><Host xsi:type="Document"><DesktopFormFactor><GetStarted><Title resid="cv.title"/><Description resid="cv.description"/><LearnMoreUrl resid="cv.url"/></GetStarted><FunctionFile resid="cv.url"/>
+   <ExtensionPoint xsi:type="PrimaryCommandSurface"><CustomTab id="cv.tab"><Group id="cv.group"><Label resid="cv.title"/>
+    <Icon><bt:Image size="16" resid="cv.icon16"/><bt:Image size="32" resid="cv.icon32"/><bt:Image size="80" resid="cv.icon80"/></Icon>
+    <Control xsi:type="Button" id="cv.open"><Label resid="cv.button"/><Supertip><Title resid="cv.title"/><Description resid="cv.description"/></Supertip><Icon><bt:Image size="16" resid="cv.icon16"/><bt:Image size="32" resid="cv.icon32"/><bt:Image size="80" resid="cv.icon80"/></Icon><Action xsi:type="ShowTaskpane"><TaskpaneId>ClaimViewerCitations</TaskpaneId><SourceLocation resid="cv.url"/></Action></Control>
+   </Group><Label resid="cv.title"/></CustomTab></ExtensionPoint>
+  </DesktopFormFactor></Host></Hosts>
+  <Resources><bt:Images><bt:Image id="cv.icon16" DefaultValue="https://localhost:38491/word/icon-16.png"/><bt:Image id="cv.icon32" DefaultValue="https://localhost:38491/word/icon-32.png"/><bt:Image id="cv.icon80" DefaultValue="https://localhost:38491/word/icon-80.png"/></bt:Images><bt:Urls><bt:Url id="cv.url" DefaultValue="https://localhost:38491/word/addin.html#token={{TOKEN}}"/></bt:Urls><bt:ShortStrings><bt:String id="cv.title" DefaultValue="Claim Viewer"/><bt:String id="cv.button" DefaultValue="Insert citation"/></bt:ShortStrings><bt:LongStrings><bt:String id="cv.description" DefaultValue="Choose a library source, page locator, citation style and writing model inside Word."/></bt:LongStrings></Resources>
+ </VersionOverrides>
+</OfficeApp>

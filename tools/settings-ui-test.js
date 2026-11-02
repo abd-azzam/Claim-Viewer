@@ -1,0 +1,18 @@
+(async()=>{
+ const results=[],check=(name,ok)=>{results.push({name,ok:!!ok});if(!ok)throw Error(name)},q=s=>document.querySelector(s);
+ const wait=async fn=>{for(let i=0;i<100;i++){if(fn())return;await new Promise(r=>setTimeout(r,50))}throw Error('Timed out: '+fn)};
+ try{
+  await wait(()=>window.pywebview?.api?.report);
+  for(const mode of ['list','notes','graph','lib']){show(mode);const r=q('#cv-settings-button').getBoundingClientRect(),a=q('aside').getBoundingClientRect();check('Bottom-left settings visible in '+mode,r.width>0&&r.top>a.top+a.height*.65&&r.bottom<=a.bottom)}
+  q('#cv-settings-button').click();await wait(()=>q('.cv-settings h2'));check('Grouped settings dialog opens',q('.cv-settings nav').textContent.includes('INTEGRATIONS'));
+  await claimSettings('appearance');q('#settings-theme').value='dark';q('#settings-theme').dispatchEvent(new Event('change',{bubbles:true}));check('Appearance applies immediately',document.documentElement.dataset.theme==='dark');q('#settings-font').value='serif';q('#settings-font').dispatchEvent(new Event('change',{bubbles:true}));check('Font applies',document.body.style.fontFamily.includes('Georgia'));
+  for(const scale of ['80','125','100']){q('#settings-scale').value=scale;q('#settings-scale').dispatchEvent(new Event('change',{bubbles:true}));const r=q('.cv-settings').getBoundingClientRect();check('Dialog fits at '+scale+'%',r.left>=0&&r.right<=innerWidth+2&&r.bottom<=innerHeight+2)}
+  await claimSettings('ai');await wait(()=>q('#ps-status')?.textContent.includes('Choose a provider'));check('Technical options collapsed',!q('#ps-advanced').open);check('Only provider key and model are required in normal setup',q('#ps-provider')&&q('#ps-key')&&q('#ps-model'));
+  q('#ps-provider').value='opencode';q('#ps-provider').dispatchEvent(new Event('change'));check('OpenCode preset uses current endpoint',q('#ps-base').value==='https://opencode.ai/inference/openai/v1');q('#ps-key').value='fixture-key';q('#ps-refresh').click();await wait(()=>q('#ps-models').children.length===75);check('Entire model catalog loaded',q('#ps-models').children.length===75);check('Default model populated',q('#ps-model').value==='model/0');q('#ps-form').requestSubmit();await wait(()=>q('#ps-status').textContent.startsWith('Provider saved'));check('Saved password cleared',q('#ps-key').value==='');check('Saved provider retained',q('#ps-saved').value==='fixture-provider');
+  check('Prompts section and chat menu removed',!q('[data-settings-page=prompts]')&&!q('#cv-prompt-menu'));
+  await claimSettings('word');await wait(()=>q('#settings-word-state')?.textContent.startsWith('Not installed'));check('Word setup shows actual status and instructions',q('.settings-content').textContent.includes('Claim Viewer → Insert citation'));q('[data-settings-action="word-install"]').click();await wait(()=>q('#settings-word-state').textContent.includes('ready'));check('Install invokes bridge and refreshes status',q('[data-settings-action="word-install"]').textContent==='Repair installation');
+  for(const page of ['general','references','sync','advanced','new','feedback','about']){await claimSettings(page);check('Settings page '+page+' renders',q('.settings-content h2')?.textContent.length>0)}
+  await claimSettings('ai');await wait(()=>q('#ps-status'));check('API key not exposed in saved provider UI',!q('.settings-content').textContent.includes('fixture-key'));q('.settings-close').click();await wait(()=>!q('.cv-settings'));check('Close removes dialog',!q('.cv-settings'));
+ }catch(e){results.push({name:'UI exception',ok:false,error:e.stack})}
+ await pywebview.api.report(JSON.stringify(results));
+})();

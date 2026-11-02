@@ -1,0 +1,8 @@
+manifest.xml
+service-config.json
+localhost*.pem
+localhost*.cer
+*.log
+catalog/
+catalog-config.json
+manifest-acl-backup.txt

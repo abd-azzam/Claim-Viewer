@@ -646,6 +646,111 @@ def api_layer(root):
             if api.save_pdf("x.pdf", "") != "":
                 add("LOW", "api", "save_pdf does not return '' when the dialog is cancelled")
         case("save_pdf", t_savepdf)
+
+        def t_ai():  # Ask AI backend against a local fake endpoint; the copy's own ai.json, never the real key
+            import http.server
+            seen, mode = [], {"m": "ok"}
+
+            class H(http.server.BaseHTTPRequestHandler):
+                def log_message(self, *a):
+                    pass
+
+                def _send(self, code, body, ctype="application/json"):
+                    b = body.encode()
+                    self.send_response(code)
+                    self.send_header("Content-Type", ctype)
+                    self.send_header("Content-Length", str(len(b)))
+                    self.end_headers()
+                    self.wfile.write(b)
+
+                def do_GET(self):
+                    seen.append(("GET", self.path, self.headers.get("Authorization"), None))
+                    if mode["m"] == "401":
+                        return self._send(401, '{"error":{"message":"bad key"}}')
+                    self._send(200, json.dumps({"data": [{"id": "fake-chat"}, {"id": "fake-reasoner"}, "junk", {}]}))
+
+                def do_POST(self):
+                    n = int(self.headers.get("Content-Length") or 0)
+                    seen.append(("POST", self.path, self.headers.get("Authorization"), json.loads(self.rfile.read(n) or b"{}")))
+                    m = mode["m"]
+                    if m == "401":
+                        return self._send(401, '{"error":{"message":"bad key"}}')
+                    if m == "html500":
+                        return self._send(500, "<html>oops</html>", "text/html")
+                    if m == "garbage":
+                        return self._send(200, "not json")
+                    if m == "nochoices":
+                        return self._send(200, '{"choices":[]}')
+                    if m == "nullcontent":
+                        return self._send(200, json.dumps({"choices": [{"message": {"content": None, "reasoning_content": "x"}}]}))
+                    self._send(200, json.dumps({"model": "fake-chat", "choices": [{"message": {"content": "pong"}}]}))
+
+            srv = http.server.ThreadingHTTPServer(("127.0.0.1", 0), H)
+            threading.Thread(target=srv.serve_forever, daemon=True).start()
+            base, KEY, aip, bad = f"http://127.0.0.1:{srv.server_address[1]}", "TESTKEY-bughunt-not-real", tmp / "ai.json", []
+            chk = lambda ok, msg: ok or bad.append(msg)
+            one = json.dumps([{"role": "user", "content": "hi"}])
+            try:
+                aip.unlink(missing_ok=True)
+                chk(api.ai_status().get("has_key") is False, "ai_status reports a key when ai.json does not exist")
+                r = api.ai_chat(one)
+                chk(r.get("ok") is False and not seen, "ai_chat without a key does not stop before the network")
+                chk(api.ai_set_key(KEY, "ftp://x").get("ok") is False and not aip.exists(), "ai_set_key accepts a non-http base")
+                chk(api.ai_set_key("", "").get("ok") is False, "ai_set_key says ok with no key anywhere")
+                r = api.ai_set_key(KEY, base + "/")
+                chk(r.get("ok") and r.get("base") == base, f"ai_set_key does not save and normalise the base: {r}")
+                raw = aip.read_text("utf-8")
+                chk(KEY not in raw and "key_enc" in raw, "ai.json holds the key in clear instead of a DPAPI blob")
+                aip.write_text(json.dumps({"key": KEY, "base": base, "model": "deepseek-chat"}), "utf-8")  # an old plaintext file must still work and get encrypted
+                chk(api.ai_status().get("has_key") is True and KEY not in aip.read_text("utf-8"), "a plaintext ai.json is not migrated to a DPAPI blob")
+                chk(KEY not in json.dumps(api.ai_status()) + json.dumps(r), "ai_status or ai_set_key returns the key to the page")
+                chk(sorted(p.name for p in tmp.glob("ai.json*")) == ["ai.json"], "ai_set_key leaves a temp file")
+
+                msgs = [{"role": "user", "content": f"m{i}"} for i in range(20)]
+                r = api.ai_chat(json.dumps(msgs))
+                chk(r.get("ok") and r.get("text") == "pong", f"ai_chat happy path: {r}")
+                _, path, auth, body = seen[-1]
+                chk(path == "/chat/completions" and auth == "Bearer " + KEY, f"request path or auth header wrong: {path} {auth and auth[:12]}")
+                chk(len(body["messages"]) == 14 and body["messages"][-1]["content"] == "m19", "history is not cut to the last 14 messages")
+                api.ai_chat(one, 'x","evil":"1')
+                chk(seen[-1][3]["model"] == "deepseek-chat", "an odd model id reaches the request body")
+                api.ai_chat(one, "fake-reasoner")
+                chk(seen[-1][3]["model"] == "fake-reasoner", "the model picked in the page is ignored")
+
+                for m in ("401", "html500", "garbage", "nochoices"):
+                    mode["m"] = m
+                    r = api.ai_chat(one)
+                    chk(r.get("ok") is False and r.get("error") and KEY not in json.dumps(r), f"server mode {m}: {str(r)[:100]}")
+                    if m == "401":
+                        chk("bad key" in str(r.get("error")), "the server's own error text is lost on 401")
+                n = len(seen)
+                for junk in ("not json", "{}", "[]", "", "null"):
+                    chk(api.ai_chat(junk).get("ok") is False, f"ai_chat accepts messages_json={junk!r}")
+                chk(len(seen) == n, "bad messages_json still reaches the network")
+                mode["m"] = "nullcontent"
+                r = api.ai_chat(one)
+                if r.get("ok") and not isinstance(r.get("text"), str):
+                    add("LOW", "api", "ai_chat returns ok with text None when the reply has null content",
+                        "reasoning models can do this; the page prints it and keeps null as an assistant turn in AI.hist, which the next question sends back. Return ok False or ''.")
+                mode["m"] = "ok"
+                r = api.ai_models()
+                chk(r.get("ok") and r.get("models") == ["fake-chat", "fake-reasoner"] and seen[-1][:3] == ("GET", "/models", "Bearer " + KEY), f"ai_models: {r}")
+                mode["m"] = "401"
+                chk(api.ai_models().get("ok") is False, "ai_models says ok on 401")
+                r = api.ai_set_key("")
+                chk(r.get("ok") and r.get("base") == base, f"ai_set_key(key only) must keep the stored base: {r}")
+                r = api.ai_set_key("", "")
+                chk(r.get("ok") and r.get("base") == "", f"ai_set_key(key, '') must clear the base (the page sends '' when the box is emptied): {r}")
+            finally:
+                srv.shutdown()
+                srv.server_close()
+            t0 = time.time()
+            r = api.ai_chat(one)
+            chk(r.get("ok") is False and KEY not in json.dumps(r) and time.time() - t0 < 15, f"dead server: {str(r)[:100]}")
+            if bad:
+                add("MED", "api", "Ask AI backend misbehaves against a fake DeepSeek endpoint", "; ".join(bad))
+        case("ask AI", t_ai)
+        skip("api", "Ask AI: a real DeepSeek reply, the 120 s timeout, and the Ask AI tab in the page (the fake endpoint only covers launch.py)")
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
         for p in profile_dirs() - before:
