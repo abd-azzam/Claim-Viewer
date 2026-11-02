@@ -2,6 +2,8 @@
 
 Read a PDF, save passages as claims, tag them, connect them to other readings, keep Zettelkasten-style notes, ask AI about the text, and see how everything fits together in a graph. Cite any source in Microsoft Word without leaving the app. It runs on your own computer: your PDFs, claims and notes are never uploaded.
 
+**[Download the installer](https://github.com/abd-azzam/Claim-Viewer/releases/latest)** — Windows 10/11, no Python needed.
+
 ![Claim list next to the PDF, with the quotes highlighted in the page](docs/screenshot-list.png)
 
 *Sample data: both papers, their text and their claims are invented. The screenshots show an earlier release; every view they illustrate is still in the app.*
@@ -134,7 +136,7 @@ The same views in a light palette; the scheme is chosen in Settings > Appearance
 
 ## Install
 
-1. Download [`ClaimViewer-Setup-2.6.1.exe`](release/ClaimViewer-Setup-2.6.1.exe) and run it. Python is not required.
+1. Download [`ClaimViewer-Setup-2.6.1.exe`](https://github.com/abd-azzam/Claim-Viewer/releases/latest) and run it. Python is not required.
 2. Keep the suggested folder, or choose a writable one. Upgrades retain the previous installation folder.
 3. Setup installs Microsoft Edge WebView2 if it is missing. That step needs an internet connection.
 4. For desktop Word, select **Add Claim Viewer to Microsoft Word's ribbon**. Save documents and close Word before continuing, and approve the Windows administrator prompt.
