@@ -1,6 +1,6 @@
 # Claim Viewer
 
-Read a PDF, save passages as claims, tag them, connect them to other readings, keep Zettelkasten-style notes, ask AI about the text, and see how everything fits together in a graph. Cite any source in Microsoft Word without leaving the app. It runs on your own computer: your PDFs, claims and notes are never uploaded.
+Read a PDF, save passages as claims, tag them, connect them to other readings, keep Zettelkasten-style notes, ask AI about the text, and see how everything fits together in a graph. Cite any source in Microsoft Word without leaving the app. Your library is stored on your computer. When you use Ask AI or draft a graph, the relevant text is sent to your selected AI provider.
 
 **[Download the installer](https://github.com/abd-azzam/Claim-Viewer/releases/latest)** — Windows 10/11, no Python needed.
 
@@ -11,6 +11,32 @@ Read a PDF, save passages as claims, tag them, connect them to other readings, k
 ## Why this exists
 
 Zotero keeps your PDFs and highlights, but it does not draw a graph of how the claims across your readings fit together, and it has no place for your own reading notes. Word can produce a citation, but not the sentence the citation rests on. This is a small viewer that does the reading, the tagging, the notes, the graph, the chat and the Word citation in one place. It was built with Claude Code and with Hermes (connected to DeepSeek Flash), under my supervision.
+
+## Changes in 2.6.3
+
+- OpenCode Go has its own provider preset, model catalog, and session header. The OpenCode preset uses the separate pay-as-you-go catalog. To refresh the list, select the saved provider in **Settings > AI**, click **Load available models**, then save. A model listed in one catalog may be unavailable in the other.
+- Ask AI keeps passage explanations brief and uses the requested page when one is specified. It omits paragraphs without verified excerpts. Choose Fast or More complete citation checking in the composer.
+- Citation jumps preserve PDF zoom when the viewer was hidden behind Ask AI.
+- All five graph views offer AI drafting with review before saving.
+- If Start shows two Claim Viewer shortcuts, open the one for the updated installation and check **Settings > About** for version 2.6.3. Older Program Files builds may lack OpenCode Go support. Back up or migrate their library before removing an old installation.
+
+## Changes in 2.6.2
+
+- The Word pane indents child folders, shows examples beside both citation forms, and accepts undated sources.
+- The note editor leaves room at both sides and groups passage actions below the source title.
+- Read Aloud uses the visible page margins, so cropped PDFs keep the opening paragraph.
+- The Word citation service starts with its own runtime. The question mark beside Claim Viewer opens the tutorial.
+- The Word pane puts source search first. Word uses the document's citation style and updates an existing bibliography after each insertion.
+- Word repair restarts the citation service, and **Settings > Tutorial** opens the expanded guide.
+- OCR shows the page being scanned and when it is writing text into the PDF. The scan options wrap to fit the dialog.
+- The left pane toggle sits beside the theme button and the right toggle stays in the upper-right corner.
+- AI Settings lists OpenAI and Claude (Anthropic). Each provider uses its own API key.
+- About shows the installed version. Check for Updates checks GitHub on startup and downloads verified installers for newer stable releases. An in-app notice opens the update page when an installer is ready.
+- Claim Viewer has a new Windows app icon.
+- Adding a claim to an existing note opens the selected note, including the first or only match.
+- OCR makes scanned text selectable in the reader and keeps word positions when you reopen the PDF. Rescan pages processed by an older build to save their positions.
+
+For future updates, set the same version in `update_service.py` and `ClaimViewer.iss`, then attach `ClaimViewer-Setup-X.Y.Z.exe` to the public, stable GitHub release tagged `vX.Y.Z`.
 
 ## Changes in 2.6.1
 
@@ -136,7 +162,7 @@ The same views in a light palette; the scheme is chosen in Settings > Appearance
 
 ## Install
 
-1. Download [`ClaimViewer-Setup-2.6.1.exe`](https://github.com/abd-azzam/Claim-Viewer/releases/latest) and run it. Python is not required.
+1. Download [`ClaimViewer-Setup-2.6.3.exe`](https://github.com/abd-azzam/Claim-Viewer/releases/latest) and run it. Python is not required.
 2. Keep the suggested folder, or choose a writable one. Upgrades retain the previous installation folder.
 3. Setup installs Microsoft Edge WebView2 if it is missing. That step needs an internet connection.
 4. For desktop Word, select **Add Claim Viewer to Microsoft Word's ribbon**. Save documents and close Word before continuing, and approve the Windows administrator prompt.
@@ -144,7 +170,7 @@ The same views in a light palette; the scheme is chosen in Settings > Appearance
 
 Requirements: Windows 10 x64 (1809 or later) or Windows 11. Word integration is optional and requires desktop Word for Windows, Office 2016 or later, with bibliography styles installed.
 
-The installer carries an empty library, the offline PDF assets, the app and the Word component. It excludes the developer's PDFs, claims, conversations, API keys and local Word credentials. Reading and organizing work offline. AI, DOI lookup and online text-to-speech need their services; optional OCR needs Tesseract installed separately. Compare the hash from `Get-FileHash .\ClaimViewer-Setup-2.6.1.exe -Algorithm SHA256` with the `.sha256` file supplied alongside it.
+The installer carries an empty library, the offline PDF assets, the app and the Word component. It excludes the developer's PDFs, claims, conversations, API keys and local Word credentials. Reading and organizing work offline. AI, DOI lookup and online text-to-speech need their services; optional OCR needs Tesseract installed separately. Compare the hash from `Get-FileHash .\ClaimViewer-Setup-2.6.3.exe -Algorithm SHA256` with the `.sha256` file supplied alongside it.
 
 **Windows SmartScreen.** The exe and the installer are unsigned, so the first run stops at *Windows protected your PC*. Only continue if the SHA256 matches: click **More info**, then **Run anyway**. Builds that you make yourself show the same prompt.
 

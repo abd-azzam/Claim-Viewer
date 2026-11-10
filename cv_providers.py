@@ -18,7 +18,9 @@ def _catalog_urls(provider, base):
     """Where the model list really lives. OpenCode serves /models under /inference/v1, not under the
     /inference/openai/v1 base its chat endpoint uses, so try the known root first and the base after."""
     urls = []
-    if provider == 'opencode' and 'opencode.ai/inference' in base:
+    if base.rstrip('/') == 'https://opencode.ai/inference/go/openai/v1':
+        urls.append('https://opencode.ai/inference/go/v1/models')
+    elif provider == 'opencode' and urllib.parse.urlsplit(base).hostname == 'opencode.ai':
         urls.append('https://opencode.ai/inference/v1/models')
     urls.append(base.rstrip('/') + '/models')
     return list(dict.fromkeys(urls))
@@ -159,10 +161,26 @@ class Providers:
             body = {'model': model, 'messages': msgs, 'stream': False}
         base = p['base'].rstrip('/')
         url = base if base.endswith('/' + endpoint) else base + '/' + endpoint
+        if base == 'https://opencode.ai/inference/go/openai/v1':
+            session = messages[0].get('session') if messages else None
+            conversation = uuid.uuid5(uuid.NAMESPACE_URL, ident + ':' + session) if session else uuid.uuid4()
+            headers.update({'User-Agent': 'ClaimViewer', 'x-opencode-session': 'ses_' + conversation.hex})
         if state is not None:
             body['stream'] = True
         req = urllib.request.Request(url, data=json.dumps(body).encode(), headers=headers)
-        with urllib.request.urlopen(req, timeout=180) as response:
+        try:
+            response = urllib.request.urlopen(req, timeout=180)
+        except urllib.error.HTTPError as e:
+            endpoint_url = urllib.parse.urlsplit(url)
+            if (e.code == 402 and endpoint_url.hostname == 'opencode.ai'
+                    and endpoint_url.path.startswith('/inference/')
+                    and not endpoint_url.path.startswith('/inference/go/')):
+                e.close()
+                raise ValueError('OpenCode pay-as-you-go rejected this request (HTTP 402). '
+                                 'Check the API key workspace’s credits and invoices. '
+                                 'An OpenCode Go subscription uses a separate endpoint for coding agents.') from None
+            raise
+        with response:
             if state is not None:
                 for raw in response:
                     line = raw.decode('utf-8', 'replace').strip()

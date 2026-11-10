@@ -184,6 +184,24 @@ class ProviderTests(unittest.TestCase):
         self.assertEqual(json.loads(request.data)['model'], 'model/74')
         self.assertEqual(reply['model'], 'model/74')
 
+    def test_opencode_go_uses_its_own_catalog_and_conversation_identity(self):
+        base = 'https://opencode.ai/inference/go/openai/v1'
+        ident = self.save(provider='opencode-go', base=base, all_models=True)
+        payload = {'data': [{'id': 'go-model'}], 'choices': [{'message': {'content': 'Answer'}}]}
+        with patch.object(module.urllib.request, 'urlopen', side_effect=lambda *a, **k: io.BytesIO(json.dumps(payload).encode())) as fetch:
+            self.providers.choices()
+            self.assertEqual(fetch.call_args.args[0].full_url, 'https://opencode.ai/inference/go/v1/models')
+            for session in ('reading-a', 'reading-a', 'reading-b'):
+                self.providers.chat(ident, [{'role': 'user', 'content': 'Question', 'session': session}])
+        first, again, other = [call.args[0] for call in fetch.call_args_list[1:]]
+        self.assertEqual(first.full_url, base + '/chat/completions')
+        self.assertEqual(first.get_header('User-agent'), 'ClaimViewer')
+        header = 'X-opencode-session'
+        self.assertTrue(first.get_header(header).startswith('ses_'))
+        self.assertNotIn('session', json.loads(first.data)['messages'][0])
+        self.assertEqual(first.get_header(header), again.get_header(header))
+        self.assertNotEqual(first.get_header(header), other.get_header(header))
+
     def test_catalog_failure_keeps_saved_model_and_reports_warning(self):
         ident = self.save(all_models=True)
         with patch.object(module.urllib.request, 'urlopen', side_effect=OSError('offline')):

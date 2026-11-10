@@ -32,6 +32,7 @@ from cv_providers import Providers
 import word_citations
 import word_service
 import settings_service
+import update_service
 import library_tools
 import startup_assets
 
@@ -380,6 +381,49 @@ def safe_id(path):
     return stem
 
 
+# Live Tesseract children, per OCR job, so the page can kill them instead of waiting them out.
+_OCR_RUNS = {}
+_OCR_DEAD = set()
+
+
+def _ocr_kill(job):
+    """Kill every Tesseract process started for this job, and refuse any later page of it."""
+    if job:
+        _OCR_DEAD.add(job)
+        if len(_OCR_DEAD) > 400:
+            _OCR_DEAD.clear()
+    for p in _OCR_RUNS.pop(job, []):
+        try:
+            p.kill()
+        except Exception:
+            pass
+
+
+def _ocr_spawn(cmd, job):
+    """subprocess.run that can be killed: the page keeps the handle in the registry."""
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                         creationflags=0x08000000 if os.name == "nt" else 0)
+    if job:
+        _OCR_RUNS.setdefault(job, []).append(p)
+    return p
+
+
+def _ocr_wait(p, job):
+    try:
+        out, err = p.communicate(timeout=180)
+    except subprocess.TimeoutExpired:
+        p.kill()
+        p.communicate()
+        raise
+    finally:
+        if job and job in _OCR_RUNS:
+            try:
+                _OCR_RUNS[job].remove(p)
+            except ValueError:
+                pass
+    return p.returncode, (out or b""), (err or b"")
+
+
 class Api:
     def save_pdf(self, name, b64):  # PDF-only save dialog; "" when cancelled
         try:
@@ -706,6 +750,16 @@ class Api:
 
     def app_settings(self, action='info'):
         try:
+            updates = pathlib.Path(ROOT, "updates")
+            if action == "version":
+                return {"ok": True, "version": update_service.VERSION}
+            if action == "check-update":
+                with _lock_for(str(updates)):
+                    return update_service.download_latest(updates)
+            if action == "open-updates":
+                updates.mkdir(exist_ok=True)
+                os.startfile(updates)
+                return {"ok": True, "message": "Opened the update folder."}
             return settings_service.command(ROOT, action, sys.executable, webview.windows[0] if webview.windows else None)
         except Exception as e:
             return {'ok': False, 'error': str(e)[:300]}
@@ -767,7 +821,7 @@ class Api:
         except Exception as e:
             return {"ok": False, "models": [], "error": str(e)[:200]}
 
-    def ai_chat(self, messages_json, model=""):  # DeepSeek is OpenAI-compatible; the page cannot POST from file://
+    def ai_chat(self, messages_json, model=""):  # The page cannot POST from file://.
         if model.startswith('profile:'):
             try:
                 return _providers().chat(model[8:], json.loads(messages_json))
@@ -1037,13 +1091,18 @@ class Api:
         except Exception as e:
             return {"ok": False, "error": "could not store the voice: %s" % e}
         return {"ok": True, "voice": v}
+    def ocr_cancel(self, job=None):  # kill the scan the page is waiting on
+        _ocr_kill(job)
+        return {"ok": True}
 
     def ocr_status(self):  # does this machine have Tesseract?
         exe = _tess_exe()
         return {"ok": bool(exe), "path": exe or "", "version": _tess_version()}
 
-    def ocr_image(self, b64_png, scale=1.0):  # read a page the reader already rendered
+    def ocr_image(self, b64_png, scale=1.0, job=None):  # read a page the reader already rendered
         """Tesseract on a PNG the page drew with pdf.js. Boxes come back in PDF points (pixels / scale)."""
+        if job and job in _OCR_DEAD:
+            return {"ok": False, "error": "cancelled"}
         exe = _tess_exe()
         if not exe:
             return {"ok": False, "error": "Tesseract is not installed on this machine"}
@@ -1067,21 +1126,19 @@ class Api:
                 f.write(raw)
             # Write the TSV to a FILE, not stdout: a windowed PyInstaller build gives Tesseract no
             # usable stdout pipe, which is why scanned pages came back empty in the installed exe.
-            r = subprocess.run([exe, tmp.name, outbase, "--psm", "3", "-l", "eng", "tsv"],
-                               capture_output=True, text=True, timeout=180,
-                               creationflags=0x08000000 if os.name == "nt" else 0)
+            p = _ocr_spawn([exe, tmp.name, outbase, "--psm", "3", "-l", "eng", "tsv"], job)
+            rc, _o, _e = _ocr_wait(p, job)
             tsv_path = outbase + ".tsv"
-            if r.returncode != 0 or not os.path.exists(tsv_path):
+            if rc != 0 or not os.path.exists(tsv_path):
                 # fall back to stdout for the plain build, where the pipe does work
-                r2 = subprocess.run([exe, tmp.name, "stdout", "--psm", "3", "-l", "eng", "tsv"],
-                                    capture_output=True, text=True, timeout=180,
-                                    creationflags=0x08000000 if os.name == "nt" else 0)
-                out = r2.stdout or ""
+                p2 = _ocr_spawn([exe, tmp.name, "stdout", "--psm", "3", "-l", "eng", "tsv"], job)
+                rc, outb, _e2 = _ocr_wait(p2, job)
+                out = (outb or b"").decode("utf-8", "replace")
             else:
                 with open(tsv_path, "r", encoding="utf-8", errors="replace") as f:
                     out = f.read()
         except subprocess.TimeoutExpired:
-            return {"ok": False, "error": "Tesseract took too long on this page (180s). Try a smaller page range."}
+            return {"ok": False, "error": "Tesseract took too long on this page (180s)"}
         except Exception as e:
             return {"ok": False, "error": "tesseract failed: %s" % str(e)[:160]}
         finally:
@@ -1093,7 +1150,7 @@ class Api:
         # stdout is None (not "") when the process was killed: never assume it is a string
         if not out.strip():
             return {"ok": False, "error": "no output (rc=%s bytes=%d head=%s)" % (
-                r.returncode, len(raw), raw[:8].hex())}
+                rc, len(raw), raw[:8].hex())}
         words, lines = [], {}
         for row in out.splitlines()[1:]:  # level page block par line word left top width height conf text
             f = row.split("\t")
@@ -1349,7 +1406,8 @@ def _start():
                                 width=_ww, height=_wh, min_size=(900, 600), text_select=True,
                                 x=_cx, y=_cy)
     webview.settings["ALLOW_DOWNLOADS"] = True
-    webview.start(storage_path=store, private_mode=False)
+    webview.start(storage_path=store, private_mode=False,
+                  icon=str(pathlib.Path(__file__).with_name("ClaimViewer.ico")))
     os._exit(0)
 
 

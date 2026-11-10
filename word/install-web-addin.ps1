@@ -1,5 +1,6 @@
 param([string]$AppExe='')
 $ErrorActionPreference='Stop'
+if(Get-Process WINWORD -ErrorAction SilentlyContinue){throw 'Save your documents and close Microsoft Word before installing or repairing the add-in.'}
 $root=$PSScriptRoot
 & (Join-Path $root 'install-citation-styles.ps1')
 $manifest=Join-Path $root 'manifest.xml'
@@ -26,15 +27,6 @@ New-Item -Path $developer -Force | Out-Null
 New-ItemProperty -Path $developer -Name 'b1a3d266-67e6-4232-a98b-7935cda2930c' -Value $manifest -PropertyType String -Force | Out-Null
 $run='HKCU:\Software\Microsoft\Windows\CurrentVersion\Run'
 New-ItemProperty -Path $run -Name 'ClaimViewerWordService' -Value ('"'+$exe+'" --word-service') -PropertyType String -Force | Out-Null
-$ready=$false
-$healthError=''
-try{$health=Invoke-RestMethod 'https://127.0.0.1:38491/health' -TimeoutSec 5;$ready=$health.service -eq 'Claim Viewer Word'}catch{$healthError=$_.Exception.Message}
-if(!$ready){Start-Process -FilePath $exe -ArgumentList '--word-service' -WindowStyle Hidden}
-for($attempt=0;$attempt -lt 20 -and !$ready;$attempt++){
-    Start-Sleep -Milliseconds 400
-    try{$health=Invoke-RestMethod 'https://127.0.0.1:38491/health' -TimeoutSec 3;$ready=$health.service -eq 'Claim Viewer Word'}catch{$healthError=$_.Exception.Message}
-}
-if(!$ready){throw ('The Word local service did not respond: '+$healthError)}
 $preference='HKCU:\Software\ClaimViewer'
 New-Item -Path $preference -Force|Out-Null
 New-ItemProperty -Path $preference -Name WordRoot -Value (Split-Path -Parent $root) -PropertyType String -Force|Out-Null
@@ -52,8 +44,37 @@ if(Test-Path $disabled){
     }
 }
 $ribbonArgs='-NoProfile -ExecutionPolicy Bypass -File "'+(Join-Path $root 'install-native-ribbon.ps1')+'"'
-$process=Start-Process powershell.exe -ArgumentList $ribbonArgs -Verb RunAs -WindowStyle Hidden -Wait -PassThru
-$result=Get-Content -Raw -LiteralPath (Join-Path $root 'ribbon-install-result.json')|ConvertFrom-Json
+$resultPath=Join-Path $root 'ribbon-install-result.json'
+if(Test-Path -LiteralPath $resultPath){Remove-Item -LiteralPath $resultPath}
+try{$process=Start-Process powershell.exe -ArgumentList $ribbonArgs -Verb RunAs -WindowStyle Hidden -Wait -PassThru}
+catch{throw ('Could not start the administrator step for Word setup: '+$_.Exception.Message)}
+if(!(Test-Path -LiteralPath $resultPath)){throw 'The administrator step did not finish. Run Repair installation and approve the Windows prompt.'}
+$result=Get-Content -Raw -LiteralPath $resultPath|ConvertFrom-Json
 if($process.ExitCode -ne 0 -or !$result.ok){throw ('Word ribbon setup failed: '+$result.error)}
 & (Join-Path $root 'install-ribbon.ps1') -DllPath (Join-Path $env:ProgramFiles 'Claim Viewer\Word\ClaimViewerWord.dll')
+$healthUrl='https://127.0.0.1:38491/health'
+$old=$null
+try{$old=Invoke-RestMethod $healthUrl -TimeoutSec 2}catch{}
+if($old.service -eq 'Claim Viewer Word'){
+    $config=Get-Content -Raw -LiteralPath (Join-Path $root 'service-config.json')|ConvertFrom-Json
+    Invoke-RestMethod 'https://127.0.0.1:38491/api' -Method Post -ContentType 'application/json' -Headers @{Authorization=('Bearer '+$config.token)} -Body '{"method":"shutdown"}' -TimeoutSec 5|Out-Null
+    for($attempt=0;$attempt -lt 10;$attempt++){
+        Start-Sleep -Milliseconds 300
+        try{Invoke-RestMethod $healthUrl -TimeoutSec 2|Out-Null}catch{break}
+    }
+    if($attempt -eq 10){throw 'The old Word service did not stop. Restart Windows and run Repair installation.'}
+}
+# The service outlives setup and needs its own extracted copy of the runtime.
+$previousReset=$env:PYINSTALLER_RESET_ENVIRONMENT
+try{
+    $env:PYINSTALLER_RESET_ENVIRONMENT='1'
+    Start-Process -FilePath $exe -ArgumentList '--word-service' -WindowStyle Hidden
+}finally{$env:PYINSTALLER_RESET_ENVIRONMENT=$previousReset}
+$ready=$false
+$healthError=''
+for($attempt=0;$attempt -lt 20 -and !$ready;$attempt++){
+    Start-Sleep -Milliseconds 400
+    try{$health=Invoke-RestMethod $healthUrl -TimeoutSec 3;$ready=$health.service -eq 'Claim Viewer Word'}catch{$healthError=$_.Exception.Message}
+}
+if(!$ready){throw ('The Word local service did not respond: '+$healthError)}
 Write-Output 'Installed. Restart Word, then choose Claim Viewer > Insert citation.'

@@ -3,6 +3,7 @@ import importlib.util
 from pathlib import Path
 from types import SimpleNamespace
 import unittest
+from unittest.mock import patch
 
 spec = importlib.util.spec_from_file_location('word_binding', Path(__file__).resolve().parents[1] / 'word_citations.py')
 wc = importlib.util.module_from_spec(spec)
@@ -29,6 +30,13 @@ class Moniker:
         return self.document
 
 class BindingTests(unittest.TestCase):
+    def test_missing_word_runtime_returns_repair_instructions(self):
+        with patch('builtins.__import__', side_effect=ImportError('private runtime path')):
+            result = wc.command('.', 'state', {})
+        self.assertFalse(result['ok'])
+        self.assertIn('Repair installation', result['error'])
+        self.assertNotIn('private runtime path', result['error'])
+
     def resolver(self, first, documents):
         looked_up = []
         monikers = [Moniker(path, doc) for path, doc in documents]

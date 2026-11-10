@@ -9,3 +9,49 @@ body.gz.idea-map-active #zkmerge,body.gz.idea-map-active #zkreset,body.gz.idea-m
 .idea-map [data-idea-group]{cursor:grab}.idea-map .idea-node{cursor:grab}.idea-map .idea-node:active,.idea-map [data-idea-group]:active{cursor:grabbing}
 #graph-action-row{display:flex;align-items:center;gap:12px;flex:none;flex-wrap:nowrap;overflow-x:auto;padding:2px 0 8px;margin-bottom:4px}#graph-action-row #graph-tools{flex:0 0 auto;flex-wrap:nowrap;gap:4px;margin:0;font-size:11px;white-space:nowrap}#graph-action-row #znav{flex:0 0 auto;flex-wrap:nowrap;align-items:center;margin:0 0 0 auto;white-space:nowrap}#graph-action-row #idea-group-control{margin-left:6px;gap:4px}#graph-tools select{width:auto}#graph-action-row #graph-tools small{display:none}
 .idea-map .idea-source-hull{fill:color-mix(in srgb,var(--acc) 2%,var(--bg));stroke:var(--ctl);stroke-dasharray:none;stroke-width:1.5}.idea-map .idea-source-label{fill:var(--acc);font-weight:600}
+.idea-map .idea-tag-label{font-weight:600}
+.idea-map .idea-subtag-hull{fill:var(--panel);stroke:var(--line);stroke-width:1}
+.idea-map .idea-subtag-label{fill:var(--mute);font-size:12px}
+
+/* Keep the draft action in sight when the graph toolbar wraps. */
+#graph-action-row{flex-wrap:wrap;overflow:visible;gap:8px;border-bottom:1px solid var(--line)}
+#graph-action-row #graph-tools,#graph-action-row #znav{flex:0 1 auto;flex-wrap:wrap;white-space:normal}
+#graph-action-row #idea-group-control{flex-wrap:wrap}
+#znav [data-node-studio]{display:none}
+#graph-draft{font:inherit;font-weight:600;min-height:44px;padding:0 12px;border:1px solid var(--acc);border-radius:5px;background:var(--acc);color:var(--bg);cursor:pointer}
+#graph-draft:focus-visible,.node-studio :focus-visible{outline:2px solid var(--acc);outline-offset:3px}
+.node-studio{box-sizing:border-box;width:min(40rem,calc(100vw - 2rem));max-height:calc(100dvh - 2rem);overflow-wrap:anywhere;font:inherit;font-size:.9rem}
+.node-studio h2{font-size:1.3rem;margin:0 0 8px}
+.node-studio button{min-height:44px}
+.node-studio .studio-actions{flex-wrap:wrap}
+.node-studio #node-status:not(:empty){border-left:1px solid var(--line)}
+#claim-draft-run,#claim-draft-apply:not(:disabled){background:var(--acc);color:var(--bg);border-color:var(--acc)}
+.node-studio .claim-draft-choice{display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px;align-items:start;margin:0;padding:12px 0;border-top:1px solid var(--line);cursor:pointer;min-height:44px}
+.node-studio .claim-draft-choice input{width:1.15rem;height:1.15rem;margin:2px 0 0}
+.claim-draft-change,.claim-draft-reason{display:block;margin-top:6px}
+.claim-draft-change{font-weight:600}
+.claim-draft-reason{color:var(--mute)}
+
+/* First-run welcome and the guided tour */
+.cv-welcome{border:1px solid var(--line);border-radius:14px;background:var(--panel);color:var(--ink);max-width:520px;padding:22px 24px}
+.cv-welcome h2{margin:0 0 8px;font-size:18px}
+.cv-welcome p{margin:0 0 14px;color:var(--mute);font-size:13px;line-height:1.5}
+.cv-welcome .cv-welcome-lang{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.cv-welcome .cv-welcome-lang button{display:grid;gap:2px;text-align:left;padding:12px 14px;border:1px solid var(--line);
+  border-radius:10px;background:var(--bg);color:var(--ink);font:inherit;cursor:pointer}
+.cv-welcome .cv-welcome-lang button:hover{border-color:var(--acc)}
+.cv-welcome .cv-welcome-lang strong{font-size:14px}
+.cv-welcome .cv-welcome-lang small{font-size:11.5px;color:var(--mute)}
+.cv-welcome .cv-welcome-hint{margin:0;font-size:11.5px}
+.cv-tour-card{border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--ink);
+  padding:14px 16px;box-shadow:0 18px 50px rgba(0,0,0,.45)}
+.cv-tour-card small.cv-tour-step{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--mute)}
+.cv-tour-card h3{margin:6px 0 6px;font-size:15px}
+.cv-tour-card p{margin:0 0 12px;font-size:12.5px;line-height:1.55;color:var(--ink)}
+.cv-tour-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.cv-tour-actions span{flex:1}
+.cv-tour-actions button{height:28px;padding:0 10px;border:1px solid var(--line);border-radius:7px;background:var(--bg);
+  color:var(--ink);font:inherit;font-size:12px;cursor:pointer}
+.cv-tour-actions button:hover{border-color:var(--acc);color:var(--acc)}
+.cv-tour-actions button:disabled{opacity:.45;cursor:default}
+.cv-tour-actions [data-tour-next]{background:var(--acc);border-color:var(--acc);color:var(--bg);font-weight:600}

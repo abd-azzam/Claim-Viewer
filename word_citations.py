@@ -34,15 +34,16 @@ def style_paths():
 def styles():
     return sorted(style_paths(), key=str.lower)
 
+def source_title(item):
+    return ((item.get('meta') or {}).get('title') or '').strip() or (item.get('title') or '').strip() or 'Untitled source'
+
+
 def source_xml(ident, item):
     meta = item.get('meta') or {}
-    title = meta.get('title') or item.get('title') or ''
-    if not title or not meta.get('author') or not meta.get('year'):
-        raise ValueError('Complete this source’s title, author and year in Library before citing it.')
     tag = 'CV' + hashlib.sha256(ident.encode()).hexdigest()[:20]
     kind = {'book': 'Book', 'chapter': 'BookSection', 'paper': 'JournalArticle', 'article': 'JournalArticle', 'journal': 'JournalArticle', 'report': 'Report', 'thesis': 'Report'}.get(meta.get('type'), 'Misc')
     people = []
-    for author in meta['author'].split(';'):
+    for author in (meta.get('author') or '').split(';'):
         author = author.strip()
         if not author:
             continue
@@ -53,14 +54,15 @@ def source_xml(ident, item):
         else:
             first, last = '', author
         people.append('<b:Person><b:Last>'+escape(last.strip())+'</b:Last><b:First>'+escape(first.strip())+'</b:First></b:Person>')
-    fields = dict(Tag=tag, SourceType=kind, Title=title, Year=meta['year'])
+    fields = dict(Tag=tag, SourceType=kind, Title=source_title(item), Year=str(meta.get('year') or '').strip() or 'n.d.')
     for field, key in [('JournalName', 'journal'), ('Publisher', 'publisher'), ('City', 'city'), ('Volume', 'volume'), ('Issue', 'issue'), ('Pages', 'pages'), ('URL', 'url'), ('StandardNumber', 'doi')]:
         if meta.get(key):
             fields[field] = meta[key]
     xml = '<b:Source xmlns:b="http://schemas.microsoft.com/office/word/2004/10/bibliography">'
     xml += ''.join('<b:'+k+'>'+escape(str(v))+'</b:'+k+'>' for k, v in fields.items())
-    xml += '<b:Author><b:Author><b:NameList>'+''.join(people)+'</b:NameList></b:Author></b:Author></b:Source>'
-    return tag, xml
+    if people:
+        xml += '<b:Author><b:Author><b:NameList>'+''.join(people)+'</b:NameList></b:Author></b:Author>'
+    return tag, xml+'</b:Source>'
 
 def _document_key(value):
     if value.lower().startswith(('file:', 'https:', 'http:')):
@@ -92,8 +94,11 @@ def _word_application(host, client, com):
     raise ValueError('This document was not found among open Word documents. Activate it and refresh the connection.')
 
 def command(root, action, payload, application=None):
-    import pythoncom
-    import win32com.client
+    try:
+        import pythoncom
+        import win32com.client
+    except ImportError:
+        return {'ok': False, 'error': 'The Word citation service could not load. Close Word and run Repair installation in Claim Viewer Settings.'}
     owns_com = application is None
     if owns_com:
         pythoncom.CoInitialize()
@@ -127,7 +132,8 @@ def command(root, action, payload, application=None):
                 raise ValueError('Use page numbers or ranges, such as 12 or 12–14.')
             library = json.loads(pathlib.Path(root, 'library.json').read_text(encoding='utf-8'))
             ident = payload['source']
-            tag, xml = source_xml(ident, library['items'][ident])
+            item = library['items'][ident]
+            tag, xml = source_xml(ident, item)
             existing = {doc.Bibliography.Sources.Item(i).Tag for i in range(1, doc.Bibliography.Sources.Count+1)}
             if tag not in existing:
                 doc.Bibliography.Sources.Add(xml)
@@ -135,9 +141,11 @@ def command(root, action, payload, application=None):
             target = app.Selection.Range
             target.Collapse(0)
             if form == 'narrative':
-                authors = [a.strip() for a in library['items'][ident]['meta']['author'].split(';') if a.strip()]
+                authors = [a.strip() for a in ((item.get('meta') or {}).get('author') or '').split(';') if a.strip()]
                 names = [a.split(',', 1)[0].strip() if ',' in a else a.rsplit(' ', 1)[-1] for a in authors]
-                author = names[0] if len(names) == 1 else ' and '.join(names) if len(names) == 2 else names[0]+' et al.'
+                author = source_title(item)
+                if names:
+                    author = names[0] if len(names) == 1 else ' and '.join(names) if len(names) == 2 else names[0]+' et al.'
                 if 'APSA' in app.Bibliography.BibliographyStyle.upper() and len(names) == 3:
                     author = ', '.join(names[:-1])+', and '+names[-1]
                 target.InsertAfter(author+' ')
@@ -155,7 +163,9 @@ def command(root, action, payload, application=None):
                 doc.Fields.Add(target, -1, 'BIBLIOGRAPHY', True)
         elif action != 'refresh':
             raise ValueError('Unknown Word action.')
-        # Update only citation-related fields, not dates, tables of contents or other fields.
+        # Word builds the bibliography from citation fields. Refresh those first,
+        # even when the bibliography is above the citations in the document.
+        bibliographies = []
         for i in range(1, doc.Fields.Count+1):
             f = doc.Fields.Item(i)
             code = f.Code.Text
@@ -170,8 +180,13 @@ def command(root, action, payload, application=None):
                 target.Collapse(1)
                 f = doc.Fields.Add(target, -1, code.strip()+' \\t', True)
                 f.Result.Font = font
-            if f.Code.Text.strip().upper().startswith(('CITATION ', 'BIBLIOGRAPHY')):
+            kind = f.Code.Text.strip().split(None, 1)
+            if kind and kind[0].upper() == 'CITATION':
                 f.Update()
+            elif kind and kind[0].upper() == 'BIBLIOGRAPHY':
+                bibliographies.append(f)
+        for field in bibliographies:
+            field.Update()
         return {'ok': True, 'document': doc.FullName, 'message': 'Word citations and bibliography updated.'}
     except Exception as e:
         return {'ok': False, 'error': str(e)[:500]}

@@ -19,7 +19,7 @@ function fixture(){
 }
 (async()=>{
  const f=fixture();await f.open();f.q('provider').value='claude';f.q('provider').onchange();f.q('model').value='fixture-claude';f.q('key').value='fixture-secret';
- await test('Preset controls fill name, endpoint and protocol',()=>{assert.equal(f.q('name').value,'Anthropic');assert.equal(f.q('base').value,'https://api.anthropic.com/v1');assert.equal(f.q('protocol').value,'anthropic')});
+ await test('Preset controls fill name, endpoint and protocol',()=>{assert.equal(f.q('name').value,'Claude (Anthropic)');assert.equal(f.q('base').value,'https://api.anthropic.com/v1');assert.equal(f.q('protocol').value,'anthropic')});
  await f.q('form').onsubmit({preventDefault(){}});
  await test('New Save selects returned id and enables editing/deletion',()=>{assert.equal(f.q('saved').value,'p1');assert.equal(f.q('delete').disabled,false);assert.equal(f.profiles.size,1);assert.equal(f.q('save').disabled,false)});
  await test('Successful Save clears password field',()=>assert.equal(f.q('key').value,''));

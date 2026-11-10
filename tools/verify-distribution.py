@@ -5,8 +5,11 @@ import re
 
 root=Path(__file__).resolve().parents[1]
 stage=root/'dist'
+app_version=re.search(r'^VERSION = "([\d.]+)"$', (root/'update_service.py').read_text(encoding='utf-8'), re.M)
+setup_version=re.search(r'^#define AppVersion "([\d.]+)"$', (root/'ClaimViewer.iss').read_text(encoding='utf-8'), re.M)
+assert app_version and setup_version and app_version[1]==setup_version[1], 'About and installer versions must match'
 required=['ClaimViewer.exe','README.md','index.html','library.json','sources.js','template/template.html',
-          'lib/pdf.min.js','lib/pdf.worker.min.js','lib/settings.js','lib/provider-settings.js',
+          'lib/pdf.min.js','lib/pdf.worker.min.js','lib/settings.js','lib/provider-settings.js','lib/source-context.js',
           'word/README.md','word/ClaimViewerWord.dll','word/APSA.xsl','word/native-bridge.js',
           'word/word.js','word/word.css','word/addin.html','word/install-web-addin.ps1',
           'word/uninstall-web-addin.ps1','word/install-ribbon.ps1','word/uninstall-ribbon.ps1',

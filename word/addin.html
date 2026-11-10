@@ -2,8 +2,28 @@
 <svg class="symbols" aria-hidden="true"><defs><symbol id="refresh-icon" viewBox="0 0 24 24"><path d="M20 7v5h-5M4 17v-5h5M6 7a7 7 0 0 1 12-1l2 3M4 15l2 3a7 7 0 0 0 12-1"/></symbol><symbol id="folder-icon" viewBox="0 0 24 24"><path d="M3 6h7l2 3h9v11H3z"/></symbol><symbol id="cite-icon" viewBox="0 0 24 24"><path d="M4 6h6v7H6v5H3v-6zM15 6h6v7h-4v5h-3v-6z"/></symbol><symbol id="book-icon" viewBox="0 0 24 24"><path d="M4 4h7l1 2 1-2h7v15h-7l-1 2-1-2H4zM12 6v15"/></symbol></defs></svg>
 <header><h1>Citations</h1><button id="connect" class="icon-button" type="button" title="Refresh library and document" aria-label="Refresh"><svg class="icon" aria-hidden="true"><use href="#refresh-icon"/></svg></button></header>
 <p id="document" class="document-name" role="status">Connecting…</p>
-<section class="library" aria-label="Library"><details id="folder-picker" open><summary>Folders</summary><nav id="folders" aria-label="Library folders"></nav></details><div class="references"><label class="sr-only" for="search">Search references</label><input id="search" type="search" placeholder="Search title, author, year"><div class="result-heading"><span id="folder-name">All references</span><span id="source-count"></span></div><div id="sources" role="listbox" aria-label="References"></div><p id="source-detail"></p></div></section>
-<fieldset class="citation-form"><legend>Citation format</legend><label><input type="radio" name="citation-form" value="parenthetical" checked><span>(Author, year)</span></label><label><input type="radio" name="citation-form" value="narrative"><span>Author (year)</span></label></fieldset>
-<section class="citation-controls" aria-label="Citation"><label for="pages">Page (optional)<input id="pages" placeholder="e.g. 12–14" aria-describedby="source-detail"></label><button id="cite" class="primary" type="button"><svg class="icon" aria-hidden="true"><use href="#cite-icon"/></svg>Insert citation</button></section>
-<section class="bibliography" aria-label="Citation style and bibliography"><label id="style-label">Citation style</label><details id="style-picker"><summary aria-labelledby="style-label style-current"><span id="style-current">Loading styles…</span></summary><div class="style-popup"><label class="sr-only" for="style-search">Find a citation style</label><input id="style-search" type="search" placeholder="Find a style"><div id="styles" role="listbox" aria-label="Citation styles"></div></div></details><div class="actions"><button id="apply-style" type="button">Apply style</button><button id="bibliography" type="button"><svg class="icon" aria-hidden="true"><use href="#book-icon"/></svg>Bibliography</button><button id="refresh" class="icon-button" type="button" title="Update citations and bibliography" aria-label="Update citations"><svg class="icon" aria-hidden="true"><use href="#refresh-icon"/></svg></button></div></section>
-<p id="status" role="status" aria-live="polite"></p></body></html>
+<section class="library" aria-label="Library">
+  <label for="search">Find a source</label>
+  <input id="search" type="search" placeholder="Title, author or year">
+  <details id="folder-picker"><summary>Filter by folder</summary><nav id="folders" aria-label="Library folders"></nav></details>
+  <div class="result-heading"><span id="folder-name">All references</span><span id="source-count"></span></div>
+  <div id="sources" role="listbox" aria-label="References"><p class="empty">Loading your library…</p></div>
+  <p id="source-detail"></p>
+</section>
+<section class="citation-controls" aria-label="Citation">
+  <label for="pages">Pages (optional)<input id="pages" placeholder="e.g. 12-14"></label>
+  <button id="cite" class="primary" type="button">Insert citation</button>
+</section>
+<p id="status" role="status" aria-live="polite"></p>
+<details id="document-options">
+  <summary>Style and bibliography</summary>
+  <fieldset class="citation-form"><legend>Citation form</legend>
+    <label><input type="radio" name="citation-form" value="parenthetical" checked><span>Parenthetical <small>(Lee, 2024)</small></span></label>
+    <label><input type="radio" name="citation-form" value="narrative"><span>Narrative <small>Lee (2024)</small></span></label>
+  </fieldset>
+  <label id="style-label">Word citation style</label>
+  <details id="style-picker"><summary aria-labelledby="style-label style-current"><span id="style-current">Loading styles…</span></summary><label class="sr-only" for="style-search">Find a citation style</label><input id="style-search" type="search" placeholder="Find a style"><div id="styles" role="listbox" aria-label="Citation styles"></div></details>
+  <div class="actions"><button id="apply-style" type="button">Apply style</button><button id="bibliography" type="button">Add bibliography</button><button id="refresh" type="button">Refresh fields</button></div>
+  <p class="hint">Place the cursor where the bibliography belongs and add it once. New citations update it automatically.</p>
+</details>
+</body></html>

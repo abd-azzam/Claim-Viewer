@@ -21,7 +21,10 @@ try:
         assert addin.Connect
         print('Word COM ribbon add-in loaded PASS')
     with tempfile.TemporaryDirectory(dir=r'C:\Apps\ClaimViewer-test-temp') as folder:
-        pathlib.Path(folder, 'library.json').write_text(json.dumps({'items': {'fixture': {'title': 'Citation integration fixture', 'meta': {'title': 'Citation integration fixture', 'author': 'Example, Test', 'year': '2020', 'type': 'book', 'publisher': 'Test fixture'}}}}))
+        items = {'fixture': {'title': 'Citation integration fixture', 'meta': {'title': 'Citation integration fixture', 'author': 'Example, Test', 'year': '2020', 'type': 'book', 'publisher': 'Test fixture'}},
+                 'second': {'title': 'Second bibliography fixture', 'meta': {'title': 'Second bibliography fixture', 'author': 'Second, Test', 'year': '2021', 'type': 'book', 'publisher': 'Test fixture'}},
+                 'undated': {'meta': {'title': None, 'author': None, 'year': None}}}
+        pathlib.Path(folder, 'library.json').write_text(json.dumps({'items': items}))
         for action, payload in [('state', {}), ('citation', {'source': 'fixture', 'pages': '12–14'}), ('bibliography', {}), ('refresh', {})]:
             result = wc.command(folder, action, payload, app)
             assert result['ok'], (action, result)
@@ -42,6 +45,13 @@ try:
         assert result['ok'], result
         assert doc.Bibliography.Sources.Count == 1
         print('Native fields, page locators, source deduplication PASS')
+        app.Selection.SetRange(doc.Content.End-1, doc.Content.End-1)
+        app.Selection.TypeParagraph()
+        result = wc.command(folder, 'citation', {'source': 'second'}, app)
+        assert result['ok'], result
+        bibliography = [f for f in doc.Fields if f.Code.Text.strip().upper().startswith('BIBLIOGRAPHY')]
+        assert len(bibliography) == 1 and 'Second bibliography fixture' in bibliography[0].Result.Text
+        print('Adding a new citation refreshes the existing bibliography PASS')
         for pages in ('', '24–26'):
             app.Selection.SetRange(doc.Content.End-1,doc.Content.End-1)
             app.Selection.TypeParagraph()
@@ -66,6 +76,17 @@ try:
             assert 'Example (2020' in text,text
             assert ('24' in text)==bool(pages),text
         print('Narrative citations with and without page numbers PASS')
+        for form in ('parenthetical', 'narrative'):
+            app.Selection.SetRange(doc.Content.End-1, doc.Content.End-1)
+            app.Selection.TypeParagraph()
+            start = doc.Content.End-1
+            result = wc.command(folder, 'citation', {'source': 'undated', 'form': form}, app)
+            assert result['ok'], result
+            text = doc.Range(start, doc.Content.End-1).Text
+            assert 'Untitled source' in text and 'n.d.' in text, text
+        bibliography = [f for f in doc.Fields if f.Code.Text.strip().upper().startswith('BIBLIOGRAPHY')][0]
+        assert 'Untitled source' in bibliography.Result.Text and 'n.d.' in bibliography.Result.Text
+        print('Missing metadata renders in both citation forms and the bibliography PASS')
 finally:
     if doc is not None:
         doc.Close(False)

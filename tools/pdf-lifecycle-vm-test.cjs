@@ -1,6 +1,6 @@
 const fs=require('fs'),vm=require('vm'),assert=require('assert/strict');
 const template=fs.readFileSync('C:/Apps/ClaimViewer/template/template.html','utf8');
-const lifecycle=template.slice(template.indexOf('let pageObserver=null,pdfLoad=null;'),template.indexOf('const zoom=async'));
+const lifecycle=template.slice(template.indexOf('let pageObserver='),template.indexOf('const zoom=async'));
 const show=template.slice(template.indexOf('window.showPdf=async(id,pg)=>'),template.indexOf('const toast=(m,top,ms)=>'));
 const deferred=()=>{let resolve,reject;const promise=new Promise((a,b)=>{resolve=a;reject=b});return {promise,resolve,reject}};
 const tick=async()=>{for(let i=0;i<12;i++)await Promise.resolve()};
@@ -29,5 +29,37 @@ const tests=[];async function test(name,fn){try{await fn();tests.push({name,ok:t
  await test('stale builds stop adding pages after awaited getPage',async()=>{const f=fixture(),d=deferred();f.ctx.d={numPages:2,getPage:()=>d.promise};f.run('docC=d');const b=f.run('build(1)');f.run('clearPages()');d.resolve(page());await b;assert.equal(f.get('rd').children.length,0)});
  await test('queued stale observer callbacks cannot restart old rendering',async()=>{const f=fixture(),p=page();f.ctx.d={numPages:1,getPage:async()=>p};f.run('docC=d');await f.run('build(1)');const node=f.get('rd').children[0],io=f.observers[0];f.run('clearPages()');io.callback([{target:node,isIntersecting:true}]);assert.equal(p.renders.length,0)});
  await test('stale PDF load is disposed without replacing newer document',async()=>{const f=fixture(),p=page();const a=f.ctx.window.showPdf('a',1);await tick();assert.equal(f.loads.length,1);const b=f.ctx.window.showPdf('b',1);await tick();assert.equal(f.loads.length,2);const old={destroyed:0,destroy:async function(){this.destroyed++}},latest={numPages:1,getPage:async()=>p,destroy:async()=>{}};f.loads[1].resolve(latest);await b;f.loads[0].resolve(old);await a;assert.equal(old.destroyed,1);assert.equal(f.run('docC'),latest);assert.equal(f.loads[0].task.destroyed,1)});
+ await test('A PDF built behind Ask AI uses the pane width and retains zoom when jumping',async()=>{
+  const f=fixture(),rd=f.get('rd'),p=page();
+  rd.clientWidth=0;rd.parentElement={clientWidth:1020};
+  f.ctx.d={numPages:1,getPage:async()=>p};
+  f.run('cur="reading";docC=d;Z=1.5');
+  await f.run('build(1)');
+  assert.equal(rd.children[0].style.width,'1500px');
+  const original=rd.children[0];rd.clientWidth=1020;
+  await f.ctx.window.showPdf('reading',1);
+  assert.equal(rd.children[0],original);
+  assert.equal(f.run('Z'),1.5);
+ });
+ await test('A citation jump rebuilds a layout measured while the entire pane was hidden',async()=>{
+  const f=fixture(),rd=f.get('rd'),p=page();
+  rd.clientWidth=0;rd.parentElement={clientWidth:0};
+  f.ctx.d={numPages:1,getPage:async()=>p};
+  f.run('cur="reading";docC=d;Z=1.5');
+  await f.run('build(1)');
+  assert.equal(rd.children[0].style.width,'150px');
+  rd.clientWidth=1020;
+  await f.ctx.window.showPdf('reading',1);
+  assert.equal(rd.children[0].style.width,'1500px');
+  assert.equal(f.run('Z'),1.5);
+ });
+ await test('Read Aloud retains the opening paragraph on a cropped page',async()=>{
+  const items=[['Running head',674.5],['The opening paragraph starts here.',648.3],['A later paragraph continues here.',557.6],['Footer',110]]
+   .map(([str,y])=>({str,transform:[1,0,0,1,144,y],hasEOL:true}));
+  const page={getViewport:()=>({height:604.8,convertToViewportPoint:(x,y)=>[x-108,702-y]}),getTextContent:async()=>({items})};
+  const context=vm.createContext({window:{},cur:'reading',docC:{getPage:async()=>page}});
+  vm.runInContext(template.slice(template.indexOf('window.pageTextBody='),template.indexOf('window.pageText=')),context);
+  assert.equal(await context.window.pageTextBody('reading',17),'The opening paragraph starts here. A later paragraph continues here.');
+ });
  console.log(JSON.stringify({passed:tests.filter(t=>t.ok).length,total:tests.length,tests},null,2));if(tests.some(t=>!t.ok))process.exitCode=1;
 })().catch(e=>{console.error(e);process.exitCode=1});

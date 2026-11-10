@@ -3,10 +3,22 @@ const ctx=vm.createContext({});
 vm.runInContext(fs.readFileSync('C:/Apps/ClaimViewer/lib/source-context.js','utf8'),ctx);
 const context=(page,quote)=>ctx.citationContext(page,quote),results=[];
 function test(name,fn){try{fn();results.push({name,ok:true})}catch(e){results.push({name,ok:false,error:e.message})}}
-test('Expands a verified anchor with exact surrounding text from its page',()=>{
+test('Completes the cited sentence without adding neighboring sentences',()=>{
  const page='The introductory context sets out the question. This policy changes the incentives facing firms. The author then explains the mechanism and its limits.';
  const anchor='This policy changes the incentives facing firms';const out=context(page,anchor);
- assert.ok(out.includes(anchor));assert.ok(out.length>anchor.length);assert.ok(page.includes(out));assert.ok(out.includes('mechanism and its limits'));
+ assert.equal(out,anchor+'.');
+});
+test('Voltaire quote excludes the transition and subsequent commentary',()=>{
+ const intro='The transition from faction to party was indeed slow and tortuous – both in the domain of ideas and in fact.';
+ const sentence='The second half of the eighteenth century had just begun when Voltaire concisely stated in the Encyclopédie: “The term party is not, in itself, loathsome; the term faction always is.”¹';
+ const after='With his versatile genius for synthesis Voltaire epitomised in this sentence a debate opened by Bolingbroke in 1732 and after that pursued for about a century.² The name faction was loathsome was not, from Roman times until the nineteenth century, a statement in want of proof.';
+ const anchor='The term party is not, in itself, loathsome; the term faction always is';
+ assert.equal(context(intro+' '+sentence+' '+after,anchor),sentence);
+});
+test('A fragment retains its own sentence and a multi-sentence citation stays complete',()=>{
+ const page='Background ends here. Policy changes incentives for firms. This explains the mechanism. Unrelated commentary follows.';
+ assert.equal(context(page,'changes incentives for firms'),'Policy changes incentives for firms.');
+ assert.equal(context(page,'Policy changes incentives for firms. This explains the mechanism.'),'Policy changes incentives for firms. This explains the mechanism.');
 });
 test('Preserves original punctuation, whitespace and capitalisation',()=>{
  const page='Prior sentence. The STATE—rather than firms—sets\n  the direction of investment. Following sentence.';

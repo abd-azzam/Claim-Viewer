@@ -3,7 +3,7 @@ from PyInstaller.utils.hooks import collect_all
 from pathlib import Path
 root = str(Path(SPECPATH).parent)
 
-datas = []
+datas = [(str(Path(root) / 'ClaimViewer.ico'), '.')]
 binaries = []
 hiddenimports = ['win32com.client', 'cv_providers', 'word_citations', 'word_service']
 tmp_ret = collect_all('webview')
@@ -34,6 +34,7 @@ exe = EXE(
     a.datas,
     [],
     name='ClaimViewer',
+    icon=str(Path(root) / 'ClaimViewer.ico'),
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
