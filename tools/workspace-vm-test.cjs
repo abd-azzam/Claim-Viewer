@@ -14,9 +14,66 @@ class Element {
 const elements=new Map;function get(id){if(!elements.has(id)){const e=new Element;e.id=id;elements.set(id,e)}return elements.get(id)}
 let dialog;const state=new Map,undo=[];let saves=0,renders=0,draws=0;
 const context=vm.createContext({console,document:{createElement:()=>dialog=new Element,querySelector:()=>new Element,getElementById:get,addEventListener(){},body:{append(){}}},localStorage:{getItem:k=>state.get(k)||null,setItem:(k,v)=>state.set(k,v)},esc:s=>String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('"','&quot;'),CMAP:{c:{name:'Collection'}},LIBQ:'',LIBSORT:{k:'title',d:1},meta:id=>({title:id,year:2026,author:'Author'}),META_FIELDS:[['title','Title'],['author','Author']],wireLibBox(){},drawLibTable(){draws++},ZK:{seq:0,notes:{'1':{title:'Existing'}}},zkSel:null,zkFlush(){},pushUndo(){undo.push(JSON.stringify(context.ZK))},zkSave(){saves++},show(){},G:{m:'L'},graph(){renders++},toast(){},window:{},Date});
+check('All notes graph includes both note types',()=>{
+ const html=fs.readFileSync('C:/Apps/ClaimViewer/template/template.html','utf8');
+ assert.equal((html.match(/data-note-graph aria-haspopup="dialog"/g)||[]).length,2);
+ const start=html.indexOf('const zkGraphSVG='),end=html.indexOf('$("zq").addEventListener',start);
+ const workspace=fs.readFileSync('C:/Apps/ClaimViewer/lib/workspace.js','utf8');
+ const graph=vm.runInNewContext(workspace.slice(0,workspace.indexOf('function openIdeaNote'))+html.slice(start,end)+'\nzkGraphSVG',{ZKCM:null,document:{body:{classList:{add(){}}}},G:context.G,
+   zkIdsF:()=>['free','question','section','legacy'],zkNote:id=>id==='legacy'?{question:'Why?'}:{kind:id,question:'Why?'},ideaMapSVG:ids=>ids.join(',')});
+ context.G.m='Z';assert.equal(graph(),'free,question,section,legacy');
+ context.G.m='S';assert.equal(graph(),'section');
+ context.G.m='L';
+});
 context.LNK=true;context.zkTags=n=>n.tags||[];context.zkNest=n=>n.subt||[];context.zkPaths=n=>n.subt.map(p=>p.split(' › '));context.zkNote=id=>({title:id==="a"?"Idea <A>":"Idea B",tags:["Topic"],subt:id==="a"?["Methods › Cases","Examples"]:[],links:id==="a"?[{to:"b",kind:"link"}]:[]});
 vm.runInContext(fs.readFileSync('C:/Apps/ClaimViewer/lib/idea-layout.js','utf8')+fs.readFileSync('C:/Apps/ClaimViewer/lib/workspace.js','utf8'),context);
+check('A link from a free-form note to a section note is drawn when both are visible',()=>{
+ const original=context.zkNote;
+ context.zkNote=id=>({...original(id),kind:id==='a'?'free':'section'});
+ try {
+  assert.match(context.ideaMapSVG(['a','b']),/class="idea-edge" data-from="a" data-to="b"/);
+  assert.doesNotMatch(context.ideaMapSVG(['b']),/class="idea-edge"/);
+ } finally {context.zkNote=original}
+});
+check('Note graph pop-up opens from a button and applies the selected mode',()=>{
+ let focused=false;
+ context.gset=()=>{};
+ context.openNoteGraphPicker({focus(){focused=true}});
+ assert.equal(dialog.open,true);
+ assert.match(dialog.innerHTML,/All notes.*Section notes/);
+ dialog.returnValue='S';dialog.close();
+ assert.equal(context.G.m,'S');
+ context.openNoteGraphPicker({focus(){focused=true}});
+ dialog.returnValue='cancel';dialog.close();
+ assert.equal(context.G.m,'S');
+ assert.equal(focused,true);
+ context.G.m='L';
+});
 check("Idea map renders circular nodes, escaped labels and connections",()=>{const svg=context.ideaMapSVG(["a","b"]);assert.match(svg,/idea-dot/);assert.match(svg,/Idea &lt;A>/);assert.match(svg,/class="idea-edge"/);context.LNK=false;assert.doesNotMatch(context.ideaMapSVG(["a","b"]),/class="idea-edge"/);context.LNK=true});
+check('Question groups show linked claims and keep unassigned claims visible',()=>{
+ const original=context.zkNote;
+ context.zkNote=id=>({...original(id),question:id==='a'?'How does it work?':'',claims:['s:1']});
+ context.zkIds=()=>['a'];
+ context.kc=c=>c.src+':'+c.id;
+ state.set('cv:idea-group','question');
+ assert.match(context.ideaMapSVG(['a','b']),/<title>How does it work\?<\/title>/);
+ const svg=context.claimQuestionMap([{src:'s',id:'1',quote:'Evidence'},{src:'s',id:'2',quote:'Other claim'}]);
+ assert.match(svg,/<title>How does it work\?<\/title>/);
+ assert.match(svg,/<title>No question<\/title>/);
+ assert.equal((svg.match(/data-question-claim/g)||[]).length,2);
+ context.DATA={sources:[{id:'s',title:'Source PDF'}]};
+ state.set('cv:idea-group','all');
+ const combined=context.claimQuestionMap([{src:'s',id:'1',quote:'Evidence',tags:['Theory'],pathway:['Mechanism']}]);
+ for(const label of ['How does it work?','Source PDF','Theory','Mechanism']) assert.ok(combined.includes('<title>'+label+'</title>'));
+ assert.ok(vm.runInContext(`(()=>{
+   const keys=[...ideaScene.groups.keys()];
+   const outer=ideaGroupBounds(ideaScene,keys.at(-1));
+   const leaf=ideaGroupBounds(ideaScene,keys[0]);
+   return outer[0]<leaf[0]&&outer[1]<leaf[1]&&outer[2]>leaf[2]&&outer[3]>leaf[3];
+ })()`,context));
+ state.delete('cv:idea-group');
+ context.zkNote=original;
+});
 check("Note graph shows nested sub-tags and keeps notes in distinct groups",()=>{
  const svg=context.ideaMapSVG(["a","b"]);
  assert.match(svg,/<title>Topic<\/title>/);
@@ -33,6 +90,24 @@ check("Note graph shows nested sub-tags and keeps notes in distinct groups",()=>
  assert.doesNotMatch(fs.readFileSync("C:/Apps/ClaimViewer/template/template.html","utf8"),/data-idea-toggle/);
 });
 check("Library stays in column view",()=>{const html=fs.readFileSync("C:/Apps/ClaimViewer/template/template.html","utf8");assert.doesNotMatch(html,/libraryWorkspace\(box/);assert.doesNotMatch(html,/data-library-view/);assert.match(html,/th data-sort/)});
+check('Section notes accept inclusive PDF ranges and reject invalid or out-of-bounds pages',()=>{
+ assert.deepEqual(Array.from(context.sectionPages('2–6',6)),[2,6]);
+ assert.deepEqual(Array.from(context.sectionPages('4',6)),[4,4]);
+ for(const range of ['0','6-2','1-7','1,2','1.5'])assert.equal(context.sectionPages(range,6),null);
+});
+check('Question drafts reject a second request within one sentence',()=>{
+ assert.equal(context.singleDraftQuestion('How did the conception of party shift from a synonym for faction into a legitimate constitutional agent, and what changed in the relationship between parties and constitutional government?'),false);
+ assert.equal(context.singleDraftQuestion('How did party legitimacy change? Why?'),false);
+ assert.equal(context.singleDraftQuestion('How does Sartori explain the changing place of parties and factions in constitutional government?'),true);
+});
+check('Guide note creation opens the free-form editor with the reading and page',()=>{
+ let opened,seed;
+ context.show=mode=>{opened=mode};
+ context.zkNew=(parent,value)=>{assert.equal(parent,null);seed=value};
+ context.openNewNote({src:'reading',page:9});
+ assert.equal(opened,'notes');
+ assert.deepEqual({...seed},{src:'reading',page:9,kind:'free'});
+});
 check('Rejects dangling/self links and empty titles',()=>{for(const v of [[{title:'x',body:'',links:[0]}],[{title:'x',body:'',links:[4]}],[{title:'',body:'',links:[]}]])assert.throws(()=>context.validateNodeDraft(v))});
 check('Each claim graph accepts only changes its view can use',()=>{
  const a={src:'a',id:'1',axisA:['Existing'],axisB:[],pathway:[],role:[],links:[],pdf_page:[]};

@@ -204,7 +204,7 @@ select,input,textarea,.bar button,#count button,.tabs button,#ed button,#vl butt
 .gc .ck{display:flex;flex-wrap:wrap;gap:2px 12px;font-size:12px;align-items:center}.gc .ck b{font-size:10px;font-weight:400;color:var(--mute)}.gc .ck label{display:flex;gap:4px;align-items:center;cursor:pointer}
 .gc .lk,body.gnet .gc .ly,body.gcon .gc .ly,body.groles .gc .ly{display:none}body.gnet .gc .lk{display:flex}
 /* The graph controls (Show boxes, box names, Edit lists) configure the Layers drawing only. */
-body.gnet #gc2>:not(.tabs),body.gcon #gc2>:not(.tabs),body.gz #gc2>:not(.tabs),body.groles #gc2>:not(.tabs){display:none}
+body.gnet #gc2>:not(.tabs,#graph-options,#graph-options-toggle),body.gcon #gc2>:not(.tabs,#graph-options,#graph-options-toggle),body.gz #gc2>:not(.tabs,#graph-options,#graph-options-toggle),body.groles #gc2>:not(.tabs,#graph-options,#graph-options-toggle){display:none}
 body.gnet #vbg,body.gcon #vbg,body.gz #vbg,body.groles #vbg{display:none}
 #gv .nn{cursor:pointer}#gv .nn circle{stroke:var(--bg);stroke-width:1.5}#gv .nn:hover circle,#gv .nn.hit circle{stroke:var(--acc);stroke-width:3}#gv .nn.dim{opacity:.25}
 #gv .ce{fill:none;stroke:var(--mute);stroke-width:1;opacity:.35}#gv .ce.tag{stroke:var(--acc);opacity:.55}#gv .ce.opp{stroke:var(--dn);stroke-dasharray:4 3;opacity:.75}#gv .ce.dim{opacity:.04}#gv .ce.hit{opacity:1;stroke-width:2}
@@ -435,12 +435,13 @@ body.zopen .zked .zhead{position:sticky;top:0;z-index:2;background:var(--bg);pad
 .zked input,.zked textarea,.zked select{font:inherit;font-weight:400;color:var(--ink);background:var(--bg);border:1px solid var(--ctl);border-radius:var(--r);padding:8px}
 .zked textarea{min-height:220px;resize:vertical;line-height:1.6}
 .zked .zid{font-variant-numeric:tabular-nums;color:var(--acc);font-weight:700}
-.zkrow{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:4px}
-.zkrow select{flex:1;min-width:140px}
-.zkrow .zkpick2{flex:1;min-width:140px;position:relative;display:flex}
-.zkrow .zkpick2 input[type=search]{flex:1;min-width:0}
-.zkrow .zkpick2 .sugg{position:absolute;left:0;right:0;top:calc(100% + 2px);z-index:6;margin:0;max-height:240px}
-.zkrow button{height:var(--h);padding:0 10px;border:1px solid var(--ctl);border-radius:var(--r);background:var(--bg);color:var(--ink);font:inherit;cursor:pointer}
+.zkrow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px;align-items:start;margin-bottom:12px}
+.zkrow .zklcol,.zkrow .zkpick2{grid-column:1/-1;min-width:0}
+.zkrow .zkpick2{display:grid;gap:4px}
+.zkrow .zkpick2 .sugg{margin:0;max-height:min(36vh,280px)}
+.zkrow .zkpick2 .sugg button{padding:8px 10px;border-radius:0}
+.zkrow .zkpick2 .sugg button+button{border-top:1px solid var(--line)}
+.zkrow .zkx{height:var(--h);padding:0 10px;border:1px solid var(--ctl);border-radius:var(--r);background:var(--bg);color:var(--ink);font:inherit;cursor:pointer}
 .zkacts{display:flex;gap:8px;flex-wrap:wrap}
 .zkacts button,.zsrc-actions button,#zkdeep{min-height:var(--h);padding:0 10px;border:1px solid transparent;border-radius:var(--r);background:transparent;color:var(--ink);font:inherit;cursor:pointer}
 .zkacts button:not([value=ok]):hover,.zsrc-actions button:hover,#zkdeep:hover{background:var(--fill);color:var(--acc)}
@@ -741,7 +742,7 @@ aside>.tabs,.top,#flt::before{flex:none}
 #ailog .aim.bot{max-width:72ch;margin:0 auto 24px;padding:12px 0;background:transparent;border:0}
 .doi-field{display:flex;align-items:center;gap:5px}.doi-field input{min-width:150px;flex:1}.doi-search{flex:none;padding:5px;min-width:30px}.doi-search .i{width:16px;height:16px}.doi-search[aria-busy=true]{opacity:.5}
 </style>
-<link rel="stylesheet" href="lib/workspace.css"><link rel="stylesheet" href="lib/provider-settings.css"><script src="lib/source-context.js"></script><script src="lib/provider-settings.js"></script><link rel="stylesheet" href="lib/settings.css"><script src="lib/i18n.js"></script><script src="lib/settings.js"></script><script src="lib/idea-layout.js"></script><script src="lib/workspace.js"></script><script defer src="lib/tutorial.js"></script></head>
+<link rel="stylesheet" href="lib/workspace.css"><link rel="stylesheet" href="lib/provider-settings.css"><script src="lib/source-context.js"></script><script src="lib/provider-settings.js"></script><link rel="stylesheet" href="lib/settings.css"><script src="lib/i18n.js"></script><script src="lib/settings.js"></script><script src="lib/idea-layout.js"></script><script src="lib/workspace.js?v=all-note-links"></script><script defer src="lib/tutorial.js"></script><link rel="stylesheet" href="lib/reading-guide.css"><script src="lib/reading-guide.js?v=one-note-editor"></script></head>
 <body>
 <aside>
     <div class="top"><h1>Claim Viewer</h1><button id="cv-tour-button" type="button" title="Start tutorial" aria-label="Start tutorial">?</button><button id="th" type="button" aria-pressed="false" aria-label="Dark mode" title="Dark mode"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path class="mo" d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/><g class="su"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></g></svg></button><button id="hl" type="button" class="pane-toggle" title="Hide left pane" aria-label="Hide left pane"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M9 5v14"/></svg></button></div>
@@ -768,11 +769,11 @@ aside>.tabs,.top,#flt::before{flex:none}
   <div id="zflt">
     <label class="f w" for="zcol">Collection</label><select id="zcol" style="grid-column:1/-1"></select>
     <label class="f w" for="zsrc">Reading</label><select id="zsrc" style="grid-column:1/-1"></select>
-    <label class="f w" for="zq">Find a note</label><input class="w" id="zq" type="search" placeholder="Title, body, tag">
+    <label class="f w" for="zq">Find a note</label><input class="w" id="zq" type="search" placeholder="Search note text, questions, or tags">
     <label class="f w" for="zft">Tag</label><select id="zft" style="grid-column:1/-1"></select>
     <label class="f w" for="zfs">Sub-tag</label><select id="zfs" style="grid-column:1/-1"></select>
       </div>
-<div class="settings-footer"><button id="cv-settings-button" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 3-1 3-3 1-2 3 2 2-1 3 3 2 3-1 2 2 3-1 1-3 3-1 1-3-2-2 1-3-3-2-3 1-2-1z"/><circle cx="12" cy="11" r="3"/></svg>Settings</button></div></aside>
+<div class="settings-footer"><button id="cv-settings-button" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h6m4 0h6M4 12h10m4 0h2M4 18h3m4 0h9"/><circle cx="12" cy="6" r="2"/><circle cx="16" cy="12" r="2"/><circle cx="9" cy="18" r="2"/></svg>Settings</button></div></aside>
 <dialog id="vl"><form method="dialog">
   <b>Lists</b>
   <small id="vscope">Type to rename. ✕ removes.</small>
@@ -810,7 +811,7 @@ aside>.tabs,.top,#flt::before{flex:none}
     <h1>Notes</h1>
     <button id="zknew" type="button">New note</button>
     <button id="zkidx" type="button">Keyword index</button>
-    <button id="zkgraph" type="button" title="Open the note graph">Note graph</button>
+    <button id="zkgraph" type="button" data-note-graph aria-haspopup="dialog">Note graph</button>
   </div>
   <div class="zbody">
     <div id="zklist" aria-label="Notes"></div>
@@ -818,8 +819,40 @@ aside>.tabs,.top,#flt::before{flex:none}
   </div>
 </div>
 </main>
-<div id="gv"><h1 id="gt"></h1><div class="gc" id="gc2"></div><div id="lkc" class="lg" role="group" aria-label="Declared connections between readings"></div><div id="graph-action-row"><div id="graph-tools" role="group" aria-label="Graph zoom" title="Ctrl + wheel to zoom. Drag ideas or groups to arrange."><button type="button" data-graph-zoom="out" aria-label="Zoom graph out">−</button><output id="graph-zoom-label" aria-live="polite">100%</output><button type="button" data-graph-zoom="in" aria-label="Zoom graph in">+</button><button type="button" data-graph-zoom="fit">Fit</button><button type="button" data-graph-zoom="reset">100%</button><span id="idea-group-control">Group by <select id="idea-group" aria-label="Group note graph by"><option value="topic">Tag and sub-tag</option><option value="source">PDF source</option><option value="source-topic">PDF source, tag and sub-tag</option></select><button type="button" data-idea-relayout="1" title="Reset saved map positions">Auto layout</button></span><small>Ctrl + wheel to zoom · Drag ideas or groups to arrange</small></div></div><div id="gx" aria-label="Horizontal scroll" role="group"><div id="gxi"></div></div><div id="gout"></div></div>
-<section><div class="rtabs" role="tablist" aria-label="Right pane"><button type="button" class="on" data-rt="pdf" role="tab" aria-selected="true">PDF</button><button type="button" data-rt="ai" role="tab" aria-selected="false">Ask AI</button></div><div id="reading-tabs" aria-label="Open readings"></div><div class="rtop"><div class="rsel"><select id="pdfsel" aria-label="Reading"></select><button id="lr" type="button" title="Delete this reading from the library" aria-label="Delete this reading from the library"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h7l4 4v14H7zM14 3v4h4M10 12l4 4m0-4-4 4"/></svg></button></div><div id="lpn"></div><div id="phint">Pick a reading here, or from the list on the left.</div></div><div id="rt" hidden><button id="zo" type="button" aria-label="Zoom out"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg></button><span id="zv">100%</span><button id="zi" type="button" aria-label="Zoom in"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button><button id="zf" type="button" title="Fit width" aria-label="Fit width"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button><button id="fb" type="button" title="Read this PDF full screen (Esc to exit)" aria-label="Read this PDF full screen" aria-pressed="false"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg></button><button id="sv" type="button" title="Save PDF" aria-label="Save PDF"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m-4-4 4 4 4-4M5 20h14"/></svg></button><button id="ra" type="button" title="Read this PDF aloud; every other sentence blurs out" aria-label="Read aloud" aria-pressed="false"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M17 8.5a5 5 0 0 1 0 7M19.5 6a8.5 8.5 0 0 1 0 12"/></svg></button><button id="hp" type="button" title="Highlighter: pick a colour, then drag over the text" aria-label="Highlighter" aria-pressed="false" aria-expanded="false"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 15l-4 4h4l4-4M14 4l6 6-8 8-6-6z"/></svg></button><div id="hpop" role="group" aria-label="Highlight colour" hidden></div><button id="ocr" type="button" title="Scan OCR: read this page from its pixels when the PDF text layer is broken" aria-label="Scan OCR"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8V5h4M20 8V5h-4M4 16v3h4M20 16v3h-4"/><path d="M8 11h8M8 14h5"/></svg></button><button id="hc" type="button" title="Clear all highlights in this PDF (right-click one highlight to remove only it)" aria-label="Clear all highlights"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13"/></svg></button><span class="pgbrk" aria-hidden="true"></span><input id="pgnow" class="pgnow" inputmode="numeric" aria-label="Page, type a number and press Enter" title="Type a page number, then Enter"></div><iframe id="pdf" allowfullscreen title="Source PDF" hidden></iframe><div id="rabar" role="group" aria-label="Read aloud controls"><button id="raprev" type="button" title="Previous sentence">&#8592; Back</button><select id="rav" aria-label="Voice" title="Voice"></select><span class="ran" id="rasent"></span><button id="ranext" type="button" title="Next sentence">Next &#8594;</button><button id="rastop" type="button" title="Stop reading and show the page normally">Stop</button></div><div id="rd" hidden></div><div id="aipane" hidden>
+<div id="gv"><h1 id="gt"></h1><div class="gc" id="gc2"></div><div id="lkc" class="lg" role="group" aria-label="Declared connections between readings"></div><div id="graph-action-row"><div id="graph-tools" role="group" aria-label="Graph zoom" title="Ctrl + wheel to zoom. Drag ideas or groups to arrange."><button type="button" data-graph-zoom="out" aria-label="Zoom graph out">−</button><output id="graph-zoom-label" aria-live="polite">100%</output><button type="button" data-graph-zoom="in" aria-label="Zoom graph in">+</button><button type="button" data-graph-zoom="fit">Fit</button><span id="idea-group-control">Group by <select id="idea-group" aria-label="Group graph by"><option value="question">Question</option><option value="all">All</option><option value="topic">Tag and sub-tag</option><option value="source">PDF source</option><option value="source-topic">PDF source, tag and sub-tag</option></select></span><small>Ctrl + wheel to zoom · Drag ideas or groups to arrange</small></div></div><div id="gx" aria-label="Horizontal scroll" role="group"><div id="gxi"></div></div><div id="gout"></div></div>
+<section><div class="rtabs" role="tablist" aria-label="Right pane"><button type="button" class="on" data-rt="pdf" role="tab" aria-selected="true">PDF</button><button type="button" data-rt="ai" role="tab" aria-selected="false">Ask AI</button></div><div id="reading-tabs" aria-label="Open readings"></div><div class="rtop"><div class="rsel"><select id="pdfsel" aria-label="Reading"></select><button id="lr" type="button" title="Delete this reading from the library" aria-label="Delete this reading from the library"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h7l4 4v14H7zM14 3v4h4M10 12l4 4m0-4-4 4"/></svg></button></div><div id="lpn"></div><div id="phint">Pick a reading here, or from the list on the left.</div></div><div id="rt" hidden><button id="zo" type="button" aria-label="Zoom out"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg></button><span id="zv">100%</span><button id="zi" type="button" aria-label="Zoom in"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button><button id="zf" type="button" title="Fit width" aria-label="Fit width"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button><button id="fb" type="button" title="Read this PDF full screen (Esc to exit)" aria-label="Read this PDF full screen" aria-pressed="false"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg></button><button id="sv" type="button" title="Save PDF" aria-label="Save PDF"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11m-4-4 4 4 4-4M5 20h14"/></svg></button><button id="ra" type="button" title="Read this PDF aloud; every other sentence blurs out" aria-label="Read aloud" aria-pressed="false"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M17 8.5a5 5 0 0 1 0 7M19.5 6a8.5 8.5 0 0 1 0 12"/></svg></button><button id="hp" type="button" title="Highlighter: pick a colour, then drag over the text" aria-label="Highlighter" aria-pressed="false" aria-expanded="false"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 15l-4 4h4l4-4M14 4l6 6-8 8-6-6z"/></svg></button><div id="hpop" role="group" aria-label="Highlight colour" hidden></div><button id="ocr" type="button" title="Scan OCR: read this page from its pixels when the PDF text layer is broken" aria-label="Scan OCR"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8V5h4M20 8V5h-4M4 16v3h4M20 16v3h-4"/><path d="M8 11h8M8 14h5"/></svg></button><button id="hc" type="button" title="Clear all highlights in this PDF (right-click one highlight to remove only it)" aria-label="Clear all highlights"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13"/></svg></button><button type="button" id="guide-toggle" title="Reading guide" aria-label="Reading guide" aria-controls="reading-guide" aria-expanded="false"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6c-3-2-6-2-9-1v14c3-1 6-1 9 1 3-2 6-2 9-1V5c-3-1-6-1-9 1v14"/></svg></button><span class="pgbrk" aria-hidden="true"></span><input id="pgnow" class="pgnow" inputmode="numeric" aria-label="Page, type a number and press Enter" title="Type a page number, then Enter"></div>
+<aside id="reading-guide" aria-label="Reading guide" hidden>
+  <header>
+    <label>Plan <select data-guide="kind"><option value="article">Journal article</option><option value="chapter">Book chapter</option></select></label>
+    <label>Reading goal <select data-guide="goal"><option value="understand">Understand the reading</option><option value="trace">Trace the argument</option><option value="respond">Write a response paper</option><option value="original" hidden>Earlier guide draft</option></select></label>
+    <label data-guide="range-label" hidden>Chapter PDF pages <input data-guide="range" type="text" placeholder="1-23"></label>
+    <button type="button" data-guide="close">Close</button>
+    <select data-guide="outline" aria-label="PDF bookmarks" hidden disabled></select>
+    <span data-guide="bookmark-status" role="status"></span>
+  </header>
+  <nav data-guide="steps" aria-label="Reading steps"></nav>
+  <p><strong data-guide="duration"></strong> <span data-guide="time" tabindex="-1"></span> <button type="button" data-guide="timer">Start timer</button></p>
+  <p data-guide="prompt"></p>
+  <ol data-guide="questions"></ol>
+  <div data-guide="fields"></div>
+  <ol data-guide="sections"></ol>
+  <footer>
+    <button type="button" data-guide="add" hidden>Add section note at this page</button>
+    <button type="button" data-guide="recall" hidden>Hide PDF and start recall</button>
+    <button type="button" data-guide="ai">Ask AI to survey</button>
+    <button type="button" data-guide="save">Copy to Notes</button>
+  </footer>
+  <p data-guide="status" role="status"></p>
+</aside>
+<dialog id="guide-recall" aria-labelledby="guide-recall-title">
+  <h2 id="guide-recall-title">Recall the argument</h2>
+  <p>Explain the argument in your own words. Mark any concept or link you need to check.</p>
+  <ol data-recall-questions></ol>
+  <label>Reconstruction<textarea rows="6" autofocus></textarea></label>
+  <label data-critique>What assumption, contradiction, conceptual problem, or alternative explanation could you discuss in a response paper?<textarea rows="3"></textarea></label>
+  <footer><form method="dialog"><button>Return to the PDF</button></form><output aria-live="off"></output></footer>
+</dialog>
+<iframe id="pdf" allowfullscreen title="Source PDF" hidden></iframe><div id="rabar" role="group" aria-label="Read aloud controls"><button id="raprev" type="button" title="Previous sentence">&#8592; Back</button><select id="rav" aria-label="Voice" title="Voice"></select><span class="ran" id="rasent"></span><button id="ranext" type="button" title="Next sentence">Next &#8594;</button><button id="rastop" type="button" title="Stop reading and show the page normally">Stop</button></div><div id="rd" hidden></div><div id="aipane" hidden>
 <div class="aibar"><button id="aiclear" type="button" title="Clear this chat" hidden>Clear chat</button><button id="aiconf" type="button" title="AI settings and API keys" hidden>AI settings</button></div>
 <div id="aikeybox" hidden><p>Connect your AI provider in Settings.</p><button type="button" onclick="claimSettings('ai')">Set up AI</button><small id="aikeyms"></small></div>
 <div id="ailog" aria-live="polite"></div>
@@ -978,7 +1011,7 @@ function rebuildVocabUI(){
   $("dlo").innerHTML=VB.axisB_list.map(v=>`<option value="${esc(v)}">`).join("");
   [["lfa",SC.a],["loc",SC.b],["lpw",SC.p],["hfa",SC.a],["hoc",SC.b],["hpw",SC.p],["gfa",SC.a+" (Enter adds one)"],["goc",SC.b+" (Enter adds one)"],["ldir","Change in "+SC.b],["gdir","Direction of "+SC.b+" (tick all that apply)"]].forEach(([i,t])=>{const e=$(i);if(!e)return;  // only the label text, never the control inside it
    const n=[...e.childNodes].find(x=>x.nodeType===3&&x.nodeValue.trim());if(n)n.nodeValue=t;else e.insertBefore(document.createTextNode(t),e.firstChild)});
-  if($("gc2")){$("gc2").innerHTML=gctl();gsync()}  // direct: a click bubbling out of #gc2 hits the graph handler  // rebuild first: gctl() recreates the inputs, so filling them before this would be wiped
+  if($("gc2")){const open=$("graph-options-toggle")?.getAttribute("aria-expanded")==="true";$("gc2").innerHTML=gctl();$("graph-options").hidden=!open;$("graph-options-toggle").setAttribute("aria-expanded",String(open));gsync()}  // direct: a click bubbling out of #gc2 hits the graph handler  // rebuild first: gctl() recreates the inputs, so filling them before this would be wiped
   const rn=(id,v)=>{const e=$(id);if(e&&document.activeElement!==e)e.value=v};rn("rna",SC.a);rn("rnp",SC.p);rn("rnb",SC.b);
   const _nc=$("col").value,_hi=$("rnh");
   if(_hi)_hi.textContent=_nc?"Box names: they label the graph, the list and the edit box":"Box names: default names for all folders. Pick a folder to override";
@@ -1019,6 +1052,12 @@ opts($("pw"),"All "+SC.p,Object.keys(VB.pathways).map(k=>({v:k,l:VB.pathways[k]}
 VB.roles={A:"Names a "+SC.a,B:"Names a "+SC.b,TYPOLOGY:"Defines or classifies, without a cause or effect",OTHER:"Context that fits none of the above"};
 opts($("role"),"All roles",Object.keys(VB.roles).map(r=>({v:r,l:ROLE()[r]})));
 $("col").innerHTML='<option value="">All collections</option>'+cTree().map(([id,n,d])=>`<option value="${esc(id)}">${"\u00a0\u00a0".repeat(d)}${esc(n)} (${DATA.sources.filter(s=>inCol(s.col,id)).length})</option>`).join("");
+if(localStorage.getItem("cv:reopen")!=="false"&&localStorage.getItem("cv:workspace")==="notes"){
+  const reading=localStorage.getItem("cv:lastreading")||"";
+  const cols=COL[reading]||[];
+  $("col").value=LFOLDER&&inCol(cols,LFOLDER)?LFOLDER:cols[0]||"";
+  $("src").value=reading;
+}
 [["lfa",SC.a],["loc",SC.b],["lpw",SC.p],["hfa",SC.a],["hoc",SC.b],["hpw",SC.p],
  ["gfa",SC.a+" (Enter adds one)"],["goc",SC.b+" (Enter adds one)"],
  ["ldir","Change in "+SC.b],["gdir","Direction of "+SC.b+" (tick all that apply)"]].forEach(([i,t])=>{const e=$(i);if(!e)return;  // only the label text, never the control inside it
@@ -1190,7 +1229,7 @@ const ask=(msg,key,info)=>new Promise(res=>{if(key&&store.get("cv:skip:"+key)===
   document.body.append(d);d.showModal()});
 
 $("list").addEventListener("click",async e=>{if(performance.now()-(window.__cdragAt||0)<350)return;if(e.target.closest("[contenteditable],.dh"))return;
-  if(e.target.closest("[data-copy]")){e.stopPropagation();const cd=e.target.closest(".card"),[s0,i0]=String((cd&&cd.dataset.k)||"").split("\u0001"),c=all.find(x=>x.src===s0&&x.id===i0);if(c)copyText(cardCopy(c));return}if(e.detail>1&&e.target.closest(".quote"))return editQ(e.target.closest(".quote"));if(e.target.closest("button[data-g]")){if(G.m==="Z"){const b=document.querySelector('#gc2 [data-gc="mL"]');if(b)b.click()}return show("graph")}  // a claim belongs in Layers, not in the note graph
+  if(e.target.closest("[data-copy]")){e.stopPropagation();const cd=e.target.closest(".card"),[s0,i0]=String((cd&&cd.dataset.k)||"").split("\u0001"),c=all.find(x=>x.src===s0&&x.id===i0);if(c)copyText(cardCopy(c));return}if(e.detail>1&&e.target.closest(".quote"))return editQ(e.target.closest(".quote"));if(e.target.closest("button[data-g]")){if(["Z","S"].includes(G.m)){const b=document.querySelector('#gc2 [data-gc="mL"]');if(b)b.click()}return show("graph")}  // a claim belongs in Layers, not in the note graph
   if(e.target.closest("[data-ed]"))return editor(all.find(x=>x.src+x.id===sel));
   if(e.target.closest("[data-zknote]")){const cd=e.target.closest(".card"),[s0,i0]=String((cd&&cd.dataset.k)||"").split("\u0001"),c=all.find(x=>x.src===s0&&x.id===i0);
     if(c)askNote(c).then(id=>{if(!id)return;if(id==="__new__"){zkFromClaim(c);return}
@@ -1314,7 +1353,7 @@ setTh(document.documentElement.dataset.theme);
 // graph view. Layers: any mix of Q1 factors, pathways, Q2 outcomes as columns; neighbours are joined by claims that carry both tags. Claim network: claims are the nodes. Counts only, no model.
 const DCOL={"+":"var(--dp)","-":"var(--dn)",mixed:"var(--dm)",none:"var(--mute)"};
 let G={m:"L",l:{f:1,p:1,o:1},k:{w:1,p:0,f:0,o:0}};
-try{const g=JSON.parse(store.get("cv:graph"));if(g&&g.l&&g.k)G=g}catch(e){}
+try{const g=JSON.parse(store.get("cv:graph"));if(g&&g.l&&g.k)G=g;if(G.m==="Q")G.m="Z"}catch(e){}
 const ckb=(grp,list)=>list.map(([k,t])=>`<label><input type="checkbox" data-gc="${grp}${k}"> ${t}</label>`).join("");
 const gImage=async kind=>{const svg=document.querySelector("#gout svg");if(!svg)return null;
   const vb=(svg.getAttribute("viewBox")||"").trim().split(/[\s,]+/).map(Number),W=Math.max(1,vb[2]||0),H=Math.max(1,vb[3]||0);
@@ -1347,10 +1386,10 @@ const gExportMenu=()=>{document.querySelectorAll("#gexd").forEach(x=>x.remove())
   document.body.appendChild(d);
   d.addEventListener("click",async e=>{const b=e.target.closest("button[value]");if(!b)return;const k=b.value;d.close();d.remove();if(k!=="cancel")await gExport(k)});
   d.showModal()};
-function gctl(){return `<div class="tabs"><button data-gc="mL">Layers</button><button data-gc="mC">Claim network</button><button data-gc="mK">Connected claims</button><button data-gc="mR">Roles</button><button data-gc="mZ">Notes</button></div>${G.m==="Z"?"":`<div class="rnw" role="group" aria-label="Box names"><span class="rnh" id="rnh">Box names: they label the graph, the list and the edit box</span><div class="tabs rn"><label title="Left column">Left<input id="rna" aria-label="Left box name" value="${esc(SC.a)}"></label><label title="Middle column">Middle<input id="rnp" aria-label="Middle box name" value="${esc(SC.p)}"></label><label title="Right column">Right<input id="rnb" aria-label="Right box name" value="${esc(SC.b)}"></label></div></div><div class="ck ly" role="group" aria-label="Layers to show"><b>Show</b><span class="rnh">untick the middle box to draw direct lines</span>${ckb("l",[["f",SC.a],["p",SC.p],["o",SC.b],...(VB.xcols||[]).map(x=>[x.k,x.name||x.k])])}</div><div class="tabs"><button type="button" id="vbg" title="Edit the three lists for this folder">Edit lists</button></div>${gsetNav()}<div class="ck lk" role="group" aria-label="Link claims that share"><b>Link by</b>${ckb("k",[["w","wording"],["p",SC.p],["f",SC.a],["o",SC.b]])}</div>`}<div class="tabs" id="znav" role="group" aria-label="Graph"><button type="button" id="gexp" title="Save this graph as an image">Export</button><button type="button" id="zklink" aria-pressed="${LNK}" title="Show the links between notes. Each one is routed below the graph so it never crosses a pill; with this off, only the open note's links are drawn">Links</button><button type="button" id="zkmerge" aria-pressed="${MERGE}" title="Join all notes of one reading into a single pill">Merge readings</button><button type="button" data-node-studio="1">Create nodes</button><button type="button" id="zkback" title="Back to the notes list">Notes list</button><button type="button" id="zkreset" title="Forget the places you dragged nodes to and lay the graph out again">Reset layout</button><button type="button" id="zkgundo" title="Undo the last change">Undo</button><button type="button" id="zkgdel" title="Delete the clicked node (tag, sub-tag or note)">Delete</button></div>`}
+function gctl(){return `<div class="tabs"><button data-gc="mL">Layers</button><button data-gc="mC">Claim network</button><button data-gc="mK">Connected claims</button><button data-gc="mR">Roles</button><button type="button" data-note-graph aria-haspopup="dialog" class="${["Z","S"].includes(G.m)?"on":""}">Note graph</button></div><button type="button" id="graph-options-toggle" aria-controls="graph-options" aria-expanded="false">More tools <svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button><div id="graph-options" hidden>${["Z","S"].includes(G.m)?"":`<div class="rnw" role="group" aria-label="Box names"><span class="rnh" id="rnh">Box names: they label the graph, the list and the edit box</span><div class="tabs rn"><label title="Left column">Left<input id="rna" aria-label="Left box name" value="${esc(SC.a)}"></label><label title="Middle column">Middle<input id="rnp" aria-label="Middle box name" value="${esc(SC.p)}"></label><label title="Right column">Right<input id="rnb" aria-label="Right box name" value="${esc(SC.b)}"></label></div></div><div class="ck ly" role="group" aria-label="Layers to show"><b>Show</b><span class="rnh">untick the middle box to draw direct lines</span>${ckb("l",[["f",SC.a],["p",SC.p],["o",SC.b],...(VB.xcols||[]).map(x=>[x.k,x.name||x.k])])}</div><div class="tabs"><button type="button" id="vbg" title="Edit the three lists for this folder">Edit lists</button></div>${gsetNav()}<div class="ck lk" role="group" aria-label="Link claims that share"><b>Link by</b>${ckb("k",[["w","wording"],["p",SC.p],["f",SC.a],["o",SC.b]])}</div>`}<div class="graph-extra-actions"><button type="button" data-graph-zoom="reset">Reset zoom</button><button type="button" data-idea-relayout="1">Auto layout</button></div></div><div class="tabs" id="znav" role="group" aria-label="Graph"><button type="button" id="gexp" title="Save this graph as an image">Export</button><button type="button" id="zklink" aria-pressed="${LNK}" title="Show the links between notes. Each one is routed below the graph so it never crosses a pill; with this off, only the open note's links are drawn">Links</button><button type="button" id="zkmerge" aria-pressed="${MERGE}" title="Join all notes of one reading into a single pill">Merge readings</button><button type="button" data-node-studio="1">Create nodes</button><button type="button" id="zkback" title="Back to the notes list">Notes list</button><button type="button" id="zkreset" title="Forget the places you dragged nodes to and lay the graph out again">Reset layout</button><button type="button" id="zkgundo" title="Undo the last change">Undo</button><button type="button" id="zkgdel" title="Delete the clicked node (tag, sub-tag or note)">Delete</button></div>`}
 function gsync(){
   const nav=$("gc2").querySelector("#znav"),row=$("graph-action-row");if(nav&&row){const old=row.querySelector("#znav");if(old)old.remove();row.append(nav)}
-  document.body.classList.toggle("gnet",G.m==="C");document.body.classList.toggle("gcon",G.m==="K");document.body.classList.toggle("gz",G.m==="Z");document.body.classList.toggle("groles",G.m==="R");
+  document.body.classList.toggle("gnet",G.m==="C");document.body.classList.toggle("gcon",G.m==="K");document.body.classList.toggle("gz",["Z","S"].includes(G.m));document.body.classList.toggle("groles",G.m==="R");
   document.querySelectorAll("[data-gc]").forEach(el=>{const k=el.dataset.gc;
     if(k[0]==="m"){const on=G.m===k[1];el.classList.toggle("on",on);el.setAttribute("aria-pressed",on)}
     else el.checked=!!G[k[0]][k[1]]});
@@ -1397,7 +1436,7 @@ function graph(){
      const used=new Set();rows.forEach(c=>(c.pathway||[]).forEach(p=>used.add(String(p))));
      if(used.size){
        rows=rows.concat(all.filter(c=>!c.del&&!rows.includes(c)&&(c.pathway||[]).some(p=>used.has(String(p)))&&c.axisB.length).map(c=>{c.__via=1;return c}))}}}
-  if(G.m==="Z"){$("gt").textContent="Notes";lkLegend();$("gout").innerHTML=zkGraphSVG();
+  if(["Z","S"].includes(G.m)){$("gt").textContent={Z:"All notes",S:"Section notes"}[G.m];lkLegend();$("gout").innerHTML=zkGraphSVG();
     const sv=$("gout").querySelector("svg");
     if(sv){const vb=(sv.getAttribute("viewBox")||"").split(/\s+/).map(Number);
       if(vb.length===4){sv.setAttribute("width",vb[2]);sv.setAttribute("height",vb[3])}}  // 1:1, no downscaling
@@ -1405,7 +1444,7 @@ function graph(){
     wireColDrag();graphZoomApply();return}
   $("gt").textContent={C:"Claim network",K:"Connected claims",R:"Roles"}[G.m]||[SC.p,SC.a,SC.b].join(", ");
   lkLegend();
-  $("gout").innerHTML=(G.m==="C"?netGraph:G.m==="K"?linkGraph:G.m==="R"?roleGraph:layerGraph)(rows,sc);wireColDrag();graphZoomApply();
+  $("gout").innerHTML=ideaGroupMode()!=="topic"?claimQuestionMap(rows):(G.m==="C"?netGraph:G.m==="K"?linkGraph:G.m==="R"?roleGraph:layerGraph)(rows,sc);wireColDrag();graphZoomApply();
 }
 function roleGraph(rows){  // one band per role: the role on top, a translucent wedge down to each side's readings
   if(!rows.length)return `<p class="count">No claims in this collection. Pick another Collection on the left, or add a claim from a PDF.</p>`;
@@ -1608,6 +1647,9 @@ function show(m,noteId){
   if(document.readyState!=='loading'&&typeof cvSettingSet==='function')cvSettingSet('workspace',m);
   if(m!=="list"&&lstOnScreen())lstSave();        // capture the place before another view replaces the list
   if(m==="list"&&lstView!=="list")lstBack=true;  // returning: restore that place, never record the clamped frame
+  if((m==="notes"||m==="graph")&&(lstView==="list"||lstView==="lib")){
+    zkFillFilters(lstView==="list"?$("src").value:"",lstView==="lib"?LFOLDER:$("col").value);
+  }
   lstView=m;
   const g=m==="graph",l=m==="lib",n=m==="notes";
   document.body.classList.toggle("graph",g);document.body.classList.toggle("library",l);document.body.classList.toggle("notes",n&&!g&&!l);
@@ -1676,7 +1718,7 @@ const doDelete=()=>{if(!zkPick)return toast("Click a node in the graph first");
 
 const zkIds=()=>Object.keys(ZK.notes).sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
 const zkNote=id=>ZK.notes[id]||null;
-const zkEmpty=n=>!n||!((n.title||"").trim()||(n.body||"").trim()||(n.quote||"").trim()||(n.tags||[]).length||(n.links||[]).length);
+const zkEmpty=n=>!n||!((n.title||"").trim()||(n.body||"").trim()||(n.quote||"").trim()||(n.tags||[]).length||(n.subt||[]).length||(n.claims||[]).length||(n.links||[]).length||(n.question||"").trim()||(n.evidenceClaims||[]).length);
 const zkDrop=id=>{const n=zkNote(id);if(!n||!zkEmpty(n))return false;delete ZK.notes[id];ZK.order=(ZK.order||[]).filter(x=>x!==id);zkSave();return true};  // a cancelled note leaves no trace
 const zkLetters=i=>{let s="";i++;while(i>0){const r=(i-1)%26;s=String.fromCharCode(97+r)+s;i=Math.floor((i-1)/26)}return s};  // a..z, then aa, ab: never punctuation
 const zkNext=p=>{if(!p){let n=1;while(ZK.notes[String(n)])n++;return String(n)}let i=0;while(ZK.notes[p+zkLetters(i)])i++;return p+zkLetters(i)};
@@ -1692,7 +1734,7 @@ const zkDetach=id=>{const n=zkNote(id);if(!n||!zkParentOf(id))return false;
   const home=zkHome(n)||{};
   // A separate note belongs where the reader is working: the folder and reading picked in the rail
   // (the PDF open in the pane), not the reading the child happened to inherit.
-  const selCol=($("col")&&$("col").value)||"";
+  const selCol=$("zcol").value;
   const selSrc=(($("zsrc")&&$("zsrc").value)||($("pdfsel")&&$("pdfsel").value)||"");
   const kids=Object.keys(ZK.notes).filter(k=>k!==id&&k.startsWith(id));
   const nid=zkNext(null);
@@ -1711,7 +1753,7 @@ const zkDetach=id=>{const n=zkNote(id);if(!n||!zkParentOf(id))return false;
 const zkBack=id=>zkIds().filter(k=>k!==id&&((zkNote(k).links||[]).some(l=>l.to===id)));
 const zkKinds={link:"link",entry:"entry point",seq:"follows"};
 let zkSel=null;
-const zkSync=()=>{zkRenderList();if(document.body.classList.contains("graph")&&G.m==="Z")graph()};
+const zkSync=()=>{zkRenderList();if(document.body.classList.contains("graph")&&["Z","S"].includes(G.m))graph()};
 const zkFilter=()=>({q:(($("zq")&&$("zq").value)||"").toLowerCase(),t:($("zft")&&$("zft").value)||"",s:($("zfs")&&$("zfs").value)||""});
 const zkCite=n=>{const t=((DATA.sources||[]).find(s=>s.id===n.src)||{}).title||"";
   if(!t)return String(n.title||n.id).slice(0,26);  // no reading: the note's own title
@@ -1761,12 +1803,19 @@ const zkPaths=n=>{
   });
   return out.filter(p=>p&&p.length)};
 const zkSegs=n=>zkPaths(n).flat();
+const zkSearchMatches=(n,q)=>{
+  const text=[n.title,n.body,n.question,n.section,n.quote,n.id,...(n.tags||[]),...(n.subt||[])].filter(Boolean);
+  const keys=new Set([...(n.claims||[]),...(n.evidenceClaims||[])]);
+  if(keys.size)for(const claim of all)if(!claim.del&&keys.has(kc(claim)))text.push(claim.quote);
+  const content=text.join(" ").toLowerCase();
+  return q.trim().split(/\s+/).every(word=>content.includes(word));
+};
 const zkPass=n=>{const{q,t,s}=zkFilter();if(!n)return false;
   if(t&&!zkTags(n).includes(t))return false;
   if(s&&!zkSegsOf(n).includes(s))return false;
   const h=zkHome(n),rs=$("zsrc"),rv=rs?rs.value:"";if(rv&&h.src!==rv)return false;
-  const cc=$("col").value||"";if(cc&&!inCol(h.src?(COL[h.src]||[]):(h.col?[h.col]:[]),cc))return false;  // a note started in a folder with no reading yet still belongs to it
-  if(q&&!((n.title||"")+" "+(n.body||"")+" "+(n.tags||[]).join(" ")+" "+(n.subt||[]).join(" ")+" "+n.id).toLowerCase().includes(q))return false;
+  if(!inCol(zkHomeCols(h),$("zcol").value))return false;  // a note started in a folder with no reading yet still belongs to it
+  if(q&&!zkSearchMatches(n,q))return false;
   return true};
 const zkIdsAll=()=>zkIds();
 const zkParentOf=id=>{const t=String(id);if(!/[a-z]$/.test(t))return null;const p=t.slice(0,-1);return ZK.notes[p]?p:null};  // one letter per level: 1a hangs from 1, 1aa from 1a
@@ -1775,12 +1824,13 @@ const zkKids=id=>zkIds().filter(k=>zkParentOf(k)===id);
 // A child note stands on the passage of the note above it: its own if it has one, else the nearest
 // ancestor's. `own` says whose passage it really is, so the editor can say so instead of pretending.
 const zkPassage=n=>{let id=n&&n.id,k=0,own=null;while(id&&k++<9){const m=ZK.notes[id];if(!m)break;
-  if((m.quote||"").trim()||(m.claims||[]).length){if(!own)own={n:m,from:id};break}
+  if((m.quote||"").trim()||(m.claims||[]).length||(m.evidenceClaims||[]).length){if(!own)own={n:m,from:id};break}
   const p=zkParentOf(id);if(!p)break;id=p}
   return own||{n,from:n&&n.id};};
-const zkOwnPassage=n=>{if(!n)return false;return !!(n.quote||"").trim()||(n.claims||[]).length>0};
+const zkOwnPassage=n=>{if(!n)return false;return !!(n.quote||"").trim()||(n.claims||[]).length>0||(n.evidenceClaims||[]).length>0};
 const zkHome=n=>{let id=n&&n.id,k=0;while(id&&k++<9){const m=ZK.notes[id];if(!m)break;if(m.src||m.col)return m;
   const p=zkParentOf(id);if(!p)break;id=p}return n};  // a child note lives in the folder and reading of the note above it
+const zkHomeCols=h=>h?.src?(COL[h.src]||[]):h?.col?[h.col]:[];
 const zkInherit=(n,pick)=>{let id=n&&n.id,k=0;while(id&&k++<9){const m=ZK.notes[id];if(!m)break;
   const v=pick(m);if(v&&v.length)return v;const p=zkParentOf(id);if(!p)break;id=p}return []};
 const zkTags=n=>zkInherit(n,m=>m.tags||[]).map(zkCanon).filter(Boolean);   // a child sits in the tag of the note above it
@@ -1791,11 +1841,19 @@ const zkNo=list=>{const m=new Map();(list||zkIdsF()).filter(id=>!zkIsChild(id)).
 const zkLabels=()=>{const no=zkNo(),m=new Map();zkIds().forEach(id=>{const p=zkParentOf(id);
   m.set(id,no.get(id)||(p&&no.get(p)?no.get(p)+id.slice(p.length):id))});return m};  // "2" for a note, "2a" for the note under it
 // tags come from the folder and reading you are in, never from another collection
-const zkScopeIds=()=>{const cc=$("col").value||"",rs=$("zsrc"),rv=rs?rs.value:"";
+const zkScopeIds=()=>{const cc=$("zcol").value,rs=$("zsrc"),rv=rs?rs.value:"";
   return zkIds().filter(id=>{const h=zkHome(zkNote(id));if(!h)return false;
     if(rv&&h.src!==rv)return false;
-    return !cc||inCol(h.src?(COL[h.src]||[]):(h.col?[h.col]:[]),cc)})};
-const zkFillFilters=()=>{const tags=new Set(),subs=new Set(),paths=new Set();
+    return !cc||inCol(zkHomeCols(h),cc)})};
+const zkFillFilters=(reading=$("zsrc").value,collection=$("zcol").value)=>{
+  $("zcol").innerHTML=$("col").innerHTML;
+  $("zcol").value=CMAP[collection]?collection:"";
+  const g=new Map();
+  DATA.sources.filter(s=>inCol(s.col,$("zcol").value)).forEach(x=>{const k=Array.isArray(x.col)?(x.col[x.col.length-1]||""):(x.col||"");if(!g.has(k))g.set(k,[]);g.get(k).push(x)});
+  $("zsrc").innerHTML='<option value="">All readings</option>'+[...g.keys()].sort((a,b)=>colPath(a).localeCompare(colPath(b)))
+    .map(k=>`<optgroup label="${esc(colPath(k)||"Unfiled")}">`+g.get(k).sort((a,b)=>(a.title||a.id).localeCompare(b.title||b.id))
+      .map(x=>`<option value="${esc(x.id)}"${x.id===reading?" selected":""}>${esc(x.title||x.id)}</option>`).join("")+"</optgroup>").join("");
+  const tags=new Set(),subs=new Set(),paths=new Set();
   zkScopeIds().forEach(id=>{const n=zkNote(id);zkTags(n).forEach(t=>tags.add(t));
     zkPaths({subt:zkNest(n)}).forEach(p=>{p.forEach(s=>subs.add(s));for(let i=1;i<=p.length;i++)paths.add(p.slice(0,i).join(" \u203a "))})});  // every branch and every step into it, so typing "A \u203a " offers the children of A
   const dl=(el,vals)=>{if(el)el.innerHTML=[...vals].sort((a,b)=>a.localeCompare(b)).map(v=>`<option value="${esc(v)}"></option>`).join("")};
@@ -1803,13 +1861,7 @@ const zkFillFilters=()=>{const tags=new Set(),subs=new Set(),paths=new Set();
   const opt=(set,cur)=>'<option value="">Any</option>'+[...set].sort((a,b)=>a.localeCompare(b)).map(t=>`<option value="${esc(t)}"${t===cur?" selected":""}>${esc(t)}</option>`).join("");
   if($("zft"))$("zft").innerHTML=opt(tags,($("zft").value||""));
   if($("zfs"))$("zfs").innerHTML=opt(subs,($("zfs").value||""));
-  if($("zcol")){const cv=$("col").value;$("zcol").innerHTML=$("col").innerHTML;$("zcol").value=cv}
-  if(!$("zsrc"))return;const rv=$("zsrc").value,g=new Map();
-  srcs().forEach(x=>{const k=Array.isArray(x.col)?(x.col[x.col.length-1]||""):(x.col||"");if(!g.has(k))g.set(k,[]);g.get(k).push(x)});
-  $("zsrc").innerHTML='<option value="">All readings</option>'+[...g.keys()].sort((a,b)=>colPath(a).localeCompare(colPath(b)))
-    .map(k=>`<optgroup label="${esc(colPath(k)||"Unfiled")}">`+g.get(k).sort((a,b)=>(a.title||a.id).localeCompare(b.title||b.id))
-      .map(x=>`<option value="${esc(x.id)}"${x.id===rv?" selected":""}>${esc(x.title||x.id)}</option>`).join("")+"</optgroup>").join("");
-  if(rv&&!$("zsrc").value)$("zsrc").value=""};
+};
 let ZEXP=new Set();  // notes whose children are shown with the arrow
 try{ZEXP=new Set(JSON.parse(store.get("cv:zexp")||"[]"))}catch(e){}
 const zkRenderList=()=>{ZKCM=null;zkFillFilters();
@@ -1831,21 +1883,25 @@ const zkRenderList=()=>{ZKCM=null;zkFillFilters();
     const P=zkPassage(n),pg=n.page||(P.n&&P.n.page)||null,inh=!!pg&&!n.page&&P.from!==id;
     const heirs=pg&&zkOwnPassage(n)?kidsOf(id).filter(k=>{const kn=zkNote(k);return kn&&!zkOwnPassage(kn)&&zkPassage(kn).from===id}):[];
     return `<div class="zkc${id===zkSel?" sel":""}${kid?" kid":""}" data-zk="${esc(id)}" data-d="${d}" tabindex="0"${kid?` style="margin-left:${26*d}px"`:""}><div>${nk?`<button type="button" class="zexp" data-exp="${esc(id)}" aria-expanded="${open}" title="${open?"Hide":"Show"} ${nk} child note${nk===1?"":"s"}">${open?"\u25be":"\u25b8"}</button>`:""}<b>${esc(numOf(id))}</b><span class="zt">${esc(n.title||"(untitled)")}</span></div>
-      <div class="zs">${pg?`<span class="tag${inh?" pgp2":""}" title="${inh?"passage of note "+esc(numOf(P.from))+" (this note has none of its own)":"page of this note's passage"}">p.${esc(pg)}${inh?" \u00b7 from "+esc(numOf(P.from)):""}</span>`:""}${heirs.map(h=>`<span class="tag" title="the passage above is also the one under note ${esc(numOf(h))}">child ${esc(numOf(h))}</span>`).join("")}${outs.slice(0,3).map(t=>chip(t,"out")).join("")}${outs.length>3?`<span class="tag">+${outs.length-3}</span>`:""}${ins.slice(0,3).map(t=>chip(t,"in")).join("")}${ins.length>3?`<span class="tag">+${ins.length-3}</span>`:""}${zkTags(n).map(t=>`<span class="tag">#${esc(t)}</span>`).join("")}${zkNest(n).map(t=>`<span class="tag">›${esc(t)}</span>`).join("")}</div></div>`};
+      <div class="zs">${n.kind==="section"?'<span class="tag">Section</span>':""}${pg?`<span class="tag${inh?" pgp2":""}" title="${inh?"passage of note "+esc(numOf(P.from))+" (this note has none of its own)":"page of this note's passage"}">p.${esc(pg)}${inh?" \u00b7 from "+esc(numOf(P.from)):""}</span>`:""}${heirs.map(h=>`<span class="tag" title="the passage above is also the one under note ${esc(numOf(h))}">child ${esc(numOf(h))}</span>`).join("")}${outs.slice(0,3).map(t=>chip(t,"out")).join("")}${outs.length>3?`<span class="tag">+${outs.length-3}</span>`:""}${ins.slice(0,3).map(t=>chip(t,"in")).join("")}${ins.length>3?`<span class="tag">+${ins.length-3}</span>`:""}${zkTags(n).map(t=>`<span class="tag">#${esc(t)}</span>`).join("")}${zkNest(n).map(t=>`<span class="tag">›${esc(t)}</span>`).join("")}</div></div>`};
   const draw=(id,d)=>{let h=line(id,d);
     if(d<9&&(ZEXP.has(id)||(zkSel!==null&&zkSel!==id&&String(zkSel).startsWith(id))))  // the arrow rules; an open child keeps its parent branch visible
       kidsOf(id).forEach(k=>{h+=draw(k,d+1)});
     return h};
-  $("zklist").innerHTML=ids.length?ids.filter(id=>!zkIsChild(id)).map(id=>draw(id,0)).join("")
-    :`<div class="empty">No notes yet. Start one with "New note": one idea, in your own words.</div>`};
+  const visible=new Set(ids);
+  $("zklist").innerHTML=ids.length?ids.filter(id=>!visible.has(zkParentOf(id))).map(id=>draw(id,0)).join("")
+    :`<div class="empty">${all.length?"No notes match these filters.":"No notes yet. Start one with New note."}</div>`};
 // The note list runs to hundreds of rows, so the link row is a typable picker: the field filters on
 // the note number and its title, and the chosen id lives in the hidden .zklto the save path reads.
-const zkPickRows=q=>{const qw=String(q||"").toLowerCase().trim(),no=zkLabels(),
-  rows=zkIds().map(id=>({id,label:(no.get(id)||id)+" \u00b7 "+String(zkNote(id).title||"(untitled)")}));
+const zkPickRows=(q,col)=>{const qw=String(q||"").toLowerCase().trim(),no=zkLabels(),
+  rows=zkIds().filter(id=>id!==zkSel&&inCol(zkHomeCols(zkHome(zkNote(id))),col)).map(id=>({id,label:(no.get(id)||id)+" \u00b7 "+String(zkNote(id).title||"(untitled)")}));
   return (qw?rows.filter(r=>r.label.toLowerCase().includes(qw)):rows).slice(0,12)};
 const zkRow=(to,kind)=>{
   const t=to&&zkNote(to)?String(zkNote(to).title||"(untitled)"):"";
-  return `<div class="zkrow"><span class="zkpick2"><input class="zklf" type="search" autocomplete="off" spellcheck="false" placeholder="Type a note title" aria-label="Find the note to link" value="${esc(t)}"><div class="sugg" hidden></div><input type="hidden" class="zklto" value="${esc(to||"")}"></span><select class="zklk" aria-label="Kind of link">${Object.entries(zkKinds).map(([k,v])=>`<option value="${k}"${kind===k?" selected":""}>${v}</option>`).join("")}</select><button type="button" class="zkx" aria-label="Remove link">✕</button></div>`};
+  const cols=zkHomeCols(zkHome(zkNote(to))),active=$("zcol").value;
+  const selected=to?(active&&inCol(cols,active)?active:cols[0]||""):active;
+  const folders=cTree().map(([id])=>`<option value="${esc(id)}"${id===selected?" selected":""}>${esc(cPath(id))}</option>`).join("");
+  return `<div class="zkrow"><select class="zklcol" aria-label="Collection for linked note"><option value="">All collections</option>${folders}</select><span class="zkpick2"><input class="zklf" type="search" autocomplete="off" spellcheck="false" placeholder="Type a note title" aria-label="Find the note to link" value="${esc(t)}"><div class="sugg" hidden></div><input type="hidden" class="zklto" value="${esc(to||"")}"></span><select class="zklk" aria-label="Kind of link">${Object.entries(zkKinds).map(([k,v])=>`<option value="${k}"${kind===k?" selected":""}>${v}</option>`).join("")}</select><button type="button" class="zkx" aria-label="Remove link">✕</button></div>`};
 const zkOpen=id=>{const n=zkNote(id);if(!n)return;
   // Anything typed in the open note goes to the note object before the pane is rebuilt for this one
   // (and before the pane is rebuilt for the SAME note, which a view switch does).
@@ -1857,7 +1913,7 @@ const zkOpen=id=>{const n=zkNote(id);if(!n)return;
   // The passage a child note stands on: its own, or the nearest one above it. A child says so,
   // and the note that owns the passage names the children that share it, so neither pretends
   // to own both.
-  const P=zkPassage(n),pn=P.n,ownP=P.from===id,hasP=!!(pn&&(pn.src||(pn.claims||[]).length));
+  const P=zkPassage(n),pn=P.n,ownP=P.from===id,hasP=!!(pn&&(pn.src||(pn.claims||[]).length||(pn.evidenceClaims||[]).length));
   const heir=ownP?zkKids(id).filter(k=>{const kn=zkNote(k);return kn&&!zkOwnPassage(kn)&&zkPassage(kn).from===id}):[];
   const srcLine=(()=>{
     if(!hasP)return "";
@@ -1866,15 +1922,17 @@ const zkOpen=id=>{const n=zkNote(id);if(!n)return;
     const ownTag=ownP?"":`<span class="zinherit" title="this note has no passage of its own; it stands on the passage of note ${esc(fromLab)}">passage of note ${esc(fromLab)}</span> `;
     const heads=ownP?` <button type="button" id="zkgo">Open in reader</button>`+(pn.quote?` <button type="button" id="zkqe">Edit passage</button><button type="button" id="zkqh">Fix passage</button>`:""):"";
     const quote=pn.quote?`<blockquote>${esc(pn.quote)}</blockquote>`:"";
-    const claims=(pn.claims||[]).map(k=>{const c=all.find(x=>kc(x)===k);if(!c||!(c.quote||"").trim())return "";
+    const claims=[...new Set([...(pn.claims||[]),...(pn.evidenceClaims||[])])].map(k=>{const c=all.find(x=>!x.del&&kc(x)===k);if(!c||!(c.quote||"").trim())return "";
       return `<blockquote class="zkq"><a data-zkclaim="${esc(k)}" title="Open this claim in the list">${esc(c.quote)}</a>${c.pdf_page&&c.pdf_page.length?` <span class="pgp">p.${esc(c.pdf_page.join(", "))}</span>`:""}${ownP?`<button type="button" class="zkunlink" data-zkunlink="${esc(k)}" title="Take this claim out of the note" aria-label="Remove claim from note">\u00d7</button>`:""}</blockquote>`}).join("");
     const heirs=heir.length?`<div class="zheir">This passage is also the one under ${heir.map(h=>`<a data-zk-jump="${esc(h)}" title="open note ${esc(h)}">note ${esc(zkLabels().get(h)||h)}</a>`).join(", ")}</div>`:"";
-    return `<div class="zsrc"><div>${ownTag}<b>${esc(srcName)}</b>${pn.page?" \u00b7 page "+esc(pn.page):""}</div>${heads?`<div class="zsrc-actions">${heads}</div>`:""}${quote}${claims}${heirs}</div>`;
+    return `<div class="zsrc"><div>${ownTag}<b>${esc(srcName)}</b>${pn.page?" \u00b7 page "+esc(pn.page)+(pn.pageEnd?"\u2013"+esc(pn.pageEnd):""):""}</div>${heads?`<div class="zsrc-actions">${heads}</div>`:""}${quote}${claims}${heirs}</div>`;
   })();
   $("zkpane").innerHTML=`<div class="zked">
     <div class="zhead"><span>Note <span class="zid">${esc(zkLabels().get(id)||id)}</span></span><button type="button" id="zkclose" title="Close this note and go back to the list" aria-label="Close this note"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>${srcLine}
+
+    <label>Note type<select id="zkkind"><option value="free"${n.kind==="section"?"":" selected"}>Free-form note</option><option value="section"${n.kind==="section"?" selected":""}>Section note</option></select></label>
     <label>Title<input id="zkt" value="${esc(n.title||"")}" placeholder="The idea in one line"></label>
-    <label>Note<textarea id="zkb" placeholder="Say it in your own words, then say what it connects to">${esc(n.body||"")}</textarea></label>
+    ${n.kind==="section"?`<p><strong>Section note</strong>${n.section?" · "+esc(n.section):""}</p>`:""}<label for="zkquestion">Question</label><div class="question-input"><input id="zkquestion" value="${esc(n.question||"")}"><button type="button" data-draft-question title="Draft question with AI" aria-label="Draft question with AI"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5M20 12a8 8 0 1 0-2 5"/></svg></button></div><p data-question-status role="status"></p><label id="zkpages-label"${n.src||n.kind==="section"?"":" hidden"}>PDF pages<input id="zkpages" value="${esc(n.page?(n.pageEnd?n.page+"-"+n.pageEnd:n.page):(n.kind!=="section"&&n.src===window.curSrc?.()?window.currentPdfPage?.()||"":""))}" placeholder="e.g. 2-6"></label><label>Note<textarea id="zkb" placeholder="Say it in your own words, then say what it connects to">${esc(n.body||"")}</textarea></label>
     <label>Tags, comma separated<input id="zkk" autocomplete="off" value="${esc((n.tags||[]).join(", "))}" placeholder="state capacity, industrial policy"></label>
     <label>Sub-tags<input id="zksub" autocomplete="off" value="${esc((n.subt||[]).join(", "))}" placeholder="France \u203a Paris; Israel; Finland" title="A child tag goes after \u203a: France \u203a Paris. Use ; to start another chain, so one country can have a child and the next none: France \u203a Paris; Israel; Finland. Several with a child each: France \u203a Paris, Israel \u203a Tel Aviv."></label>
     <datalist id="zdlk"></datalist><datalist id="zdls"></datalist>
@@ -1885,7 +1943,7 @@ const zkOpen=id=>{const n=zkNote(id);if(!n)return;
     <div class="zback">Linked from: ${back.length?back.map(b=>`<a data-zk="${esc(b)}">${esc(b)}</a>`).join(" "):"nothing yet"}</div>
     <div class="zkacts"><button value="ok" id="zksave">Save</button><button id="zkchild">New child note</button>${zkParentOf(id)?`<button type="button" id="zkdet" title="Keep this note and its children, but take it out of the note above it and make it a top-level note">Make separate</button>`:""}<button id="zkdel">Delete</button></div>
   </div>`;
-  zkRenderList();zkSugg($("zkk"),"zdlk");zkSugg($("zksub"),"zdls")};
+  $("zkkind").onchange=()=>{n.kind=$("zkkind").value;$("zkpages-label").hidden=!n.src&&n.kind!=="section";zkFlush();zkRenderList()};wireNoteQuestion($("zkpane"),n);zkRenderList();zkSugg($("zkk"),"zdlk");zkSugg($("zksub"),"zdls")};
 const zkSugg=(inp,listId)=>{if(!inp||inp.dataset.sugg)return;inp.dataset.sugg="1";
   const box=document.createElement("div");box.className="sugg";box.hidden=true;
   inp.parentElement.insertBefore(box,inp.nextSibling);
@@ -1914,9 +1972,10 @@ const zkSugg=(inp,listId)=>{if(!inp||inp.dataset.sugg)return;inp.dataset.sugg="1
 // Anything that rebuilds the pane (opening another note, switching to List or Graph and back, the
 // keyword index) used to throw half-typed text away, because the fields are re-created from the
 // stored note. This is the same read as Save, minus the redraw.
+const zkReadPages=n=>{if($("zkpages-label")?.hidden||!$("zkpages"))return true;const value=$("zkpages").value.trim();const range=sectionPages(value,n.src===window.curSrc?.()?window.currentPdfPageCount?.():undefined);if(value&&!range)return false;n.page=range?.[0]||null;n.pageEnd=range&&range[1]>range[0]?range[1]:null;return true};
 const zkFlush=()=>{const n=zkNote(zkSel);if(!n)return false;
   if(!$("zkt")||!$("zkb")||!$("zkk")||!$("zksub")||!$("zkrows"))return false;
-  n.title=$("zkt").value;n.body=$("zkb").value;
+  zkReadPages(n);n.title=$("zkt").value;n.body=$("zkb").value;if($("zkquestion"))n.question=$("zkquestion").value.trim();
   n.tags=($("zkk").value||"").split(",").map(t=>t.trim()).filter(Boolean);
   n.subt=($("zksub").value||"").split(",").map(t=>t.trim()).filter(Boolean);
   n.links=[...$("zkrows").querySelectorAll(".zkrow")].map(r=>{const to=r.querySelector(".zklto").value,
@@ -1929,7 +1988,8 @@ const zkAuto=()=>{if(zkT)clearTimeout(zkT);zkT=setTimeout(()=>{zkT=null;zkFlush(
 
 const zkSaveNote=(back)=>{const n=zkNote(zkSel);if(!n)return;
   if(!$("zkt")||!$("zkb")||!$("zkk")||!$("zksub")||!$("zkrows"))return;  // the pane is showing the index, or nothing: the fields are not there to read
-  n.title=$("zkt").value.trim();n.body=$("zkb").value;
+  if(!zkReadPages(n)){toast("Enter a valid PDF page or range.");$("zkpages").focus();return}
+  n.question=$("zkquestion").value.trim();n.title=$("zkt").value.trim();n.body=$("zkb").value;
   n.tags=($("zkk").value||"").split(",").map(t=>t.trim()).filter(Boolean);
   n.subt=($("zksub").value||"").split(",").map(t=>t.trim()).filter(Boolean);
   // Typed text that never picked a note must not become a wrong link: the row is dropped, and the
@@ -1944,9 +2004,13 @@ const zkSaveNote=(back)=>{const n=zkNote(zkSel);if(!n)return;
     $("zkpane").innerHTML=`<div class="empty">Pick a note on the left, or start a new one.</div>`;zkRenderList();zkDrop(gone)}  // Save returns to the list
   else zkRenderList();
   toast("Note "+lb+" saved"+(lost?" \u00b7 "+lost+" link"+(lost>1?"s":"")+" dropped: pick the note from the list":""))};
-const zkNew=(parent,seed)=>{const id=zkNext(parent);ZK.notes[id]={id,title:"",body:"",tags:[],links:[],created:Date.now()};
-  const sc=($("zsrc")&&$("zsrc").value)||(typeof cur!=="undefined"&&typeof rd!=="undefined"&&!rd.hidden?cur:"");  // the reader scope is not always thereif(!parent){if(sc)ZK.notes[id].src=sc;else if($("col").value)ZK.notes[id].col=$("col").value}  // land in the reading or the folder you are looking at
-  if(seed){if(seed.src)ZK.notes[id].src=seed.src;if(seed.page)ZK.notes[id].page=seed.page;if(seed.quote)ZK.notes[id].quote=seed.quote;if(seed.tags)ZK.notes[id].tags=seed.tags;if(seed.subt)ZK.notes[id].subt=seed.subt}
+const zkNew=(parent,seed)=>{const id=zkNext(parent);ZK.notes[id]={id,kind:"free",title:"",body:"",tags:[],links:[],created:Date.now()};
+  const col=$("zcol").value,reading=$("zsrc").value||$("pdfsel").value;
+  if(!parent){
+    if(reading&&inCol(COL[reading]||[],col))ZK.notes[id].src=reading;
+    else if(col)ZK.notes[id].col=col;
+  }
+  if(seed){if(seed.kind)ZK.notes[id].kind=seed.kind;if(seed.src)ZK.notes[id].src=seed.src;if(seed.page)ZK.notes[id].page=seed.page;if(seed.quote)ZK.notes[id].quote=seed.quote;if(seed.tags)ZK.notes[id].tags=seed.tags;if(seed.subt)ZK.notes[id].subt=seed.subt}
   zkSave();zkOpen(id);setTimeout(()=>{const t=$("zkt");if(t)t.focus()},0);return id};
 // the reading is the source: a note can carry the passage and the page it came from
 const zkFromPassage=(q,pg,src)=>{src=src||(window.curSrc?window.curSrc():"");const t=(q||"").trim();
@@ -1964,7 +2028,7 @@ const askNote=c=>new Promise(res=>{  // two buttons only: file it under an exist
   // A collection filter must never hide every note: with none left in it, the dialog offers all
   // notes, so "Add to existing note" cannot end up disabled with a library full of notes.
   let ids=(!cc?allIds:allIds.filter(id=>{const h=zkHome(zkNote(id));
-      const cols=h.src?(COL[h.src]||[]):(h.col?[h.col]:[]);return inCol(cols,cc)}));
+      const cols=zkHomeCols(h);return inCol(cols,cc)}));
   if(!ids.length)ids=allIds;
   const num=zkLabels(),d=document.createElement("dialog");d.id="zkpick";
   d.innerHTML=`<div class="zkpick"><button type="button" data-a="existing"${ids.length?"":" disabled title=\"No note in this collection yet\""} aria-expanded="false">Add to existing note</button>`
@@ -2006,8 +2070,8 @@ const zkToggleLinks=()=>{LNK=!LNK;localStorage.setItem("cv:zklink",LNK?"1":"0");
 const zkGraphSVG=()=>{
   ZKCM=null;  // a tag may have been renamed or added since the last draw
   document.body.classList.add("idea-map-active");
-  const ids=zkIdsF();
-  if(!ids.length)return `<p class="empty">${ZK&&Object.keys(ZK.notes).length?"No note matches this filter.":"No notes yet. Start one in List, Notes."}</p>`;
+  const ids=zkIdsF().filter(id=>G.m!=="S"||noteGraphMode(zkNote(id))==="S");
+  if(!ids.length)return `<p class="empty">${ZK&&Object.keys(ZK.notes).length?"No note matches this filter.":"No notes yet. Choose New note to add one."}</p>`;
   return ideaMapSVG(ids);
 };
 $("zq").addEventListener("input",zkRenderList);
@@ -2034,7 +2098,7 @@ document.addEventListener("click",e=>{if(e.target.closest("#zkclose")){const gon
   document.querySelectorAll("#zklist .zkc.sel").forEach(r=>r.classList.remove("sel"));
   $("zkpane").innerHTML=`<div class="empty">Pick a note on the left, or start a new one.</div>`;return}
   const un=e.target.closest&&e.target.closest("[data-zkunlink]");
-  if(un){const key=un.dataset.zkunlink,n=zkNote(zkSel);if(n){n.claims=(n.claims||[]).filter(k=>k!==key);zkSave();zkOpen(zkSel)}return}
+  if(un){const key=un.dataset.zkunlink,n=zkNote(zkSel);if(n){n.claims=(n.claims||[]).filter(k=>k!==key);if(n.evidenceClaims)n.evidenceClaims=n.evidenceClaims.filter(k=>k!==key);zkSave();zkOpen(zkSel)}return}
   const cl=e.target.closest&&e.target.closest("[data-zkclaim]");
   if(cl){const key=cl.dataset.zkclaim,[s0,i0]=String(key).split("\u0001");show("list");open_(s0,i0);return}
   if(e.target.id!=="zkdeep")return;const i=$("zksub");if(!i)return;
@@ -2042,11 +2106,11 @@ document.addEventListener("click",e=>{if(e.target.closest("#zkclose")){const gon
   const head=i.value.slice(0,at).replace(/\s*$/,"");if(/\u203a\s*$/.test(head)){i.focus();return}
   const deeper=head?head+" \u203a ":head;
   i.value=deeper+i.value.slice(at);i.focus();i.setSelectionRange(deeper.length,deeper.length)});
-$("zcol").addEventListener("change",()=>{$("col").value=$("zcol").value;$("col").dispatchEvent(new Event("change"))});
+$("zcol").addEventListener("change",zkSync);
 $("zsrc").addEventListener("change",zkRenderList);
 $("zft").addEventListener("change",zkRenderList);
 $("zfs").addEventListener("change",zkRenderList);
-["zq","zft","zfs","zsrc"].forEach(i=>$(i).addEventListener("change",()=>{if(document.body.classList.contains("graph")&&G.m==="Z")graph()}));
+["zq","zft","zfs","zsrc"].forEach(i=>$(i).addEventListener("change",()=>{if(document.body.classList.contains("graph")&&["Z","S"].includes(G.m))graph()}));
 // panels fold away and stay folded across restarts
 let SIDES={l:0,r:0};  // both panels open on a first launch
 try{const _s=store.get("cv:sides");if(_s)SIDES=Object.assign(SIDES,JSON.parse(_s))}catch(e){}
@@ -2072,20 +2136,36 @@ $("zklist").addEventListener("click",e=>{const b=e.target.closest&&e.target.clos
 // typable picker for the "Links to other notes" rows: type, see the matches, click one
 const zkPickBox=inp=>inp&&inp.parentNode?inp.parentNode.querySelector(".sugg"):null;
 const zkPickShow=inp=>{const box=zkPickBox(inp);if(!box)return;
-  const rows=zkPickRows(inp.value);
-  if(!rows.length){box.hidden=true;return}
+  const rows=zkPickRows(inp.value,inp.closest(".zkrow").querySelector(".zklcol").value);
+  if(!rows.length){box.textContent="No matching notes in this collection.";box.hidden=false;return}
   box.innerHTML=rows.map(r=>`<button type="button" data-id="${esc(r.id)}">${esc(r.label)}</button>`).join("");box.hidden=false};
 $("zkv").addEventListener("input",e=>{const i=e.target.closest(".zklf");if(i)zkPickShow(i)});
+$("zkv").addEventListener("change",e=>{
+  const col=e.target.closest(".zklcol");if(!col)return;
+  const field=col.closest(".zkrow").querySelector(".zklf");
+  field.focus();field.select();zkPickShow(field);
+});
 // every field in the open note autosaves, so a redraw cannot take back what was typed
 $("zkv").addEventListener("input",e=>{if(e.target.closest&&e.target.closest("#zkpane"))zkAuto()});
 $("zkv").addEventListener("change",e=>{if(e.target.closest&&e.target.closest("#zkpane"))zkAuto()});
 $("zkv").addEventListener("focusin",e=>{const i=e.target.closest(".zklf");if(i)zkPickShow(i)});
-$("zkv").addEventListener("focusout",e=>{const i=e.target.closest(".zklf");if(!i)return;
-  setTimeout(()=>{const b=zkPickBox(i);if(b)b.hidden=true},160)});
-$("zkv").addEventListener("mousedown",e=>{const b=e.target.closest(".sugg button[data-id]");if(!b)return;
-  e.preventDefault();const row=b.closest(".zkrow"),h=row.querySelector(".zklto"),f=row.querySelector(".zklf");
-  h.value=b.dataset.id;f.value=String(zkNote(b.dataset.id).title||"(untitled)");b.parentNode.hidden=true;f.focus()});  // mousedown beats the blur that would close the list first
+$("zkv").addEventListener("focusout",e=>{
+  const picker=e.target.closest(".zkpick2");
+  if(picker&&!picker.contains(e.relatedTarget))picker.querySelector(".sugg").hidden=true;
+});
 $("zkv").addEventListener("click",e=>{
+  const result=e.target.closest(".zkpick2 .sugg button[data-id]");
+  if(result){
+    const row=result.closest(".zkrow"),note=zkNote(result.dataset.id);
+    if(!note)return;
+    const field=row.querySelector(".zklf");
+    row.querySelector(".zklto").value=note.id;
+    field.value=String(note.title||"(untitled)");
+    field.focus();
+    zkPickBox(field).hidden=true;
+    zkAuto();
+    return;
+  }
   const jump=e.target.closest("[data-zk-jump]");
   if(jump){e.stopPropagation();e.preventDefault();zkOpen(jump.dataset.zkJump);return}  // a link chip opens the note it names
   const card=e.target.closest("[data-zk]");if(card){zkOpen(card.dataset.zk);return}
@@ -2178,7 +2258,7 @@ const zkMenu=(x,y,src)=>{document.querySelectorAll("#zmenu").forEach(n=>n.remove
   d.addEventListener("click",e=>{const b=e.target.closest("button[data-zk]");if(!b)return;d.remove();show("notes");zkOpen(b.dataset.zk)});
   setTimeout(()=>document.addEventListener("pointerdown",ev=>{if(!d.contains(ev.target))d.remove()},{once:true}),0);
   return d};
-$("zkgraph").onclick=()=>{show("graph");const b=document.querySelector('#gc2 [data-gc="mZ"]');if(b)b.click()};  // same path as clicking the tab, so gz and the toolbar follow
+
 $("tl").onclick=()=>show("list");$("tg").onclick=()=>show("graph");$("lb").onclick=()=>show("lib");$("vn").onclick=()=>show("notes");$("vc").onclick=()=>show("list");
 {const GZ=document.getElementById("gout");let DR=null;
   const targetAt=(x,y)=>{const el=document.elementFromPoint(x,y);if(!el)return null;
@@ -3047,7 +3127,7 @@ function relib(){const _p=performance.now();
   Object.keys(CMAP).forEach(k=>delete CMAP[k]);LIB.collections.forEach(c=>CMAP[c.id]=c);
   Object.keys(ANC).forEach(k=>delete ANC[k]);
   LIB.collections.forEach(c=>{const a=new Set();let p=c.parent;while(p&&CMAP[p]){a.add(p);p=CMAP[p].parent}ANC[c.id]=a});
-  DATA.sources.forEach(s=>{const it=LIB.items[s.id];s.col=it&&Array.isArray(it.collections)?it.collections:[]});
+  DATA.sources.forEach(s=>{const it=LIB.items[s.id];COL[s.id]=s.col=it&&Array.isArray(it.collections)?it.collections:[]});
   const cur=$("col").value;
   $("col").innerHTML='<option value="">All collections</option>'+cTree().map(([id,n,d])=>`<option value="${esc(id)}">${"\u00a0\u00a0".repeat(d)}${esc(n)} (${DATA.sources.filter(s=>inCol(s.col,id)).length})</option>`).join("");
   if(cur&&CMAP[cur])$("col").value=cur;else $("col").value="";
@@ -3221,8 +3301,8 @@ $("libtree").addEventListener("click",async e=>{  const tw=e.target.closest(".lc
   if(!e.target.closest("button")&&!e.target.closest("input:not([readonly])")){  // buttons and an open rename keep their job
     LFOLDER=(LFOLDER===id?null:id);
     try{store.set("cv:libfolder",LFOLDER||"")}catch(_){}
-    if($("col"))$("col").value=LFOLDER||"";
-    drawLib();drawLibTable();return}
+    $("col").value=LFOLDER||"";
+    $("col").dispatchEvent(new Event("change"));return}
   if(e.target.classList.contains("ldel")){
     if(!await nask("Delete the folder "+cPath(id)+"?\n\nThe readings and their claims stay.","Claim Viewer"))return;
     LIB.collections=LIB.collections.filter(c=>c.id!==id);
@@ -3497,6 +3577,7 @@ function paintReadingTabs(active){
  });
 }
 window.showPdf=async(id,pg)=>{if(!id)return;
+ if(cur!==id)window.closeReadingGuide?.();
  if(!readingTabs.includes(id))readingTabs.push(id);paintReadingTabs(id);  // the dropdown starts on "(pick a reading)"; loading pdf/.pdf only 404s
  try{store.set("cv:lastreading",id)}catch(e){}  // reopened at the next start
  if(s.value!==id){if(![...s.options].some(o=>o.value===id)){const x=DATA.sources.find(q=>q.id===id);s.insertAdjacentHTML("beforeend",`<option value="${esc(id)}">${esc(x?x.title:id)}</option>`)}s.value=id;drawLib();if(document.body.classList.contains("rtai"))aiLogSync()}  // a reading outside the chosen collection has no option: add one, or the dropdown keeps naming the old reading  // a card click opens the reading: the dropdown must name it (set directly: a change event would start a second load)
@@ -3514,7 +3595,7 @@ $("phint")&&($("phint").hidden=true);const my=++tok;
  try{const loading=pdfjsLib.getDocument({data:new Uint8Array(buf.slice(0))});pdfLoad=loading;const doc=await loading.promise;if(my!==tok){await doc.destroy();return}pdfLoad=null;
   docC=doc;curBuf=buf;Z=1;pg=Math.max(1,Math.min(+pg||1,doc.numPages));lastPg=pg;lastPgId=id;savePage();await ocrHydrate(id);if(my!==tok)return;await build(pg);if(my!==tok)return;showPage();rt.hidden=false;if(document.body.classList.contains("rtai"))aiLoad()}
  catch(e){if(my!==tok)return;releaseReader();cur="";lpn.className="warn";lpn.textContent="The reader could not open this PDF"+(/worker/i.test(String(e&&e.message))?" (lib/pdf.worker.min.js is missing)":"")+". It is open in a plain frame instead.";fallback(id,pg)}};
-window.cvIdle=()=>{++tok;savePage();releaseReader();cur="";lastPgId="";rt.hidden=true;rd.hidden=true;f.hidden=true;f.removeAttribute("src");$("phint")&&($("phint").hidden=false)};  // leave the pane empty instead of parsing a new PDF
+window.cvIdle=()=>{window.closeReadingGuide?.();++tok;savePage();releaseReader();cur="";lastPgId="";rt.hidden=true;rd.hidden=true;f.hidden=true;f.removeAttribute("src");$("phint")&&($("phint").hidden=false)};  // leave the pane empty instead of parsing a new PDF
 const toast=(m,top,ms)=>{let t=$("toast");if(!t){t=document.createElement("div");t.id="toast";t.setAttribute("aria-live","polite");document.body.append(t)}(document.fullscreenElement||document.body).append(t);t.textContent=m;t.classList.toggle('top',!!top);t.hidden=false;clearTimeout(t._h);t._h=setTimeout(()=>{t.hidden=true},ms||3500)};
 window.toast=toast;
 const capture=(q,pg,rs,hg)=>{if(rs&&rs[0]&&!rs[0].t)rs[0].t=q;q=(q||"").replace(/\s+/g," ").trim();if(q.length<20)return;const x=all.find(x=>x.src+x.id===sel),src=(!rd.hidden&&cur)||(x&&x.src)||s.value,
@@ -4021,7 +4102,7 @@ const rectsNow=()=>{const g=getSelection();if(!g.rangeCount)return[];const pgs=[
 let st=0;document.addEventListener("selectionchange",()=>{if(st)return;st=setTimeout(()=>{st=0;rd.querySelectorAll(".bsel").forEach(e=>e.remove());const g=getSelection();if(g.isCollapsed||!rd.contains(g.anchorNode))return;rectsNow().forEach(m=>{const d=rd.querySelector(`.pg[data-n="${m.n}"]`),e=document.createElement("div");e.className="bsel";e.style.cssText=`left:${m.x}%;top:${m.y}%;width:${m.w}%;height:${m.h}%`;d&&d.append(e)})},80)});
 const mark=(c,rs)=>{if(!rs||!rs.length||!cur){toast("Select text first");return}const g=Date.now(),o=HL(),a=o[cur]||(o[cur]=[]),t=getSelection().toString().replace(/\s+/g," ").trim();if(t&&!rs[0].t)rs[0].t=t;rs.forEach(m=>{m=Object.assign({c,g},m);a.push(m);const d=rd.querySelector(`.pg[data-n="${m.n}"]`);if(d)d.append(mkHL(m))});saveHL(o);getSelection().removeAllRanges();toast("Highlighted "+HN[c]);return g};
 const sel_=(min=20)=>{const g=getSelection();if(!g.rangeCount||!rd.contains(g.anchorNode))return null;const q=g.toString().replace(/\s+/g," ").trim();if(q.length<min)return null;const p=g.anchorNode.parentElement.closest(".pg");return{q,pg:p&&+p.dataset.n}};
-window.selQ=()=>sel_(1);window.curSrc=()=>cur;  // the reader closure owns sel_ and cur; the toolbar and notes live outside it
+window.selQ=()=>sel_(1);window.curSrc=()=>cur;window.currentPdfPage=()=>docC?PAGEN():null;window.currentPdfPageCount=()=>docC?.numPages;  // the reader closure owns sel_ and cur; the toolbar and notes live outside it
 const hitHL=e=>[...rd.querySelectorAll(".hl")].find(h=>{const r=h.getBoundingClientRect();return e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom});
 const flash=g=>{rd.querySelectorAll(".hl.on").forEach(e=>e.classList.remove("on"));let f;rd.querySelectorAll(".hl").forEach(e=>{if(g&&e._m.g===g){e.classList.add("on");f=f||e}});return f};
 const nk=s=>s.toLowerCase().replace(/[^a-z0-9]/g,"");
@@ -4453,6 +4534,32 @@ async function addPdfs(fl){const d=await db,have=new Set(DATA.sources.map(x=>key
  try{store.set("cv:src",JSON.stringify(JSON.parse(store.get("cv:src")||"[]").concat(add)))}catch(e){store.set("cv:src",JSON.stringify(add))}
  add.forEach(a=>{if(!DATA.sources.some(x=>x.id===a.id))DATA.sources.push({id:a.id,kind:"paper",title:a.id,claims:[],col:[]})});
  relib();showPdf(add[0].id);toast(ps.length+" PDF"+(ps.length>1?"s":"")+" added")}  // in place: no reload
+let lastGuidePrompt;
+window.closeReadingGuide=initReadingGuide({
+  store,
+  selection:()=>docC&&cur===s.value?{id:cur,doc:docC,page:PAGEN(),kind:["book","chapter"].includes(meta(cur).type)?"chapter":"article"}:null,
+  jump:(id,page)=>{if(cur===id&&Number.isInteger(page)&&page>=1&&page<=docC?.numPages)scroll(page)},
+  sectionNote:source=>openNewNote(source),
+  askAI:prompt=>{
+    rtab("ai");
+    const input=$("aiin");
+    if(input.value.trim()&&input.value!==lastGuidePrompt){
+      toast("Send or clear your Ask AI draft, then reopen the Reading guide.");
+      input.focus();
+      return;
+    }
+    input.value=lastGuidePrompt=prompt;
+    input.focus();
+  },
+  saveNote:(id,title,body)=>{
+    const note=zkNew(null,{src:id});
+    $("zkt").value=title;
+    $("zkb").value=body;
+    zkFlush();
+    show("notes",note);
+    zkRenderList();
+  }
+});
 s.onchange=()=>showPdf(s.value);
 (async()=>{const d=await db;if(d)await new Promise(r=>{const q=d.transaction("p").objectStore("p").openCursor();q.onsuccess=()=>{const c=q.result;if(c){files[c.key]=c.value;c.continue()}else r()};q.onerror=()=>r()});
   // reopen the reading you were in: the page resumes its page already, and the Ask AI chat is kept

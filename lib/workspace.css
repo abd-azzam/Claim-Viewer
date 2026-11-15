@@ -5,7 +5,7 @@ body.gz #gout .node rect{rx:9;stroke-width:1.5;filter:drop-shadow(0 2px 3px #000
 #toast{background:var(--panel)!important;color:var(--ink)!important;border:1px solid var(--ctl)!important;border-left:3px solid var(--acc)!important;border-radius:7px!important;box-shadow:0 6px 24px #0003!important}
 .idea-map{background:var(--bg)}.idea-map .idea-hull{fill:color-mix(in srgb,var(--acc) 4%,var(--bg));stroke:var(--line);stroke-dasharray:4 6}.idea-map .idea-edge{fill:none;stroke:var(--acc);stroke-opacity:.45;stroke-width:1.2}.idea-map .idea-node{cursor:pointer}.idea-map .idea-dot{fill:var(--acc);stroke:var(--bg);stroke-width:2}.idea-map .idea-halo{fill:var(--acc);opacity:0}.idea-map .idea-node:hover .idea-halo,.idea-map .idea-node:focus .idea-halo{opacity:.15}.idea-map text{fill:var(--ink);font:12px "Segoe UI",sans-serif}.idea-map .idea-cluster{fill:var(--mute);font-size:14px}.idea-map .idea-node:focus{outline:none}
 body.gz.idea-map-active #zkmerge,body.gz.idea-map-active #zkreset,body.gz.idea-map-active #zkgdel{display:none}
-#graph-tools{display:flex;align-items:center;flex-wrap:wrap;gap:6px;flex:none;margin:6px 0 10px;color:var(--mute);font-size:12px}#graph-tools button,#graph-tools select{flex:0 0 auto;height:22px;min-height:0;padding:0 9px;font:inherit;font-size:11px;font-weight:400;color:var(--mute);background:var(--bg);border:1px solid var(--ctl);border-radius:5px;cursor:pointer}#graph-tools button:hover,#graph-tools select:hover{color:var(--ink);border-color:var(--acc)}#graph-tools button:focus-visible,#graph-tools select:focus-visible{outline:2px solid var(--acc);outline-offset:2px}#graph-zoom-label{min-width:48px;text-align:center;font-variant-numeric:tabular-nums}#idea-group-control{display:none;margin-left:12px;align-items:center;gap:6px}body.gz.idea-map-active #idea-group-control{display:inline-flex}#graph-tools small{margin-left:auto;color:var(--mute)}
+#graph-tools{display:flex;align-items:center;flex-wrap:wrap;gap:6px;flex:none;margin:6px 0 10px;color:var(--mute);font-size:12px}#graph-tools button,#graph-tools select{flex:0 0 auto;height:22px;min-height:0;padding:0 9px;font:inherit;font-size:11px;font-weight:400;color:var(--mute);background:var(--bg);border:1px solid var(--ctl);border-radius:5px;cursor:pointer}#graph-tools button:hover,#graph-tools select:hover{color:var(--ink);border-color:var(--acc)}#graph-tools button:focus-visible,#graph-tools select:focus-visible{outline:2px solid var(--acc);outline-offset:2px}#graph-zoom-label{min-width:48px;text-align:center;font-variant-numeric:tabular-nums}#idea-group-control{display:inline-flex;margin-left:12px;align-items:center;gap:6px}#graph-tools small{margin-left:auto;color:var(--mute)}
 .idea-map [data-idea-group]{cursor:grab}.idea-map .idea-node{cursor:grab}.idea-map .idea-node:active,.idea-map [data-idea-group]:active{cursor:grabbing}
 #graph-action-row{display:flex;align-items:center;gap:12px;flex:none;flex-wrap:nowrap;overflow-x:auto;padding:2px 0 8px;margin-bottom:4px}#graph-action-row #graph-tools{flex:0 0 auto;flex-wrap:nowrap;gap:4px;margin:0;font-size:11px;white-space:nowrap}#graph-action-row #znav{flex:0 0 auto;flex-wrap:nowrap;align-items:center;margin:0 0 0 auto;white-space:nowrap}#graph-action-row #idea-group-control{margin-left:6px;gap:4px}#graph-tools select{width:auto}#graph-action-row #graph-tools small{display:none}
 .idea-map .idea-source-hull{fill:color-mix(in srgb,var(--acc) 2%,var(--bg));stroke:var(--ctl);stroke-dasharray:none;stroke-width:1.5}.idea-map .idea-source-label{fill:var(--acc);font-weight:600}
@@ -17,8 +17,36 @@ body.gz.idea-map-active #zkmerge,body.gz.idea-map-active #zkreset,body.gz.idea-m
 #graph-action-row{flex-wrap:wrap;overflow:visible;gap:8px;border-bottom:1px solid var(--line)}
 #graph-action-row #graph-tools,#graph-action-row #znav{flex:0 1 auto;flex-wrap:wrap;white-space:normal}
 #graph-action-row #idea-group-control{flex-wrap:wrap}
+#graph-action-row [data-graph-new-note]{font:inherit;min-height:var(--h);padding:0 8px;border:1px solid var(--ctl);border-radius:var(--r);background:var(--bg);color:var(--ink)}
+.node-studio [hidden]{display:none}
+#note-graph-picker{box-sizing:border-box;width:min(18rem,calc(100vw - 2rem));padding:1rem;background:var(--panel);color:var(--ink);border:1px solid var(--ctl);border-radius:var(--r)}
+#note-graph-picker form{display:grid;gap:.5rem}
+#note-graph-picker h2{font-size:1rem;margin:0 0 .2rem}
+#note-graph-picker button{min-height:var(--h);font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--ctl);border-radius:var(--r);cursor:pointer}
+#note-graph-picker button:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+#note-graph-picker::backdrop{background:#0005}
+#note-graph-picker h2{padding-inline-end:2rem}
+#note-graph-picker .note-graph-close{position:absolute;inset:.55rem .55rem auto auto;min-width:var(--h);background:transparent;border:0}
+#graph-options-toggle{display:inline-flex;align-items:center;gap:.35rem;min-height:var(--h);margin-block:.35rem;padding:0 .65rem;font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--ctl);border-radius:var(--r);cursor:pointer}
+#graph-options-toggle:hover,#graph-options-toggle[aria-expanded="true"]{border-color:var(--acc);color:var(--acc)}
+#graph-options-toggle{white-space:nowrap}
+#gv #graph-options-toggle svg{width:1em;height:1em;min-width:0;flex:none}
+#graph-options-toggle[aria-expanded="true"] svg{transform:rotate(180deg)}
+#graph-options-toggle:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+#graph-options[hidden]{display:none}
+#graph-options{padding-bottom:.5rem;border-bottom:1px solid var(--line)}
+#graph-options .graph-extra-actions{display:flex;flex-wrap:wrap;gap:.4rem}
+#graph-options .graph-extra-actions button{min-height:var(--h);font:inherit;padding:0 .5rem;color:var(--ink);background:var(--bg);border:1px solid var(--ctl);border-radius:var(--r);cursor:pointer}
+body.notes main>.bar{background:var(--bg)}
+body.notes #zkv .zbar{position:static}
+.node-studio .question-input{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:.4rem}
+.zked .question-input{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:.4rem}
+.zked .question-input button{min-width:var(--h);cursor:pointer;color:var(--ink);background:var(--bg);border:1px solid var(--ctl);border-radius:var(--r)}
+.zked [hidden],.zked [data-question-status]:empty{display:none}
+.node-studio [data-draft-question]{min-height:var(--h);min-width:var(--h);padding:0 6px}
+.node-studio [data-question-status]:empty{display:none}
 #znav [data-node-studio]{display:none}
-#graph-draft{font:inherit;font-weight:600;min-height:44px;padding:0 12px;border:1px solid var(--acc);border-radius:5px;background:var(--acc);color:var(--bg);cursor:pointer}
+#graph-draft{font:inherit;font-weight:600;min-height:var(--h);padding:0 8px;border:1px solid var(--acc);border-radius:5px;background:var(--acc);color:var(--bg);cursor:pointer}
 #graph-draft:focus-visible,.node-studio :focus-visible{outline:2px solid var(--acc);outline-offset:3px}
 .node-studio{box-sizing:border-box;width:min(40rem,calc(100vw - 2rem));max-height:calc(100dvh - 2rem);overflow-wrap:anywhere;font:inherit;font-size:.9rem}
 .node-studio h2{font-size:1.3rem;margin:0 0 8px}

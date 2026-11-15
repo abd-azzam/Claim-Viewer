@@ -4,7 +4,7 @@ Windows desktop library for PDFs, claims, notes, research chat and Word citation
 
 ## Install
 
-1. Run **ClaimViewer-Setup-2.6.3.exe**. Python is not required.
+1. Run **ClaimViewer-Setup-2.6.4.exe**. Python is not required.
 2. Keep the suggested folder, or choose a writable folder. Upgrades retain the previous installation folder.
 3. Setup installs Microsoft Edge WebView2 if missing. That step needs an internet connection.
 4. For desktop Word, select **Add Claim Viewer to Microsoft Word's ribbon**. Save documents and close Word before continuing. Approve the Windows administrator prompt for the Word component.
@@ -14,8 +14,19 @@ Requirements: Windows 10 x64 (1809 or later) or Windows 11. Word integration is 
 
 The installer includes an empty library, offline PDF assets, the app and Word component. It excludes the developer's PDFs, claims, conversations, API keys and local Word credentials. This release is unsigned; verify the download source and compare the adjacent SHA256 file before sharing or installing it.
 
+## Changes in 2.6.4
+
+- Open the book icon in the PDF toolbar to use the **Reading guide**. Choose an article or chapter plan and a reading goal. The guide saves your draft and uses the same questions when preparing a prompt for Ask AI.
+- **New note** opens the free-form editor. From a claim, choose **To note > New note** to carry the passage into the editor. Draft an editable question using the refresh icon beside **Question**. For a note with a PDF source, enter a PDF page or range like `1-9`. The draft asks one question about the main argument across those pages. To attach another claim, open **Claims** and use **To note**.
+- Open **Note graph** to choose **All notes** to see links between free-form and section notes, or **Section notes** to focus on sections. **Group by > Question** groups items by question, and **All** adds PDF source, tag, and sub-tag. Claims use pathway at the last level.
+- Open **More tools** in the graph toolbar to find layout and zoom reset controls. Layers also puts box names, layer controls, list editing, and sets there.
+
 ## Changes in 2.6.3
 
+- In Library, select a folder and drag the handle beside a PDF onto another folder. You can also click the handle and choose the destination.
+- Notes starts with the collection and reading selected in Claims, or the folder selected in Library. Adjusting the Notes filters keeps your Claims filters in place.
+- In a note, choose a collection in **Add Link**, then search for a note in that collection.
+- Notes with matching filters stay visible even when their parent note is filtered out. Newly created notes use the active reading or collection.
 - OpenCode Go has its own provider preset, model catalog, and session header. The OpenCode preset uses the separate pay-as-you-go catalog. To refresh the list, select the saved provider in **Settings > AI**, click **Load available models**, then save. A model listed in one catalog may be unavailable in the other.
 - Ask AI keeps passage explanations brief and uses the requested page when one is specified. It omits paragraphs without verified excerpts. Choose Fast or More complete citation checking in the composer.
 - Citation jumps preserve PDF zoom when the viewer was hidden behind Ask AI.
@@ -79,7 +90,7 @@ Citations use native CITATION fields; bibliography uses BIBLIOGRAPHY. Add biblio
 
 Use Settings' backup action before updating. Save and close Word. Run the new installer into the existing app folder. Library, PDFs and local state are preserved. First launch refreshes the interface from the installed template while retaining embedded research data; `index.html.previous` keeps the prior page.
 
-Compare the installer hash from `Get-FileHash .\ClaimViewer-Setup-2.6.3.exe -Algorithm SHA256` with `ClaimViewer-Setup-2.6.3.exe.sha256` supplied alongside it.
+Compare the installer hash from `Get-FileHash .\ClaimViewer-Setup-2.6.4.exe -Algorithm SHA256` with `ClaimViewer-Setup-2.6.4.exe.sha256` supplied alongside it.
 
 Settings' **Open data folder** action locates your data. A legacy Program Files executable can use another folder through `data-root.txt`. Library deletions update counts and retain recovery files in `data/deleted-readings`. Restore manually with the app closed, or restore a backup; copying back only a PDF does not restore its library record.
 

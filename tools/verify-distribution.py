@@ -1,5 +1,6 @@
 """Release gate: all runtime assets, empty research data, no account files."""
 from pathlib import Path
+from html.parser import HTMLParser
 import json
 import re
 
@@ -10,6 +11,7 @@ setup_version=re.search(r'^#define AppVersion "([\d.]+)"$', (root/'ClaimViewer.i
 assert app_version and setup_version and app_version[1]==setup_version[1], 'About and installer versions must match'
 required=['ClaimViewer.exe','README.md','index.html','library.json','sources.js','template/template.html',
           'lib/pdf.min.js','lib/pdf.worker.min.js','lib/settings.js','lib/provider-settings.js','lib/source-context.js',
+          'lib/tutorial.js','lib/settings.css','lib/reading-guide.js','lib/reading-guide.css','lib/workspace.js','lib/workspace.css','lib/idea-layout.js',
           'word/README.md','word/ClaimViewerWord.dll','word/APSA.xsl','word/native-bridge.js',
           'word/word.js','word/word.css','word/addin.html','word/install-web-addin.ps1',
           'word/uninstall-web-addin.ps1','word/install-ribbon.ps1','word/uninstall-ribbon.ps1',
@@ -22,6 +24,23 @@ for name in required:
 library=json.loads((stage/'library.json').read_text(encoding='utf-8'))
 assert library=={'collections':[],'items':{}},'Release contains library data'
 page=(stage/'index.html').read_text(encoding='utf-8')
+class StartupMarkup(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.scripts=set()
+        self.ids=set()
+
+    def handle_starttag(self, tag, attrs):
+        values=dict(attrs)
+        if tag=='script' and values.get('src'):
+            self.scripts.add(values['src'].split('?',1)[0])
+        if values.get('id'):
+            self.ids.add(values['id'])
+
+markup=StartupMarkup()
+markup.feed(page)
+assert {'lib/workspace.js','lib/reading-guide.js'} <= markup.scripts, 'Missing startup scripts'
+assert {'col','gout','pdfsel','guide-toggle'} <= markup.ids, 'Missing startup controls'
 match=re.search(r'\bconst\s+DATA\s*=\s*',page)
 data,_=json.JSONDecoder().raw_decode(page[match.end():])
 assert not data['sources'] and not data['library']['items'],'Release contains research data'

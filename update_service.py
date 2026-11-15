@@ -8,7 +8,7 @@ import tempfile
 import urllib.request
 
 
-VERSION = "2.6.3"
+VERSION = "2.6.4"
 REPO = "abd-azzam/Claim-Viewer"
 RELEASE = f"https://api.github.com/repos/{REPO}/releases/latest"
 

@@ -12,8 +12,19 @@ Read a PDF, save passages as claims, tag them, connect them to other readings, k
 
 Zotero keeps your PDFs and highlights, but it does not draw a graph of how the claims across your readings fit together, and it has no place for your own reading notes. Word can produce a citation, but not the sentence the citation rests on. This is a small viewer that does the reading, the tagging, the notes, the graph, the chat and the Word citation in one place. It was built with Claude Code and with Hermes (connected to DeepSeek Flash), under my supervision.
 
+## Changes in 2.6.4
+
+- Open the book icon in the PDF toolbar to use the **Reading guide**. Choose an article or chapter plan and a reading goal. The guide saves your draft and uses the same questions when preparing a prompt for Ask AI.
+- **New note** opens the free-form editor. From a claim, choose **To note > New note** to carry the passage into the editor. Draft an editable question using the refresh icon beside **Question**. For a note with a PDF source, enter a PDF page or range like `1-9`. The draft asks one question about the main argument across those pages. To attach another claim, open **Claims** and use **To note**.
+- Open **Note graph** to choose **All notes** to see links between free-form and section notes, or **Section notes** to focus on sections. **Group by > Question** groups items by question, and **All** adds PDF source, tag, and sub-tag. Claims use pathway at the last level.
+- Open **More tools** in the graph toolbar to find layout and zoom reset controls. Layers also puts box names, layer controls, list editing, and sets there.
+
 ## Changes in 2.6.3
 
+- In Library, select a folder and drag the handle beside a PDF onto another folder. You can also click the handle and choose the destination.
+- Notes starts with the collection and reading selected in Claims, or the folder selected in Library. Adjusting the Notes filters keeps your Claims filters in place.
+- In a note, choose a collection in **Add Link**, then search for a note in that collection.
+- Notes with matching filters stay visible even when their parent note is filtered out. Newly created notes use the active reading or collection.
 - OpenCode Go has its own provider preset, model catalog, and session header. The OpenCode preset uses the separate pay-as-you-go catalog. To refresh the list, select the saved provider in **Settings > AI**, click **Load available models**, then save. A model listed in one catalog may be unavailable in the other.
 - Ask AI keeps passage explanations brief and uses the requested page when one is specified. It omits paragraphs without verified excerpts. Choose Fast or More complete citation checking in the composer.
 - Citation jumps preserve PDF zoom when the viewer was hidden behind Ask AI.
@@ -162,7 +173,7 @@ The same views in a light palette; the scheme is chosen in Settings > Appearance
 
 ## Install
 
-1. Download [`ClaimViewer-Setup-2.6.3.exe`](https://github.com/abd-azzam/Claim-Viewer/releases/latest) and run it. Python is not required.
+1. Download [`ClaimViewer-Setup-2.6.4.exe`](https://github.com/abd-azzam/Claim-Viewer/releases/latest) and run it. Python is not required.
 2. Keep the suggested folder, or choose a writable one. Upgrades retain the previous installation folder.
 3. Setup installs Microsoft Edge WebView2 if it is missing. That step needs an internet connection.
 4. For desktop Word, select **Add Claim Viewer to Microsoft Word's ribbon**. Save documents and close Word before continuing, and approve the Windows administrator prompt.
@@ -170,7 +181,7 @@ The same views in a light palette; the scheme is chosen in Settings > Appearance
 
 Requirements: Windows 10 x64 (1809 or later) or Windows 11. Word integration is optional and requires desktop Word for Windows, Office 2016 or later, with bibliography styles installed.
 
-The installer carries an empty library, the offline PDF assets, the app and the Word component. It excludes the developer's PDFs, claims, conversations, API keys and local Word credentials. Reading and organizing work offline. AI, DOI lookup and online text-to-speech need their services; optional OCR needs Tesseract installed separately. Compare the hash from `Get-FileHash .\ClaimViewer-Setup-2.6.3.exe -Algorithm SHA256` with the `.sha256` file supplied alongside it.
+The installer carries an empty library, the offline PDF assets, the app and the Word component. It excludes the developer's PDFs, claims, conversations, API keys and local Word credentials. Reading and organizing work offline. AI, DOI lookup and online text-to-speech need their services; optional OCR needs Tesseract installed separately. Compare the hash from `Get-FileHash .\ClaimViewer-Setup-2.6.4.exe -Algorithm SHA256` with the `.sha256` file supplied alongside it.
 
 **Windows SmartScreen.** The exe and the installer are unsigned, so the first run stops at *Windows protected your PC*. Only continue if the SHA256 matches: click **More info**, then **Run anyway**. Builds that you make yourself show the same prompt.
 

@@ -1,0 +1,72 @@
+#reading-guide, #guide-recall {
+  color: var(--ink);
+  background: var(--panel);
+  font-size: .875rem;
+  line-height: 1.5;
+}
+#reading-guide {
+  position: fixed;
+  z-index: 20;
+  box-sizing: border-box;
+  width: min(22rem, calc(100vw - 16px));
+  overflow: auto;
+  padding: .65rem .85rem;
+  border: 1px solid var(--ctl);
+  border-radius: var(--r);
+}
+body.rtai #reading-guide, #reading-guide[hidden], #reading-guide [hidden], #guide-recall [hidden] { display: none; }
+#reading-guide header, #reading-guide nav, #reading-guide footer, #guide-recall footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .4rem .65rem;
+  align-items: center;
+}
+#reading-guide nav { margin-block: .6rem; }
+#reading-guide header { padding: 0 0 .6rem; }
+#reading-guide header button { margin-inline-start: auto; }
+#reading-guide [data-guide="outline"] { max-inline-size: 100%; }
+#reading-guide [data-guide="fields"] {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+  gap: .4rem .75rem;
+}
+#reading-guide label, #guide-recall label { display: block; }
+#reading-guide textarea, #guide-recall textarea {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  resize: vertical;
+  margin-block: .2rem .55rem;
+}
+#reading-guide [data-guide="range"] { display: block; width: 7rem; max-width: 100%; }
+#reading-guide :is(button, select, textarea, input), #guide-recall :is(button, textarea) {
+  font: inherit;
+  color: var(--ink);
+  background: var(--bg);
+  border: 1px solid var(--ctl);
+  border-radius: var(--r);
+  padding: .25rem .5rem;
+  min-block-size: 2rem;
+}
+#reading-guide button[aria-current="step"] {
+  color: var(--acc);
+  border-color: var(--acc);
+  font-weight: 700;
+}
+#reading-guide :focus-visible, #guide-recall :focus-visible, #rt #guide-toggle:focus-visible {
+  outline: 2px solid var(--acc);
+  outline-offset: 2px;
+}
+#reading-guide ol { padding-inline-start: 1.5rem; }
+#reading-guide [role="status"]:empty, #reading-guide ol:empty { display: none; }
+#guide-recall {
+  box-sizing: border-box;
+  width: min(36rem, calc(100% - 2rem));
+  max-height: calc(100% - 2rem);
+  overflow: auto;
+  border: 1px solid var(--ctl);
+  border-radius: var(--r);
+  padding: 1rem;
+}
+#guide-recall::backdrop { background: var(--bg); }
+#guide-recall h2 { margin: 0; }
