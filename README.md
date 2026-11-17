@@ -14,7 +14,7 @@ Zotero keeps your PDFs and highlights, but it does not draw a graph of how the c
 
 ## Changes in 2.6.4
 
-- In **Library**, click **Date added** to sort PDFs by when you imported them. Older entries marked with `~` use the creation date of the library copy.
+- In **Library**, click **Date added** to sort PDFs by when you imported them. Readings without a recorded import date have a blank cell.
 - Open the book icon in the PDF toolbar to use the **Reading guide**. Choose an article or chapter plan and a reading goal. The guide saves your draft and uses the same questions when preparing a prompt for Ask AI.
 - **New note** opens the free-form editor. From a claim, choose **To note > New note** to carry the passage into the editor. Draft an editable question using the refresh icon beside **Question**. For a note with a PDF source, enter a PDF page or range like `1-9`. The draft asks one question about the main argument across those pages. To attach another claim, open **Claims** and use **To note**.
 - Open **Note graph** to choose **All notes** to see links between free-form and section notes, or **Section notes** to focus on sections. **Group by > Question** groups items by question, and **All** adds PDF source, tag, and sub-tag. Claims use pathway at the last level.

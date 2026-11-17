@@ -2911,6 +2911,7 @@ async function fillFromDoi(id,button){
     await libSave();drawLibTable();toast('Filled from '+r.source+' · Undo is in the right-click menu.');
   }catch(e){toast(e.message,1,6000)}finally{button.disabled=false;button.removeAttribute('aria-busy')}
 }
+const libraryAddedDate=id=>{const item=LIB.items[id];return !item.addedAtEstimated&&Number.isFinite(item.addedAt)&&item.addedAt>0&&Number.isFinite(new Date(item.addedAt).getTime())?item.addedAt:0};
 function drawLibTable(){
   const box=$("libtbl");if(!box)return;
   const ids=Object.keys(LIB.items);  // the library is the list here, not the filtered claim set
@@ -2921,7 +2922,7 @@ function drawLibTable(){
     return [m.title,m.author,m.year,m.type,m.journal,m.volume,m.issue,m.pages,m.doi,m.publisher,m.url,
       ...(LIB.items[id]&&LIB.items[id].tags||[])].map(v=>String(v||"").toLowerCase()).join(" ").includes(q)});
   if(LIBSORT.k)shown=[...shown].sort((a,b)=>{
-    const A=String((LIBSORT.k==="addedAt"?LIB.items[a].addedAt:meta(a)[LIBSORT.k])||""),B=String((LIBSORT.k==="addedAt"?LIB.items[b].addedAt:meta(b)[LIBSORT.k])||"");
+    const A=String((LIBSORT.k==="addedAt"?libraryAddedDate(a):meta(a)[LIBSORT.k])||""),B=String((LIBSORT.k==="addedAt"?libraryAddedDate(b):meta(b)[LIBSORT.k])||"");
     if(!A&&!B)return 0;
     if(!A)return 1;  // an empty cell sinks to the bottom in both directions
     if(!B)return -1;
@@ -2936,9 +2937,10 @@ function drawLibTable(){
     wireLibBox(box);return}
   const gaps=shown.filter(id=>{const m=meta(id);return !m.author||!m.year||!m.title}).length;
   const types=new Set(shown.map(id=>meta(id).type));
-  const cols=["type","pdf","title","addedAt","year","author"];
+  const cols=["type","pdf","title","year","author"];
   [...types].forEach(t=>(TYPE_COLS[t]||[]).forEach(k=>{if(!cols.includes(k))cols.push(k)}));
   if(!cols.includes('doi'))cols.push('doi');
+  cols.push('addedAt');
   box.innerHTML='<div class="lthead">'
     +'<input id="libq" type="search" placeholder="Filter readings\u2026" aria-label="Filter readings" value="'+esc(LIBQ)+'">'
     +'<b>'+shown.length+(q?" of "+ids.length+"":"")+' reading'+(shown.length===1?"":"s")+'</b>'
@@ -2954,7 +2956,7 @@ function drawLibTable(){
         if(k==="pdf")return `<td class="pdfcell"><button type="button" class="pdficon" data-open="${esc(id)}" title="Open this PDF in the reader" aria-label="Open this PDF">`
           +`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h7l4 4v14H7zM14 3v4h4"/><path d="M10 13h4M10 16h4"/></svg></button>`
           +(col&&LIB.items[id].collections?.includes(col)?`<button type="button" class="pdficon libmove" data-move="${esc(id)}" draggable="true" title="Drag to a folder or click to choose one" aria-label="Move PDF to a folder">&#10239;</button>`:"")+"</td>";
-        if(k==="addedAt"){const {addedAt,addedAtEstimated}=LIB.items[id],date=new Date(addedAt);return Number.isFinite(date.getTime())&&addedAt?'<td style="white-space:nowrap"'+(addedAtEstimated?' title="Approximate date from the library PDF copy"':'')+'>'+(addedAtEstimated?"~":"")+esc(date.toLocaleDateString())+"</td>":'<td aria-label="Unknown date added">—</td>'}
+        if(k==="addedAt"){const stamp=libraryAddedDate(id);return stamp?'<td style="white-space:nowrap">'+esc(new Date(stamp).toLocaleDateString())+"</td>":'<td aria-label="Date added not recorded"></td>'}
         if(k==="type")return `<td><select class="typ" data-id="${esc(id)}" aria-label="Document type">`
           +DOC_TYPES.map(([v,n])=>`<option value="${v}"${m.type===v?" selected":""}>${esc(n)}</option>`).join("")
           +`</select></td>`;
