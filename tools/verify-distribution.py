@@ -9,6 +9,7 @@ stage=root/'dist'
 app_version=re.search(r'^VERSION = "([\d.]+)"$', (root/'update_service.py').read_text(encoding='utf-8'), re.M)
 setup_version=re.search(r'^#define AppVersion "([\d.]+)"$', (root/'ClaimViewer.iss').read_text(encoding='utf-8'), re.M)
 assert app_version and setup_version and app_version[1]==setup_version[1], 'About and installer versions must match'
+assert f"const CV_UI_VERSION='{app_version[1]}';" in (stage/'lib/settings.js').read_text(encoding='utf-8'), 'Update banner version must match the installer'
 required=['ClaimViewer.exe','README.md','index.html','library.json','sources.js','template/template.html',
           'lib/pdf.min.js','lib/pdf.worker.min.js','lib/settings.js','lib/provider-settings.js','lib/source-context.js',
           'lib/tutorial.js','lib/settings.css','lib/reading-guide.js','lib/reading-guide.css','lib/workspace.js','lib/workspace.css','lib/idea-layout.js',

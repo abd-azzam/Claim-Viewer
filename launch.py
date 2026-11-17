@@ -149,6 +149,7 @@ def read_lib():
         cols = v.get("collections")
         v["collections"] = [str(c) for c in cols] if isinstance(cols, list) else []
         items[k] = v
+    library_tools.fill_added_dates(items, PDF_DIR)
     lib["items"] = items
     lib["collections"] = [c for c in lib["collections"] if isinstance(c, dict) and isinstance(c.get("id"), str)]
     return lib
@@ -694,7 +695,7 @@ class Api:
                 if os.path.normcase(os.path.abspath(src)) != os.path.normcase(os.path.abspath(dst)):
                     shutil.copy2(src, dst)  # picking a file already in pdf\\ threw WinError 32
                 lib["items"][i] = {"title": i, "collections": [collection] if collection else [],
-                                   "tags": []}
+                                   "tags": [], "addedAt": int(time.time() * 1000)}
                 taken.add(i.lower())
                 added.append(i)
             except Exception as e:  # one unreadable file must not strand the rest of the batch

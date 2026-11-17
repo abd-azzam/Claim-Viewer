@@ -9,6 +9,23 @@ import urllib.parse
 import urllib.request
 
 
+def fill_added_dates(items, pdf_dir):
+    root = pathlib.Path(pdf_dir).resolve()
+    for ident, item in items.items():
+        if item.get('addedAt') or pathlib.Path(ident).name != ident:
+            continue
+        try:
+            pdf = (root / (ident + '.pdf')).resolve()
+            if pdf.parent != root or not pdf.is_file():
+                continue
+            stat = pdf.stat()
+            # shortcut: use the managed copy's creation time for imports that predate recorded dates.
+            created = getattr(stat, 'st_birthtime', stat.st_ctime)
+            item.update(addedAt=int(created * 1000), addedAtEstimated=True)
+        except (OSError, ValueError):
+            continue
+
+
 def remove_item(root, ident, library):
     if ident not in library['items']:
         raise ValueError('This reading is no longer in the library.')

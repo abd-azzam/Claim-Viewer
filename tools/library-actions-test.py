@@ -12,6 +12,29 @@ import launch
 import library_tools
 
 class LibraryActions(unittest.TestCase):
+    def test_legacy_date_uses_managed_pdf_and_preserves_recorded_import(self):
+        with tempfile.TemporaryDirectory(dir=Path(__file__).parent) as folder:
+            (Path(folder)/'old.pdf').write_bytes(b'%PDF fixture')
+            items={'old':{},'recorded':{'addedAt':123},'missing':{}}
+            library_tools.fill_added_dates(items,folder)
+            self.assertGreater(items['old']['addedAt'],0)
+            self.assertTrue(items['old']['addedAtEstimated'])
+            self.assertEqual(items['recorded'],{'addedAt':123})
+            self.assertEqual(items['missing'],{})
+
+    def test_import_records_its_own_date_and_keeps_it_in_the_library(self):
+        with tempfile.TemporaryDirectory(dir=Path(__file__).parent) as folder:
+            root=Path(folder)
+            incoming=root/'incoming.pdf'
+            incoming.write_bytes(b'%PDF fixture')
+            with patch.multiple(launch,ROOT=str(root),PDF_DIR=str(root/'pdf'),LIB_PATH=str(root/'library.json'),SRC_PATH=str(root/'sources.js')):
+                with patch.object(launch,'meta_query_from_title',return_value=None):
+                    result=launch.Api().import_pdfs(paths=[str(incoming)])
+                record=result['library']['items']['incoming']
+                self.assertGreater(record['addedAt'],0)
+                self.assertNotIn('addedAtEstimated',record)
+                self.assertEqual(launch.read_lib()['items']['incoming']['addedAt'],record['addedAt'])
+
     def test_delete_removes_pdf_and_count_and_keeps_recovery_copy(self):
         with tempfile.TemporaryDirectory(dir=Path(__file__).parent) as folder:
             root=Path(folder);(root/'pdf').mkdir()
