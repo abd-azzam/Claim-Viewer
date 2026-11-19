@@ -14,6 +14,7 @@ Zotero keeps your PDFs and highlights, but it does not draw a graph of how the c
 
 ## Changes in 2.6.4
 
+- In **Notes**, click **Draft notes with AI** beside **New note** to draft note titles and content with AI. Open a PDF and choose the pages to read. Review the claims, explanations, supporting excerpts, and editable tags. **Add more with AI** sends the current drafts and saved notes from the same PDF to your selected provider to help avoid repeated claims. **Save to Notes** adds each draft as a separate note linked to its source page.
 - In **Library**, click **Date added** to sort PDFs by when you imported them. Readings without a recorded import date have a blank cell.
 - Open the book icon in the PDF toolbar to use the **Reading guide**. Choose an article or chapter plan and a reading goal. The guide saves your draft and uses the same questions when preparing a prompt for Ask AI.
 - **New note** opens the free-form editor. From a claim, choose **To note > New note** to carry the passage into the editor. Draft an editable question using the refresh icon beside **Question**. For a note with a PDF source, enter a PDF page or range like `1-9`. The draft asks one question about the main argument across those pages. To attach another claim, open **Claims** and use **To note**.

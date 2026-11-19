@@ -3,10 +3,10 @@ const checks=[];function check(name,fn){fn();checks.push(name)}
 class Element {
  constructor(){this.value='';this.textContent='';this.disabled=false;this.fields=[];this._html=''}
  set innerHTML(html){this._html=html;if(this.id==='node-preview'){
-  dialog.fields=[...html.matchAll(/data-node="(\d+)" data-field="(title|links)" value="([^"]*)"|data-node="(\d+)" data-field="body">([^<]*)/g)].map(m=>({dataset:{node:m[1]||m[4],field:m[2]||'body'},value:m[3]??m[5]}));
+  dialog.fields=[...html.matchAll(/data-node="(\d+)" data-field="(title|links|tags)" value="([^"]*)"|data-node="(\d+)" data-field="body">([^<]*)/g)].map(m=>({dataset:{node:m[1]||m[4],field:m[2]||'body'},value:m[3]??m[5]}));
  }}
  get innerHTML(){return this._html}
- querySelector(sel){return get(sel.slice(1))}
+ querySelector(sel){return get(sel==='h2'?'studio-heading':sel==='p'?'studio-description':sel.slice(1))}
  setAttribute(){}
  querySelectorAll(){return this.fields}
  showModal(){this.open=true}close(){this.open=false;this.onclose?.()}remove(){}focus(){}append(){}
@@ -138,5 +138,56 @@ check('Batch saves and supplies single undo snapshot',()=>{assert.equal(saves,1)
  check('Stubbed AI response renders review without saving',()=>{assert.match(get('node-preview').innerHTML,/AI idea/);assert.equal(JSON.stringify(context.ZK),before);assert.equal(get('node-generate').disabled,false)});
  context.pywebview.api.ai_chat=async()=>({ok:true,text:'not json'});await get('node-generate').onclick();
  check('Malformed AI response surfaces error and keeps data unchanged',()=>{assert.ok(get('node-status').textContent);assert.equal(JSON.stringify(context.ZK),before);assert.equal(get('node-generate').disabled,false)});
+ let destination;
+ context.show=(...args)=>{destination=args};
+ get('zcol').value='note-collection';
+ Object.assign(context.window,{curSrc:()=> 'source-fixture',currentPdfPage:()=>2,currentPdfPageCount:()=>3,pageText:async (_,page)=>page===2?'The author explains the mechanism.':'The evidence supports it.'});
+ get('node-context').previousSibling={};
+ context.nodeStudio(true);get('node-goal').value='Explain the argument';get('node-context').value='2-3';
+ context.pywebview.api.ai_chat=async messages=>{
+  assert.match(JSON.parse(messages)[0].content,/one substantive claim per note/);
+  assert.deepEqual(JSON.parse(JSON.parse(messages)[1].content).source,{2:'The author explains the mechanism.',3:'The evidence supports it.'});
+  return {ok:true,text:'[{"title":"Main argument","body":"The author explains the mechanism and its limits.","page":2,"quote":"The author explains the mechanism.","tags":["Causal mechanisms"]}]'};
+ };
+ await get('node-generate').onclick();
+ check('AI list drafts include content and stay in review until saved',()=>{
+  assert.equal(JSON.stringify(context.ZK),before);
+  assert.match(get('node-preview').innerHTML,/mechanism and its limits/);
+  assert.doesNotMatch(get('node-preview').innerHTML,/data-field="links"/);
+  const tags=dialog.fields.find(f=>f.dataset.field==="tags");
+  assert.equal(tags.value,"Causal mechanisms");
+  tags.value="Causal mechanisms, Evidence";
+ });
+ context.ZK.notes['9']={id:'9',src:'source-fixture',title:'Saved claim',body:'Already in the notes list.'};
+ context.ZK.notes['10']={id:'10',src:'another-pdf',title:'Other reading',body:'Unrelated note.'};
+ const beforeMore=JSON.stringify(context.ZK);
+ context.pywebview.api.ai_chat=async messages=>{
+  const payload=JSON.parse(JSON.parse(messages)[1].content);
+  assert.deepEqual(payload.existingClaims.map(note=>note.title),['Main argument','Saved claim']);
+  return {ok:true,text:JSON.stringify([
+   {title:'Main argument!',body:'Repeated claim',page:2,quote:'The author explains the mechanism.'},
+   {title:'Saved claim!',body:'Repeating a saved note',page:2,quote:'The author explains the mechanism.'},
+   {title:'Evidence',body:'The evidence supports the mechanism.',page:3,quote:'The evidence supports it.'}
+  ])};
+ };
+ await get('node-more').onclick();
+ check('Add more keeps edits and skips drafts and saved claims from the source PDF',()=>{
+  assert.equal(JSON.stringify(context.ZK),beforeMore);
+  assert.equal(dialog.fields.filter(f=>f.dataset.field==='title').length,2);
+  assert.match(get('node-preview').innerHTML,/Causal mechanisms, Evidence/);
+  assert.doesNotMatch(get('node-preview').innerHTML,/Repeated claim|Repeating a saved note/);
+ });
+ get('node-apply').onclick();
+ check('AI notes save into the list with content and the chosen collection',()=>{
+  const n=Object.values(context.ZK.notes).find(n=>n.title==='Main argument');
+  assert.equal(n.body,'The author explains the mechanism and its limits.');
+  assert.equal(n.col,'note-collection');
+  assert.equal(n.page,2);
+  assert.deepEqual(Array.from(n.tags),["Causal mechanisms","Evidence"]);
+  assert.equal(n.quote,'The author explains the mechanism.');
+  assert.equal(destination[0],'notes');
+  assert.equal(destination[1],n.id);
+  assert.equal(n.links.length,0);
+ });
  console.log(JSON.stringify({passed:checks.length,checks,limitations:['DOM shim, not browser rendering','API stub only; no live model request']},null,2));
 })().catch(e=>{console.error(e);process.exitCode=1});

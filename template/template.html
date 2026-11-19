@@ -742,7 +742,7 @@ aside>.tabs,.top,#flt::before{flex:none}
 #ailog .aim.bot{max-width:72ch;margin:0 auto 24px;padding:12px 0;background:transparent;border:0}
 .doi-field{display:flex;align-items:center;gap:5px}.doi-field input{min-width:150px;flex:1}.doi-search{flex:none;padding:5px;min-width:30px}.doi-search .i{width:16px;height:16px}.doi-search[aria-busy=true]{opacity:.5}
 </style>
-<link rel="stylesheet" href="lib/workspace.css"><link rel="stylesheet" href="lib/provider-settings.css"><script src="lib/source-context.js"></script><script src="lib/provider-settings.js"></script><link rel="stylesheet" href="lib/settings.css"><script src="lib/i18n.js"></script><script src="lib/settings.js?v=date-added-update"></script><script src="lib/idea-layout.js"></script><script src="lib/workspace.js?v=all-note-links"></script><script defer src="lib/tutorial.js"></script><link rel="stylesheet" href="lib/reading-guide.css"><script src="lib/reading-guide.js?v=one-note-editor"></script></head>
+<link rel="stylesheet" href="lib/workspace.css"><link rel="stylesheet" href="lib/provider-settings.css"><script src="lib/source-context.js"></script><script src="lib/provider-settings.js"></script><link rel="stylesheet" href="lib/settings.css"><script src="lib/i18n.js"></script><script src="lib/settings.js?v=pdf-note-drafts"></script><script src="lib/idea-layout.js"></script><script src="lib/workspace.js?v=ai-note-saved-claims"></script><script defer src="lib/tutorial.js"></script><link rel="stylesheet" href="lib/reading-guide.css"><script src="lib/reading-guide.js?v=one-note-editor"></script></head>
 <body>
 <aside>
     <div class="top"><h1>Claim Viewer</h1><button id="cv-tour-button" type="button" title="Start tutorial" aria-label="Start tutorial">?</button><button id="th" type="button" aria-pressed="false" aria-label="Dark mode" title="Dark mode"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path class="mo" d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/><g class="su"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></g></svg></button><button id="hl" type="button" class="pane-toggle" title="Hide left pane" aria-label="Hide left pane"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M9 5v14"/></svg></button></div>
@@ -810,6 +810,7 @@ aside>.tabs,.top,#flt::before{flex:none}
   <div class="zbar">
     <h1>Notes</h1>
     <button id="zknew" type="button">New note</button>
+    <button id="zkdraft" type="button" data-note-list-draft aria-haspopup="dialog"><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l3 3v5M6 3v18h6M15 3v4h3M9 10h4M9 14h2M14 19l6-6 2 2-6 6h-2z"/></svg> Draft notes with AI</button>
     <button id="zkidx" type="button">Keyword index</button>
     <button id="zkgraph" type="button" data-note-graph aria-haspopup="dialog">Note graph</button>
   </div>
@@ -2127,6 +2128,7 @@ $("hl").onclick=()=>{SIDES.l=!SIDES.l;sides();if(!SIDES.l)setTimeout(()=>{try{do
 $("hr").onclick=()=>{SIDES.r=!SIDES.r;sides()};
 sides();
 $("zknew").onclick=()=>zkNew(null);
+$("zkdraft").onclick=()=>nodeStudio(true);
 $("zkidx").onclick=zkIndex;
 $("zklist").addEventListener("click",e=>{const b=e.target.closest&&e.target.closest(".zexp");if(!b)return;
   e.preventDefault();e.stopPropagation();const id=b.dataset.exp;
